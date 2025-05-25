@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react'; // Adicionado useState
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -13,14 +13,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAssets } from '@/contexts/AssetContext';
-import { useSuppliers } from '@/contexts/SupplierContext'; // Importado
+import { useSuppliers } from '@/contexts/SupplierContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { CalendarIcon, Save } from 'lucide-react';
+import { CalendarIcon, Save, UploadCloud, XCircle } from 'lucide-react'; // Adicionado UploadCloud, XCircle
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Asset } from '@/components/assets/types';
+import Image from 'next/image'; // Adicionado Image do Next.js
 
 const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
@@ -31,18 +32,22 @@ const assetFormSchema = z.object({
   invoiceNumber: z.string().min(1, "Número da nota fiscal é obrigatório."),
   serialNumber: z.string().optional(),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
-  supplier: z.string().min(1, "Fornecedor é obrigatório."), // Agora será o ID do fornecedor
+  supplier: z.string().min(1, "Fornecedor é obrigatório."),
   category: z.string().min(1, "Categoria é obrigatória."),
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
+  imageDataUri: z.string().optional(), // Novo campo para a imagem
 });
 
 type AssetFormValues = z.infer<typeof assetFormSchema>;
 
 export default function AddAssetPage() {
   const { addAsset } = useAssets();
-  const { suppliers } = useSuppliers(); // Usando o contexto de fornecedores
+  const { suppliers } = useSuppliers();
   const { toast } = useToast();
   const router = useRouter();
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
@@ -52,9 +57,10 @@ export default function AddAssetPage() {
       invoiceNumber: '',
       serialNumber: '',
       assetTag: '',
-      supplier: '', // Inicialmente vazio
+      supplier: '',
       category: '',
       purchaseValue: 0,
+      imageDataUri: '', // Valor inicial para o campo de imagem
     },
   });
 
@@ -62,8 +68,8 @@ export default function AddAssetPage() {
     const assetDataToSave: Omit<Asset, 'id'> = {
       ...data,
       purchaseDate: format(data.purchaseDate, 'yyyy-MM-dd'),
-      currentValue: data.purchaseValue,
-      // supplier já é o ID do fornecedor vindo do formulário
+      currentValue: data.purchaseValue, // Valor atual inicializado com o valor de compra
+      imageDataUri: data.imageDataUri || undefined, // Garante que seja undefined se vazio
     };
     addAsset(assetDataToSave);
     toast({
@@ -72,6 +78,29 @@ export default function AddAssetPage() {
     });
     router.push('/assets');
   }
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string) => void) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+        fieldOnChange(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
+      fieldOnChange('');
+    }
+  };
+
+  const handleRemoveImage = (fieldOnChange: (value: string) => void) => {
+    setImagePreview(null);
+    fieldOnChange('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // Reseta o input de arquivo visualmente
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -243,6 +272,54 @@ export default function AddAssetPage() {
                   )}
                 />
               </div>
+
+              {/* Seção de Upload de Imagem */}
+              <div className="space-y-2 pt-4">
+                <FormField
+                  control={form.control}
+                  name="imageDataUri"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        <UploadCloud className="mr-2 h-5 w-5" />
+                        Foto do Ativo (Opcional)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          ref={fileInputRef}
+                          onChange={(e) => handleImageChange(e, field.onChange)}
+                          className="cursor-pointer"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Formatos suportados: JPG, PNG, GIF, etc.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {imagePreview && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Pré-visualização:</p>
+                    <div className="relative w-48 h-48 border rounded-md overflow-hidden">
+                       <Image src={imagePreview} alt="Pré-visualização do ativo" layout="fill" objectFit="contain" />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRemoveImage(form.setValue.bind(form, 'imageDataUri', ''))} // form.setValue.bind(form, 'imageDataUri', '')
+                      className="text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
+                    >
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Remover Imagem
+                    </Button>
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-end space-x-2 pt-6">
                  <Button type="button" variant="outline" onClick={() => router.back()}>
                     Cancelar

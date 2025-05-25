@@ -9,4 +9,5 @@ export interface Asset {
   category: string;
   purchaseValue: number;
   currentValue: number;
+  imageDataUri?: string; // Novo campo para a imagem
 }
