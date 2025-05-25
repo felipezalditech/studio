@@ -32,7 +32,7 @@ const assetFormSchema = z.object({
   supplier: z.string().min(1, "Fornecedor é obrigatório."),
   category: z.string().min(1, "Categoria é obrigatória."),
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
-  currentValue: z.coerce.number().min(0.01, "Valor atual deve ser maior que zero."),
+  // currentValue foi removido daqui
 });
 
 type AssetFormValues = z.infer<typeof assetFormSchema>;
@@ -53,7 +53,7 @@ export default function AddAssetPage() {
       supplier: '',
       category: '',
       purchaseValue: 0,
-      currentValue: 0,
+      // currentValue não é mais um valor default do formulário
     },
   });
 
@@ -61,6 +61,7 @@ export default function AddAssetPage() {
     const assetDataToSave: Omit<Asset, 'id'> = {
       ...data,
       purchaseDate: format(data.purchaseDate, 'yyyy-MM-dd'), // Salvar data no formato ISO string
+      currentValue: data.purchaseValue, // Valor atual inicializado com o valor de compra
     };
     addAsset(assetDataToSave);
     toast({
@@ -221,19 +222,7 @@ export default function AddAssetPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="currentValue"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Valor Atual (R$)</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" placeholder="Ex: 2350.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* FormField para currentValue foi removido */}
               </div>
               <div className="flex justify-end space-x-2 pt-6">
                  <Button type="button" variant="outline" onClick={() => router.back()}>
