@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ArrowUpDown, MoreHorizontal, Eye, Edit2, Archive, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { parseISO, format } from 'date-fns';
+import { parseISO, format, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 // Helper function to format currency
@@ -26,9 +26,30 @@ const formatCurrency = (amount: number) => {
 const formatDate = (dateString: string) => {
   try {
     const date = parseISO(dateString);
-    return format(date, 'PPP', { locale: ptBR }); // e.g. 15 de jan. de 2023
+    // Updated date format to dd/MM/yyyy
+    return format(date, 'dd/MM/yyyy', { locale: ptBR }); 
   } catch (error) {
-    return dateString; // Fallback if date is invalid
+    if (dateString && typeof dateString === 'string') {
+        // Attempt to handle if dateString is already in dd/MM/yyyy or similar
+        const parts = dateString.split(/[-/]/);
+        if (parts.length === 3) {
+            // Assuming dd/MM/yyyy or yyyy/MM/dd or MM/dd/yyyy
+            // For simplicity, if it's already somewhat formatted, return as is or a specific known input format
+            // This fallback might need refinement based on actual invalid date strings received
+            if (parts[0].length === 4) { // yyyy-MM-dd
+                return format(new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])), 'dd/MM/yyyy', { locale: ptBR });
+            } else if (parts[2].length === 4) { // dd-MM-yyyy or MM-dd-yyyy
+                 // Check if parts[0] is month or day based on value
+                const d = parseInt(parts[0]);
+                const m = parseInt(parts[1]);
+                if (m > 0 && m <=12) { // Likely dd/MM/yyyy
+                    return format(new Date(parseInt(parts[2]), m - 1, d), 'dd/MM/yyyy', { locale: ptBR });
+                }
+                // Could be MM/dd/yyyy - this part can get complex without knowing exact formats
+            }
+        }
+    }
+    return dateString; // Fallback if date is invalid or not in expected ISO format
   }
 };
 
@@ -77,27 +98,27 @@ export const columns: ColumnDef<Asset>[] = [
   },
   {
     accessorKey: "name",
-    header: ({ column }) => <SortableHeader column={column} title="Nome" />,
+    header: ({ column }) => <SortableHeader column={column} title="Nome do Ativo" />, // Traduzido
+  },
+  {
+    accessorKey: "assetTag", // "Patrimônio"
+    header: ({ column }) => <SortableHeader column={column} title="Patrimônio" />, // Traduzido
   },
   {
     accessorKey: "invoiceNumber",
-    header: ({ column }) => <SortableHeader column={column} title="Nº Fatura" />,
+    header: ({ column }) => <SortableHeader column={column} title="Nota Fiscal" />, // Traduzido
   },
   {
     accessorKey: "serialNumber",
-    header: ({ column }) => <SortableHeader column={column} title="Nº Série" />,
-  },
-  {
-    accessorKey: "assetTag",
-    header: ({ column }) => <SortableHeader column={column} title="Etiqueta do Ativo" />,
-  },
-  {
-    accessorKey: "supplier",
-    header: ({ column }) => <SortableHeader column={column} title="Fornecedor" />,
+    header: ({ column }) => <SortableHeader column={column} title="Nº de Série" />, // Traduzido
   },
   {
     accessorKey: "category",
     header: ({ column }) => <SortableHeader column={column} title="Categoria" />,
+  },
+  {
+    accessorKey: "supplier",
+    header: ({ column }) => <SortableHeader column={column} title="Fornecedor" />,
   },
   {
     accessorKey: "purchaseValue",
@@ -111,7 +132,7 @@ export const columns: ColumnDef<Asset>[] = [
   },
   {
     id: "actions",
-    header: () => <div className="text-right">Ações</div>,
+    header: () => <div className="text-right pr-4">Ações</div>, // Adicionado padding para alinhar com botão
     cell: ({ row }) => {
       const asset = row.original;
       return (
@@ -125,15 +146,15 @@ export const columns: ColumnDef<Asset>[] = [
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Ações</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => alert(`Visualizar detalhes do ativo: ${asset.name}`)}>
+              <DropdownMenuItem onClick={() => console.log(`Visualizar detalhes do ativo: ${asset.name}`)}>
                 <Eye className="mr-2 h-4 w-4" />
                 Visualizar Detalhes
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => alert(`Editar ativo: ${asset.name}`)}>
+              <DropdownMenuItem onClick={() => console.log(`Editar ativo: ${asset.name}`)}>
                 <Edit2 className="mr-2 h-4 w-4" />
                 Editar
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => alert(`Baixar ativo: ${asset.name}`)}>
+              <DropdownMenuItem onClick={() => console.log(`Baixar ativo: ${asset.name}`)}>
                 <Archive className="mr-2 h-4 w-4" />
                 Baixar Ativo
               </DropdownMenuItem>
@@ -141,7 +162,7 @@ export const columns: ColumnDef<Asset>[] = [
               <DropdownMenuItem
                 onClick={() => {
                   if (confirm(`Tem certeza que deseja deletar permanentemente o ativo: ${asset.name}?`)) {
-                    alert(`Ativo ${asset.name} deletado.`);
+                    console.log(`Ativo ${asset.name} deletado.`);
                   }
                 }}
                 className="text-red-600 hover:!text-red-600 focus:text-red-600 focus:!bg-red-100 dark:focus:!bg-red-700/50"
@@ -155,7 +176,6 @@ export const columns: ColumnDef<Asset>[] = [
       );
     },
     enableSorting: false,
-    enableHiding: true, // Permitir ocultar esta coluna se desejado
+    enableHiding: true,
   },
 ];
-
