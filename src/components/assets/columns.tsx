@@ -3,7 +3,7 @@
 
 import type { ColumnDef, HeaderContext } from "@tanstack/react-table";
 import type { Asset } from "./types";
-import type { Supplier } from "@/contexts/SupplierContext"; // Importado
+import type { Supplier } from "@/contexts/SupplierContext";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +17,8 @@ import { ArrowUpDown, MoreHorizontal, Eye, Edit2, Archive, Trash2 } from "lucide
 import { Checkbox } from "@/components/ui/checkbox";
 import { parseISO, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useAssets } from "@/contexts/AssetContext"; // Importar o hook useAssets
+import { useToast } from "@/hooks/use-toast"; // Importar o hook useToast
 
 
 // Helper function to format currency
@@ -51,7 +53,7 @@ const SortableHeader = <TData, TValue>({ column, title }: { column: HeaderContex
 // Modificado para ser uma função que aceita o mapa de fornecedores
 export const getColumns = (
   supplierNameMap: Map<string, string>,
-  getSupplierById: (id: string) => Supplier | undefined // Função para buscar fornecedor
+  getSupplierById: (id: string) => Supplier | undefined
 ): ColumnDef<Asset>[] => [
   {
     id: "select",
@@ -77,7 +79,7 @@ export const getColumns = (
   },
   {
     accessorKey: "purchaseDate",
-    header: ({ column }) => <SortableHeader column={column} title="Data da Compra" />,
+    header: ({ column }) => <SortableHeader column={column} title="Data Compra" />,
     cell: ({ row }) => formatDate(row.getValue("purchaseDate")),
   },
   {
@@ -101,12 +103,10 @@ export const getColumns = (
     header: ({ column }) => <SortableHeader column={column} title="Categoria" />,
   },
   {
-    accessorKey: "supplier", // Agora é o ID do fornecedor
+    accessorKey: "supplier",
     header: ({ column }) => <SortableHeader column={column} title="Fornecedor" />,
     cell: ({ row }) => {
       const supplierId = row.getValue("supplier") as string;
-      // Usar o mapa passado para obter o nome do fornecedor
-      // Se não encontrar, exibe o ID (ou "Desconhecido")
       return supplierNameMap.get(supplierId) || supplierId || "Desconhecido";
     },
   },
@@ -123,8 +123,21 @@ export const getColumns = (
   {
     id: "actions",
     header: () => <div className="text-right">Ações</div>,
-    cell: ({ row }) => {
+    cell: function ActionsCell({ row }) { // Usar 'function' para acessar 'this' ou hooks
       const asset = row.original;
+      const { deleteAsset } = useAssets(); // Obter a função deleteAsset do contexto
+      const { toast } = useToast(); // Obter a função toast
+
+      const handleDelete = () => {
+        if (confirm(`Tem certeza que deseja deletar permanentemente o ativo: ${asset.name}?`)) {
+          deleteAsset(asset.id);
+          toast({
+            title: "Sucesso!",
+            description: `Ativo "${asset.name}" deletado.`,
+          });
+        }
+      };
+
       return (
         <div className="text-right">
           <DropdownMenu>
@@ -150,12 +163,7 @@ export const getColumns = (
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => {
-                  if (confirm(`Tem certeza que deseja deletar permanentemente o ativo: ${asset.name}?`)) {
-                    console.log(`Ativo ${asset.name} deletado.`);
-                    // Aqui você chamaria a função de deletar do AssetContext
-                  }
-                }}
+                onClick={handleDelete} // Chamar a função handleDelete
                 className="text-red-600 hover:!text-red-600 focus:text-red-600 focus:!bg-red-100 dark:focus:!bg-red-700/50"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
