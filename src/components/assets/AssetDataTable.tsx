@@ -102,6 +102,7 @@ export function AssetDataTable<TData, TValue>({
                                           column.id === "category" ? "Categoria" :
                                           column.id === "purchaseValue" ? "Valor de Compra" :
                                           column.id === "currentValue" ? "Valor Atual" :
+                                          column.id === "actions" ? "Ações" : // Adicionado para a nova coluna
                                           column.id;
                 return (
                   <DropdownMenuCheckboxItem
@@ -184,3 +185,4 @@ export function AssetDataTable<TData, TValue>({
     </div>
   )
 }
+
