@@ -19,6 +19,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription, // Added FormDescription to import
   FormField,
   FormItem,
   FormLabel,
