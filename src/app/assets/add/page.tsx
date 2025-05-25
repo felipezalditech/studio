@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAssets } from '@/contexts/AssetContext';
+import { useSuppliers } from '@/contexts/SupplierContext'; // Importado
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { CalendarIcon, Save } from 'lucide-react';
@@ -29,16 +31,16 @@ const assetFormSchema = z.object({
   invoiceNumber: z.string().min(1, "Número da nota fiscal é obrigatório."),
   serialNumber: z.string().optional(),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
-  supplier: z.string().min(1, "Fornecedor é obrigatório."),
+  supplier: z.string().min(1, "Fornecedor é obrigatório."), // Agora será o ID do fornecedor
   category: z.string().min(1, "Categoria é obrigatória."),
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
-  // currentValue foi removido daqui
 });
 
 type AssetFormValues = z.infer<typeof assetFormSchema>;
 
 export default function AddAssetPage() {
   const { addAsset } = useAssets();
+  const { suppliers } = useSuppliers(); // Usando o contexto de fornecedores
   const { toast } = useToast();
   const router = useRouter();
 
@@ -50,25 +52,25 @@ export default function AddAssetPage() {
       invoiceNumber: '',
       serialNumber: '',
       assetTag: '',
-      supplier: '',
+      supplier: '', // Inicialmente vazio
       category: '',
       purchaseValue: 0,
-      // currentValue não é mais um valor default do formulário
     },
   });
 
   function onSubmit(data: AssetFormValues) {
     const assetDataToSave: Omit<Asset, 'id'> = {
       ...data,
-      purchaseDate: format(data.purchaseDate, 'yyyy-MM-dd'), // Salvar data no formato ISO string
-      currentValue: data.purchaseValue, // Valor atual inicializado com o valor de compra
+      purchaseDate: format(data.purchaseDate, 'yyyy-MM-dd'),
+      currentValue: data.purchaseValue,
+      // supplier já é o ID do fornecedor vindo do formulário
     };
     addAsset(assetDataToSave);
     toast({
       title: "Sucesso!",
       description: "Ativo adicionado com sucesso.",
     });
-    router.push('/assets'); // Redireciona para a lista de ativos
+    router.push('/assets');
   }
 
   return (
@@ -134,9 +136,27 @@ export default function AddAssetPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Fornecedor</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Tech Solutions Ltda." {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um fornecedor" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {suppliers.length === 0 ? (
+                            <SelectItem value="no-suppliers" disabled>Nenhum fornecedor cadastrado</SelectItem>
+                          ) : (
+                            suppliers.map((supplier) => (
+                              <SelectItem key={supplier.id} value={supplier.id}>
+                                {supplier.nomeFantasia} ({supplier.razaoSocial})
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Cadastre fornecedores na tela de "Fornecedores".
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -222,7 +242,6 @@ export default function AddAssetPage() {
                     </FormItem>
                   )}
                 />
-                {/* FormField para currentValue foi removido */}
               </div>
               <div className="flex justify-end space-x-2 pt-6">
                  <Button type="button" variant="outline" onClick={() => router.back()}>

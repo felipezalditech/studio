@@ -3,6 +3,7 @@
 
 import type { ColumnDef, HeaderContext } from "@tanstack/react-table";
 import type { Asset } from "./types";
+import type { Supplier } from "@/contexts/SupplierContext"; // Importado
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { parseISO, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+
 // Helper function to format currency
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
@@ -28,7 +30,6 @@ const formatDate = (dateString: string) => {
     const date = parseISO(dateString);
     return format(date, 'dd/MM/yyyy', { locale: ptBR });
   } catch (error) {
-    // Fallback for potentially already formatted or invalid dates
     return dateString; 
   }
 };
@@ -39,7 +40,7 @@ const SortableHeader = <TData, TValue>({ column, title }: { column: HeaderContex
     <Button
       variant="ghost"
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      className="p-0 gap-1 h-auto focus-visible:ring-inset" // Ajustado para ser mais compacto
+      className="p-0 gap-1 h-auto focus-visible:ring-inset"
     >
       {title}
       <ArrowUpDown className="h-4 w-4" />
@@ -47,8 +48,11 @@ const SortableHeader = <TData, TValue>({ column, title }: { column: HeaderContex
   );
 };
 
-
-export const columns: ColumnDef<Asset>[] = [
+// Modificado para ser uma função que aceita o mapa de fornecedores
+export const getColumns = (
+  supplierNameMap: Map<string, string>,
+  getSupplierById: (id: string) => Supplier | undefined // Função para buscar fornecedor
+): ColumnDef<Asset>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -97,8 +101,14 @@ export const columns: ColumnDef<Asset>[] = [
     header: ({ column }) => <SortableHeader column={column} title="Categoria" />,
   },
   {
-    accessorKey: "supplier",
+    accessorKey: "supplier", // Agora é o ID do fornecedor
     header: ({ column }) => <SortableHeader column={column} title="Fornecedor" />,
+    cell: ({ row }) => {
+      const supplierId = row.getValue("supplier") as string;
+      // Usar o mapa passado para obter o nome do fornecedor
+      // Se não encontrar, exibe o ID (ou "Desconhecido")
+      return supplierNameMap.get(supplierId) || supplierId || "Desconhecido";
+    },
   },
   {
     accessorKey: "purchaseValue",
@@ -112,7 +122,7 @@ export const columns: ColumnDef<Asset>[] = [
   },
   {
     id: "actions",
-    header: () => <div className="text-right">Ações</div>, // Removido pr-4, o padding da célula TableHead (px-1) cuidará disso
+    header: () => <div className="text-right">Ações</div>,
     cell: ({ row }) => {
       const asset = row.original;
       return (
@@ -143,6 +153,7 @@ export const columns: ColumnDef<Asset>[] = [
                 onClick={() => {
                   if (confirm(`Tem certeza que deseja deletar permanentemente o ativo: ${asset.name}?`)) {
                     console.log(`Ativo ${asset.name} deletado.`);
+                    // Aqui você chamaria a função de deletar do AssetContext
                   }
                 }}
                 className="text-red-600 hover:!text-red-600 focus:text-red-600 focus:!bg-red-100 dark:focus:!bg-red-700/50"

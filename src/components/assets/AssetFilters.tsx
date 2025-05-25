@@ -13,10 +13,12 @@ import { cn } from '@/lib/utils';
 import { format, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useSuppliers } from '@/contexts/SupplierContext'; // Importado
+import { useAssets } from '@/contexts/AssetContext'; // Para categorias
 
 export interface AssetFiltersState {
   name: string;
-  supplier: string;
+  supplier: string; // Agora será o ID do fornecedor
   invoiceNumber: string;
   category: string;
   purchaseDateFrom: Date | undefined;
@@ -26,14 +28,17 @@ export interface AssetFiltersState {
 interface AssetFiltersProps {
   filters: AssetFiltersState;
   setFilters: Dispatch<SetStateAction<AssetFiltersState>>;
-  categories: string[];
-  suppliers: string[];
+  // categories: string[]; // Removido, usará useAssets
+  // suppliers: string[]; // Removido, usará useSuppliers
   onResetFilters: () => void;
 }
 
-const ALL_ITEMS_SENTINEL_VALUE = "_ALL_"; // Internal value, no need to translate
+const ALL_ITEMS_SENTINEL_VALUE = "_ALL_";
 
-export function AssetFilters({ filters, setFilters, categories, suppliers, onResetFilters }: AssetFiltersProps) {
+export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFiltersProps) {
+  const { suppliers: allSuppliersFromContext } = useSuppliers(); // Fornecedores do contexto
+  const { categories: allCategoriesFromContext } = useAssets(); // Categorias do contexto de ativos
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
@@ -74,7 +79,7 @@ export function AssetFilters({ filters, setFilters, categories, suppliers, onRes
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todos os Fornecedores</SelectItem>
-              {suppliers.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              {allSuppliersFromContext.map(s => <SelectItem key={s.id} value={s.id}>{s.nomeFantasia}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filters.category || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('category')}>
@@ -83,7 +88,7 @@ export function AssetFilters({ filters, setFilters, categories, suppliers, onRes
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todas as Categorias</SelectItem>
-              {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+              {allCategoriesFromContext.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
             </SelectContent>
           </Select>
 
@@ -97,7 +102,7 @@ export function AssetFilters({ filters, setFilters, categories, suppliers, onRes
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {filters.purchaseDateFrom && isValid(filters.purchaseDateFrom) ? format(filters.purchaseDateFrom, "PPP", { locale: ptBR }) : <span>Data da Compra De</span>}
+                {filters.purchaseDateFrom && isValid(filters.purchaseDateFrom) ? format(filters.purchaseDateFrom, "PPP", { locale: ptBR }) : <span>Data de Compra Inicial</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
