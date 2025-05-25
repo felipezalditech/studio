@@ -4,7 +4,7 @@
 import React, { useMemo, useCallback, useState } from 'react';
 import Link from 'next/link';
 import { AssetDataTable } from '@/components/assets/AssetDataTable';
-import { getColumns } from '@/components/assets/columns'; // Modificado para getColumns
+import { getColumns } from '@/components/assets/columns';
 import type { Asset } from '@/components/assets/types';
 import { AssetFilters, type AssetFiltersState } from '@/components/assets/AssetFilters';
 import { Button } from '@/components/ui/button';
@@ -14,29 +14,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useToast } from '@/hooks/use-toast';
 import { isValid, parseISO } from 'date-fns';
 import { useAssets } from '@/contexts/AssetContext';
-import { useSuppliers } from '@/contexts/SupplierContext'; // Importado
+import { useSuppliers } from '@/contexts/SupplierContext';
+import { AssetDetailsDialog } from '@/components/assets/AssetDetailsDialog'; // Importar o novo diálogo
 
 const initialFilters: AssetFiltersState = {
   name: '',
-  supplier: '', // Agora representa o ID do fornecedor ou string vazia
+  supplier: '',
   invoiceNumber: '',
   category: '',
   purchaseDateFrom: undefined,
   purchaseDateTo: undefined,
 };
 
-// Helper function to format currency
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
 };
 
 export default function AssetsPage() {
   const { assets } = useAssets();
-  const { suppliers: allSuppliersFromContext, getSupplierById } = useSuppliers(); // Fornecedores do contexto
+  const { suppliers: allSuppliersFromContext, getSupplierById } = useSuppliers();
   const [filters, setFilters] = useState<AssetFiltersState>(initialFilters);
   const { toast } = useToast();
+  const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<Asset | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
-  // Criar um mapa de ID de fornecedor para nome para exibição na tabela
   const supplierNameMap = useMemo(() => {
     const map = new Map<string, string>();
     allSuppliersFromContext.forEach(supplier => {
@@ -45,7 +46,12 @@ export default function AssetsPage() {
     return map;
   }, [allSuppliersFromContext]);
 
-  const columns = useMemo(() => getColumns(supplierNameMap, getSupplierById), [supplierNameMap, getSupplierById]);
+  const handleViewDetails = useCallback((asset: Asset) => {
+    setSelectedAssetForDetails(asset);
+    setIsDetailsDialogOpen(true);
+  }, []);
+
+  const columns = useMemo(() => getColumns(supplierNameMap, getSupplierById, handleViewDetails), [supplierNameMap, getSupplierById, handleViewDetails]);
 
 
   const filteredAssets = useMemo(() => {
@@ -55,7 +61,6 @@ export default function AssetsPage() {
       const dateTo = filters.purchaseDateTo;
 
       const nameMatch = asset.name.toLowerCase().includes(filters.name.toLowerCase());
-      // asset.supplier é o ID, filters.supplier é o ID ou ""
       const supplierMatch = filters.supplier ? asset.supplier === filters.supplier : true; 
       const invoiceMatch = asset.invoiceNumber.toLowerCase().includes(filters.invoiceNumber.toLowerCase());
       const categoryMatch = filters.category ? asset.category === filters.category : true;
@@ -76,10 +81,9 @@ export default function AssetsPage() {
       toast({ title: "Aviso de Exportação", description: "Nenhum ativo para exportar.", variant: "destructive" });
       return;
     }
-    // Para CSV, pode ser útil mostrar o nome do fornecedor em vez do ID
     const assetsForExport = filteredAssets.map(asset => ({
       ...asset,
-      supplier: supplierNameMap.get(asset.supplier) || asset.supplier, // Substitui ID por nome
+      supplier: supplierNameMap.get(asset.supplier) || asset.supplier,
     }));
     exportToCSV(assetsForExport, 'ativos_filtrados.csv');
     toast({ title: "Exportação Concluída", description: "Ativos exportados para CSV." });
@@ -92,7 +96,7 @@ export default function AssetsPage() {
     }
     const assetsForExport = filteredAssets.map(asset => ({
       ...asset,
-      supplier: supplierNameMap.get(asset.supplier) || asset.supplier, // Substitui ID por nome
+      supplier: supplierNameMap.get(asset.supplier) || asset.supplier,
     }));
     exportToPDF(assetsForExport, 'ativos_filtrados.pdf');
     toast({ title: "Exportação Concluída", description: "Ativos exportados para PDF." });
@@ -112,7 +116,6 @@ export default function AssetsPage() {
       <AssetFilters 
         filters={filters} 
         setFilters={setFilters} 
-        // categories e suppliers agora são obtidos internamente no AssetFilters
         onResetFilters={handleResetFilters}
       />
 
@@ -152,6 +155,12 @@ export default function AssetsPage() {
           </CardFooter>
         )}
       </Card>
+
+      <AssetDetailsDialog
+        asset={selectedAssetForDetails}
+        open={isDetailsDialogOpen}
+        onOpenChange={setIsDetailsDialogOpen}
+      />
     </div>
   );
 }

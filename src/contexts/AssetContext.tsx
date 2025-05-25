@@ -9,7 +9,8 @@ import { mockAssets as initialMockAssets } from '@/components/assets/data';
 interface AssetContextType {
   assets: Asset[];
   addAsset: (asset: Omit<Asset, 'id'>) => void;
-  deleteAsset: (assetId: string) => void; // Nova função
+  updateAsset: (updatedAsset: Asset) => void; // Nova função
+  deleteAsset: (assetId: string) => void;
   setAssets: Dispatch<SetStateAction<Asset[]>>;
   categories: string[];
 }
@@ -35,6 +36,12 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
     setAssets(prevAssets => [...prevAssets, newAsset]);
   };
 
+  const updateAsset = (updatedAsset: Asset) => {
+    setAssets(prevAssets =>
+      prevAssets.map(asset => (asset.id === updatedAsset.id ? updatedAsset : asset))
+    );
+  };
+
   const deleteAsset = (assetId: string) => {
     setAssets(prevAssets => prevAssets.filter(asset => asset.id !== assetId));
   };
@@ -42,7 +49,7 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
   const categories = useMemo(() => Array.from(new Set(assets.map(asset => asset.category))).sort(), [assets]);
 
   return (
-    <AssetContext.Provider value={{ assets, addAsset, deleteAsset, setAssets, categories }}>
+    <AssetContext.Provider value={{ assets, addAsset, updateAsset, deleteAsset, setAssets, categories }}>
       {children}
     </AssetContext.Provider>
   );

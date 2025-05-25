@@ -15,23 +15,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ArrowUpDown, MoreHorizontal, Eye, Edit2, Archive, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { parseISO, format } from 'date-fns';
+import { parseISO, format as formatDateFn } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useAssets } from "@/contexts/AssetContext"; // Importar o hook useAssets
-import { useToast } from "@/hooks/use-toast"; // Importar o hook useToast
+import { useAssets } from "@/contexts/AssetContext";
+import { useToast } from "@/hooks/use-toast";
 
-
-// Helper function to format currency
-const formatCurrency = (amount: number) => {
+// Helper function to format currency - Exportada
+export const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
 };
 
-// Helper function to format date
-const formatDate = (dateString: string) => {
+// Helper function to format date - Exportada
+export const formatDate = (dateString: string) => {
   try {
     const date = parseISO(dateString);
-    return format(date, 'dd/MM/yyyy', { locale: ptBR });
+    return formatDateFn(date, 'dd/MM/yyyy', { locale: ptBR });
   } catch (error) {
+    console.error("Erro ao formatar data:", dateString, error);
     return dateString; 
   }
 };
@@ -42,18 +42,18 @@ const SortableHeader = <TData, TValue>({ column, title }: { column: HeaderContex
     <Button
       variant="ghost"
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      className="p-0 gap-1 h-auto focus-visible:ring-inset"
+      className="p-0 gap-1 h-auto focus-visible:ring-inset hover:bg-transparent" // Removido -ml-4
     >
       {title}
-      <ArrowUpDown className="h-4 w-4" />
+      <ArrowUpDown className="h-3 w-3" /> {/* Ícone menor */}
     </Button>
   );
 };
 
-// Modificado para ser uma função que aceita o mapa de fornecedores
 export const getColumns = (
   supplierNameMap: Map<string, string>,
-  getSupplierById: (id: string) => Supplier | undefined
+  getSupplierById: (id: string) => Supplier | undefined,
+  onViewDetails: (asset: Asset) => void // Callback para visualizar detalhes
 ): ColumnDef<Asset>[] => [
   {
     id: "select",
@@ -122,11 +122,11 @@ export const getColumns = (
   },
   {
     id: "actions",
-    header: () => <div className="text-right">Ações</div>,
-    cell: function ActionsCell({ row }) { // Usar 'function' para acessar 'this' ou hooks
+    header: () => <div className="text-right pr-0">Ações</div>, // Removido pr-2
+    cell: function ActionsCell({ row }) {
       const asset = row.original;
-      const { deleteAsset } = useAssets(); // Obter a função deleteAsset do contexto
-      const { toast } = useToast(); // Obter a função toast
+      const { deleteAsset } = useAssets();
+      const { toast } = useToast();
 
       const handleDelete = () => {
         if (confirm(`Tem certeza que deseja deletar permanentemente o ativo: ${asset.name}?`)) {
@@ -149,7 +149,7 @@ export const getColumns = (
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Ações</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => console.log(`Visualizar detalhes do ativo: ${asset.name}`)}>
+              <DropdownMenuItem onClick={() => onViewDetails(asset)}>
                 <Eye className="mr-2 h-4 w-4" />
                 Visualizar Detalhes
               </DropdownMenuItem>
@@ -163,7 +163,7 @@ export const getColumns = (
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={handleDelete} // Chamar a função handleDelete
+                onClick={handleDelete}
                 className="text-red-600 hover:!text-red-600 focus:text-red-600 focus:!bg-red-100 dark:focus:!bg-red-700/50"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
