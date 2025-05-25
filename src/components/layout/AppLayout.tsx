@@ -135,7 +135,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <BrandingModal />
           </div>
         </header>
-        <main className="flex-grow p-4 sm:p-6 overflow-auto">
+        <main className="flex-grow p-4 sm:p-6 overflow-y-auto overflow-x-hidden">
           {children}
         </main>
       </SidebarInset>
