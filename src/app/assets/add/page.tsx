@@ -37,7 +37,7 @@ const assetFormSchema = z.object({
   supplier: z.string().min(1, "Fornecedor é obrigatório."),
   category: z.string().min(1, "Categoria é obrigatória."),
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
-  imageDateUris: z.array(z.string()).optional().max(MAX_PHOTOS, `Máximo de ${MAX_PHOTOS} fotos permitidas.`),
+  imageDateUris: z.array(z.string()).max(MAX_PHOTOS, `Máximo de ${MAX_PHOTOS} fotos permitidas.`).optional(),
 });
 
 type AssetFormValues = z.infer<typeof assetFormSchema>;
@@ -110,7 +110,7 @@ export default function AddAssetPage() {
       const newUrisArray = [...currentUris];
 
       let filesRead = 0;
-      if (filesToProcess.length === 0) { // Nenhum arquivo novo para processar (ex: se o usuário selecionou mais do que o permitido e já tínhamos o máximo)
+      if (filesToProcess.length === 0) { 
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
@@ -124,8 +124,8 @@ export default function AddAssetPage() {
           filesRead++;
           if (filesRead === filesToProcess.length) {
             setImagePreviews(newPreviewsArray);
-            fieldOnChange(newUrisArray); // Atualiza o form com o array de URIs
-            if (fileInputRef.current) fileInputRef.current.value = ''; // Limpa o input após processar
+            fieldOnChange(newUrisArray); 
+            if (fileInputRef.current) fileInputRef.current.value = ''; 
           }
         };
         reader.readAsDataURL(file);
@@ -319,7 +319,7 @@ export default function AddAssetPage() {
                 <FormField
                   control={form.control}
                   name="imageDateUris"
-                  render={({ field }) => ( // field.onChange aqui espera um único valor, precisamos ajustar
+                  render={({ field }) => ( 
                     <FormItem>
                       <FormLabel className="flex items-center">
                         <UploadCloud className="mr-2 h-5 w-5" />
@@ -329,9 +329,9 @@ export default function AddAssetPage() {
                         <Input
                           type="file"
                           accept="image/*"
-                          multiple // Permite seleção múltipla
+                          multiple 
                           ref={fileInputRef}
-                          onChange={(e) => handleImageChange(e, field.onChange as any)} // Passando field.onChange que espera um array
+                          onChange={(e) => handleImageChange(e, field.onChange as any)} 
                           className="cursor-pointer"
                           disabled={(form.getValues('imageDateUris')?.length || 0) >= MAX_PHOTOS}
                         />
