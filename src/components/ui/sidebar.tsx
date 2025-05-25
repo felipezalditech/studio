@@ -319,15 +319,15 @@ const SidebarRail = React.forwardRef<
 SidebarRail.displayName = "SidebarRail"
 
 const SidebarInset = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"main"> 
+  HTMLDivElement, // Changed from HTMLMainElement
+  React.ComponentProps<"div"> // Changed from React.ComponentProps<"main">
 >(({ className, ...props }, ref) => {
   const { state, isMobile } = useSidebar();
   return (
-    <main 
+    <div // Changed from <main>
       ref={ref}
       className={cn(
-        "relative flex min-h-svh flex-1 flex-col bg-background transition-all duration-300 ease-in-out",
+        "relative flex min-h-svh flex-1 flex-col bg-background transition-all duration-300 ease-in-out overflow-x-hidden", // Added overflow-x-hidden
         !isMobile && state === "expanded" ? "md:ml-[--sidebar-width]" : "md:ml-[--sidebar-width-icon]",
         (isMobile || (state === "collapsed" && props["data-sidebar-collapsible"] === "offcanvas")) && "md:ml-0",
         "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
@@ -759,3 +759,5 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
+    
