@@ -5,6 +5,7 @@ import type { Asset } from "./types";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { parseISO, format } from 'date-fns';
 
 // Helper function to format currency
 const formatCurrency = (amount: number) => {
@@ -14,8 +15,10 @@ const formatCurrency = (amount: number) => {
 // Helper function to format date
 const formatDate = (dateString: string) => {
   try {
-    return new Date(dateString).toLocaleDateString();
+    const date = parseISO(dateString);
+    return format(date, 'PPP'); // e.g. Jan 15th, 2023
   } catch (error) {
+    // console.error('Error formatting date:', dateString, error); // You can uncomment this for debugging
     return dateString; // Fallback if date is invalid
   }
 };
