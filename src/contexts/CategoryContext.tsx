@@ -18,10 +18,10 @@ const CategoryContext = createContext<CategoryContextType | undefined>(undefined
 
 // Dados mock iniciais para categorias
 const initialMockCategories: AssetCategory[] = [
-  { id: 'cat-001', name: 'Eletrônicos', depreciationMethod: 'linear', usefulLifeInYears: 5, residualValuePercentage: 10 },
+  { id: 'cat-001', name: 'Eletrônicos', depreciationMethod: 'linear', usefulLifeInYears: 5, residualValuePercentage: 10, depreciationRateType: 'annual', depreciationRateValue: 20 },
   { id: 'cat-002', name: 'Móveis', depreciationMethod: 'linear', usefulLifeInYears: 10, residualValuePercentage: 5 },
-  { id: 'cat-003', name: 'Veículos', depreciationMethod: 'linear', usefulLifeInYears: 5, residualValuePercentage: 20 },
-  { id: 'cat-004', name: 'Redes', depreciationMethod: 'linear', usefulLifeInYears: 7, residualValuePercentage: 0 },
+  { id: 'cat-003', name: 'Veículos', depreciationMethod: 'linear', usefulLifeInYears: 5, residualValuePercentage: 20, depreciationRateType: 'annual', depreciationRateValue: 20 },
+  { id: 'cat-004', name: 'Redes', depreciationMethod: 'linear', usefulLifeInYears: 7, residualValuePercentage: 0, depreciationRateType: 'monthly', depreciationRateValue: 1.19 },
 ];
 
 export const CategoryProvider = ({ children }: { children: ReactNode }) => {
@@ -70,3 +70,4 @@ export const useCategories = (): CategoryContextType => {
   }
   return context;
 };
+

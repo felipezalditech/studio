@@ -23,11 +23,22 @@ export default function SettingsPage() {
   };
 
   const handleSubmitCategory = (data: CategoryFormValues) => {
+    // Certificar que usefulLifeInYears é number ou undefined
+    const categoryDataToSave: Omit<AssetCategory, 'id'> = {
+      name: data.name,
+      depreciationMethod: data.depreciationMethod,
+      residualValuePercentage: data.residualValuePercentage,
+      usefulLifeInYears: data.usefulLifeInYears === null || data.usefulLifeInYears === undefined ? undefined : Number(data.usefulLifeInYears),
+      depreciationRateType: data.depreciationRateType,
+      depreciationRateValue: data.depreciationRateValue === null || data.depreciationRateValue === undefined ? undefined : Number(data.depreciationRateValue),
+    };
+
+
     if (editingCategory) {
-      updateCategory({ ...editingCategory, ...data });
+      updateCategory({ ...editingCategory, ...categoryDataToSave });
       toast({ title: "Sucesso!", description: "Categoria atualizada." });
     } else {
-      addCategory(data);
+      addCategory(categoryDataToSave);
       toast({ title: "Sucesso!", description: "Categoria adicionada." });
     }
     setIsCategoryDialogOpen(false);
@@ -42,9 +53,15 @@ export default function SettingsPage() {
   };
 
   const getDepreciationMethodLabel = (method: AssetCategory['depreciationMethod']) => {
-    if (method === 'linear') return 'Linear (Linha Reta)';
+    if (method === 'linear') return 'Linear';
     if (method === 'reducing_balance') return 'Saldos Decrescentes';
     return method;
+  }
+
+  const getDepreciationRateTypeLabel = (type?: 'annual' | 'monthly') => {
+    if (type === 'annual') return 'Anual';
+    if (type === 'monthly') return 'Mensal';
+    return 'N/A';
   }
 
   return (
@@ -79,6 +96,8 @@ export default function SettingsPage() {
                   <TableHead>Nome</TableHead>
                   <TableHead>Método Depreciação</TableHead>
                   <TableHead className="text-center">Vida Útil (Anos)</TableHead>
+                  <TableHead className="text-center">Tx. Depreciação</TableHead>
+                  <TableHead className="text-center">Tipo Taxa</TableHead>
                   <TableHead className="text-center">Valor Residual (%)</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -88,7 +107,9 @@ export default function SettingsPage() {
                   <TableRow key={category.id}>
                     <TableCell>{category.name}</TableCell>
                     <TableCell>{getDepreciationMethodLabel(category.depreciationMethod)}</TableCell>
-                    <TableCell className="text-center">{category.usefulLifeInYears}</TableCell>
+                    <TableCell className="text-center">{category.usefulLifeInYears ?? 'N/A'}</TableCell>
+                    <TableCell className="text-center">{category.depreciationRateValue !== undefined ? `${category.depreciationRateValue}%` : 'N/A'}</TableCell>
+                    <TableCell className="text-center">{getDepreciationRateTypeLabel(category.depreciationRateType)}</TableCell>
                     <TableCell className="text-center">{category.residualValuePercentage}%</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -152,3 +173,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

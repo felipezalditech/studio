@@ -19,7 +19,7 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription, // Added FormDescription to import
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,9 +33,24 @@ const categoryFormSchema = z.object({
   depreciationMethod: z.enum(['linear', 'reducing_balance'], {
     required_error: "Método de depreciação é obrigatório."
   }),
-  usefulLifeInYears: z.coerce.number().min(1, "Vida útil deve ser no mínimo 1 ano.").max(100, "Vida útil máxima de 100 anos."),
-  residualValuePercentage: z.coerce.number().min(0, "Valor residual não pode ser negativo.").max(100, "Valor residual não pode exceder 100%.")
+  usefulLifeInYears: z.coerce.number().min(0, "Vida útil não pode ser negativa.").max(100, "Vida útil máxima de 100 anos.").optional(),
+  residualValuePercentage: z.coerce.number().min(0, "Valor residual não pode ser negativo.").max(100, "Valor residual não pode exceder 100%."),
+  depreciationRateType: z.enum(['annual', 'monthly']).optional(),
+  depreciationRateValue: z.coerce.number().min(0, "Taxa de depreciação não pode ser negativa.").max(100, "Taxa de depreciação não pode exceder 100%.").optional(),
+}).refine(data => {
+  // Se um dos campos de taxa explícita for preenchido, o outro também deve ser.
+  if (data.depreciationRateType && data.depreciationRateValue === undefined) return false;
+  if (data.depreciationRateValue !== undefined && !data.depreciationRateType) return false;
+  // Pelo menos a vida útil OU a taxa explícita (tipo e valor) devem ser fornecidas
+  if (data.usefulLifeInYears === undefined && (data.depreciationRateType === undefined || data.depreciationRateValue === undefined)) return false;
+  return true;
+}, {
+  message: "Defina a depreciação pela Vida Útil OU forneça um Tipo de Taxa e um Valor de Taxa.",
+  // Você pode direcionar a mensagem de erro para um campo específico se desejar,
+  // mas uma mensagem geral no formulário pode ser suficiente.
+  // path: ["usefulLifeInYears"], // Ou outro campo relevante
 });
+
 
 export type CategoryFormValues = z.infer<typeof categoryFormSchema>;
 
@@ -48,7 +63,12 @@ interface CategoryFormDialogProps {
 
 const depreciationMethodOptions: { value: DepreciationMethod; label: string }[] = [
   { value: 'linear', label: 'Linear (Linha Reta)' },
-  // { value: 'reducing_balance', label: 'Saldos Decrescentes (Não implementado)' }, // Exemplo de outro método
+  // { value: 'reducing_balance', label: 'Saldos Decrescentes (Não implementado)' },
+];
+
+const depreciationRateTypeOptions: { value: 'annual' | 'monthly'; label: string }[] = [
+  { value: 'annual', label: 'Anual (%)' },
+  { value: 'monthly', label: 'Mensal (%)' },
 ];
 
 export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initialData }: CategoryFormDialogProps) {
@@ -59,24 +79,37 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
       depreciationMethod: 'linear',
       usefulLifeInYears: 5,
       residualValuePercentage: 10,
+      depreciationRateType: undefined,
+      depreciationRateValue: undefined,
     },
   });
 
   useEffect(() => {
     if (initialData) {
-      form.reset(initialData);
+      form.reset({
+        ...initialData,
+        usefulLifeInYears: initialData.usefulLifeInYears ?? undefined,
+        depreciationRateType: initialData.depreciationRateType ?? undefined,
+        depreciationRateValue: initialData.depreciationRateValue ?? undefined,
+      });
     } else {
       form.reset({
         name: '',
         depreciationMethod: 'linear',
         usefulLifeInYears: 5,
         residualValuePercentage: 10,
+        depreciationRateType: undefined,
+        depreciationRateValue: undefined,
       });
     }
   }, [initialData, form, open]);
 
   function onSubmit(data: CategoryFormValues) {
-    onSubmitAction(data);
+    const dataToSubmit: CategoryFormValues = {
+        ...data,
+        usefulLifeInYears: data.usefulLifeInYears === 0 ? undefined : data.usefulLifeInYears, // Trata 0 como não definido se necessário
+    };
+    onSubmitAction(dataToSubmit);
     onOpenChange(false);
   }
 
@@ -135,8 +168,54 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
                 <FormItem>
                   <FormLabel>Vida Útil (em anos)</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="Ex: 5" {...field} />
+                    <Input type="number" placeholder="Ex: 5 (deixe 0 ou vazio se usar taxa)" {...field} />
                   </FormControl>
+                   <FormDescription>
+                    Preencha se a depreciação for baseada na vida útil.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="depreciationRateType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de Taxa de Depreciação (Opcional)</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo (se usar taxa)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {depreciationRateTypeOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Selecione se a depreciação for baseada em uma taxa percentual.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="depreciationRateValue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Valor da Taxa de Depreciação (%, opcional)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" placeholder="Ex: 20 (para 20%)" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Percentual da taxa de depreciação, se aplicável.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -151,12 +230,15 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
                     <Input type="number" step="0.01" placeholder="Ex: 10 (para 10%)" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Percentual do valor de compra que o ativo terá ao final de sua vida útil.
+                    Percentual do valor de compra que o ativo terá ao final de sua depreciação.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+             {form.formState.errors.root && (
+                <p className="text-sm font-medium text-destructive">{form.formState.errors.root.message}</p>
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
@@ -172,3 +254,4 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
     </Dialog>
   );
 }
+
