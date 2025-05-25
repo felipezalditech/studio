@@ -2,12 +2,13 @@
 "use client";
 
 import React, { useMemo, useCallback, useState } from 'react';
+import Link from 'next/link'; // Importado
 import { AssetDataTable } from '@/components/assets/AssetDataTable';
 import { columns } from '@/components/assets/columns';
 import type { Asset } from '@/components/assets/types';
 import { AssetFilters, type AssetFiltersState } from '@/components/assets/AssetFilters';
 import { Button } from '@/components/ui/button';
-import { DownloadIcon, FileTextIcon } from 'lucide-react';
+import { DownloadIcon, FileTextIcon, PlusCircle } from 'lucide-react'; // Importado PlusCircle
 import { exportToCSV, exportToPDF } from '@/lib/export-utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -86,7 +87,12 @@ export default function AssetsPage() {
             <CardTitle className="text-2xl">Lista de Ativos</CardTitle>
             <CardDescription>Visualize, ordene e gerencie seus ativos imobilizados.</CardDescription>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex items-center space-x-2">
+            <Button asChild>
+              <Link href="/assets/add">
+                <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Ativo
+              </Link>
+            </Button>
             <Button onClick={handleExportCSV} variant="outline">
               <DownloadIcon className="mr-2 h-4 w-4" /> Exportar CSV
             </Button>
