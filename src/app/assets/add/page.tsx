@@ -14,6 +14,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
+import { useCategories } from '@/contexts/CategoryContext'; // Importado
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { CalendarIcon, Save, UploadCloud, XCircle } from 'lucide-react';
@@ -34,8 +35,8 @@ const assetFormSchema = z.object({
   invoiceNumber: z.string().min(1, "Número da nota fiscal é obrigatório."),
   serialNumber: z.string().optional(),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
-  supplier: z.string().min(1, "Fornecedor é obrigatório."),
-  category: z.string().min(1, "Categoria é obrigatória."),
+  supplier: z.string().min(1, "Fornecedor é obrigatório."), // Supplier ID
+  categoryId: z.string().min(1, "Categoria é obrigatória."), // Category ID
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
   imageDateUris: z.array(z.string()).max(MAX_PHOTOS, `Máximo de ${MAX_PHOTOS} fotos permitidas.`).optional(),
 });
@@ -45,6 +46,7 @@ type AssetFormValues = z.infer<typeof assetFormSchema>;
 export default function AddAssetPage() {
   const { addAsset } = useAssets();
   const { suppliers } = useSuppliers();
+  const { categories } = useCategories(); // Categorias do contexto
   const { toast } = useToast();
   const router = useRouter();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -59,7 +61,7 @@ export default function AddAssetPage() {
       serialNumber: '',
       assetTag: '',
       supplier: '',
-      category: '',
+      categoryId: '',
       purchaseValue: 0,
       imageDateUris: [],
     },
@@ -69,7 +71,7 @@ export default function AddAssetPage() {
     const assetDataToSave: Omit<Asset, 'id'> = {
       ...data,
       purchaseDate: format(data.purchaseDate, 'yyyy-MM-dd'),
-      currentValue: data.purchaseValue, // Valor atual inicializado com o valor de compra
+      currentValue: data.purchaseValue,
       imageDateUris: data.imageDateUris || [],
     };
     addAsset(assetDataToSave);
@@ -92,7 +94,7 @@ export default function AddAssetPage() {
           description: `Você já adicionou o máximo de ${MAX_PHOTOS} fotos.`,
           variant: "destructive",
         });
-        if (fileInputRef.current) fileInputRef.current.value = ''; // Limpa o input
+        if (fileInputRef.current) fileInputRef.current.value = ''; 
         return;
       }
 
@@ -190,13 +192,31 @@ export default function AddAssetPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="category"
+                  name="categoryId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Categoria</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Eletrônicos, Móveis" {...field} />
-                      </FormControl>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma categoria" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories.length === 0 ? (
+                            <SelectItem value="no-categories" disabled>Nenhuma categoria cadastrada</SelectItem>
+                          ) : (
+                            categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Cadastre categorias na tela de "Configurações".
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

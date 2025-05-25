@@ -13,14 +13,14 @@ import { cn } from '@/lib/utils';
 import { format, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSuppliers } from '@/contexts/SupplierContext'; // Importado
-import { useAssets } from '@/contexts/AssetContext'; // Para categorias
+import { useSuppliers } from '@/contexts/SupplierContext';
+import { useCategories } from '@/contexts/CategoryContext'; // Alterado de useAssets para useCategories
 
 export interface AssetFiltersState {
   name: string;
-  supplier: string; // Agora será o ID do fornecedor
+  supplier: string; // Supplier ID
   invoiceNumber: string;
-  category: string;
+  categoryId: string; // Alterado de category para categoryId
   purchaseDateFrom: Date | undefined;
   purchaseDateTo: Date | undefined;
 }
@@ -28,16 +28,14 @@ export interface AssetFiltersState {
 interface AssetFiltersProps {
   filters: AssetFiltersState;
   setFilters: Dispatch<SetStateAction<AssetFiltersState>>;
-  // categories: string[]; // Removido, usará useAssets
-  // suppliers: string[]; // Removido, usará useSuppliers
   onResetFilters: () => void;
 }
 
 const ALL_ITEMS_SENTINEL_VALUE = "_ALL_";
 
 export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFiltersProps) {
-  const { suppliers: allSuppliersFromContext } = useSuppliers(); // Fornecedores do contexto
-  const { categories: allCategoriesFromContext } = useAssets(); // Categorias do contexto de ativos
+  const { suppliers: allSuppliersFromContext } = useSuppliers();
+  const { categories: allCategoriesFromContext } = useCategories(); // Usando o contexto de categorias
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -82,13 +80,13 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
               {allSuppliersFromContext.map(s => <SelectItem key={s.id} value={s.id}>{s.nomeFantasia}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={filters.category || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('category')}>
+          <Select value={filters.categoryId || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('categoryId')}>
             <SelectTrigger className="text-sm">
               <SelectValue placeholder="Filtrar por Categoria" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todas as Categorias</SelectItem>
-              {allCategoriesFromContext.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+              {allCategoriesFromContext.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
             </SelectContent>
           </Select>
 

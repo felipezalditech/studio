@@ -14,11 +14,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Asset } from "./types";
-import type { Supplier } from "@/contexts/SupplierContext";
 import { useAssets } from "@/contexts/AssetContext";
 import { useSuppliers } from "@/contexts/SupplierContext";
+import { useCategories } from "@/contexts/CategoryContext"; // Importado
 import { formatDate, formatCurrency } from "@/components/assets/columns";
-import { Trash2, Download, XCircle } from 'lucide-react'; // Adicionado XCircle
+import { Trash2, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AssetDetailsDialogProps {
@@ -30,11 +30,13 @@ interface AssetDetailsDialogProps {
 export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDialogProps) {
   const { updateAsset } = useAssets();
   const { getSupplierById } = useSuppliers();
+  const { getCategoryById } = useCategories(); // Usando o contexto de categorias
   const { toast } = useToast();
 
   if (!asset) return null;
 
   const supplier = getSupplierById(asset.supplier);
+  const category = getCategoryById(asset.categoryId); // Obtendo nome da categoria
 
   const handleRemoveImage = (indexToRemove: number) => {
     if (!asset || !asset.imageDateUris) return;
@@ -65,7 +67,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto"> {/* Aumentado max-width */}
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Detalhes do Ativo: {asset.name}</DialogTitle>
           <DialogDescription>
@@ -78,7 +80,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
             <div className="space-y-1.5 text-sm">
               <p><strong>Nome:</strong> {asset.name}</p>
               <p><strong>Patrimônio:</strong> {asset.assetTag}</p>
-              <p><strong>Categoria:</strong> {asset.category}</p>
+              <p><strong>Categoria:</strong> {category?.name || asset.categoryId}</p> {/* Exibindo nome da categoria */}
               <p><strong>Fornecedor:</strong> {supplier?.nomeFantasia || asset.supplier}</p>
               <p><strong>Data da Compra:</strong> {formatDate(asset.purchaseDate)}</p>
               <p><strong>Nº Nota Fiscal:</strong> {asset.invoiceNumber}</p>

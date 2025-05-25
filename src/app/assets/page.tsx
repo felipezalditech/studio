@@ -15,13 +15,14 @@ import { useToast } from '@/hooks/use-toast';
 import { isValid, parseISO } from 'date-fns';
 import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
-import { AssetDetailsDialog } from '@/components/assets/AssetDetailsDialog'; // Importar o novo diálogo
+import { useCategories } from '@/contexts/CategoryContext'; // Importado
+import { AssetDetailsDialog } from '@/components/assets/AssetDetailsDialog';
 
 const initialFilters: AssetFiltersState = {
   name: '',
   supplier: '',
   invoiceNumber: '',
-  category: '',
+  categoryId: '', // Alterado de category para categoryId
   purchaseDateFrom: undefined,
   purchaseDateTo: undefined,
 };
@@ -31,8 +32,9 @@ const formatCurrency = (amount: number) => {
 };
 
 export default function AssetsPage() {
-  const { assets } = useAssets();
+  const { assets, getCategoryNameById } = useAssets();
   const { suppliers: allSuppliersFromContext, getSupplierById } = useSuppliers();
+  const { categories: allCategoriesFromContext } = useCategories(); // Para o AssetFilters
   const [filters, setFilters] = useState<AssetFiltersState>(initialFilters);
   const { toast } = useToast();
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<Asset | null>(null);
@@ -46,12 +48,20 @@ export default function AssetsPage() {
     return map;
   }, [allSuppliersFromContext]);
 
+  const categoryNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    allCategoriesFromContext.forEach(category => {
+      map.set(category.id, category.name);
+    });
+    return map;
+  }, [allCategoriesFromContext]);
+
   const handleViewDetails = useCallback((asset: Asset) => {
     setSelectedAssetForDetails(asset);
     setIsDetailsDialogOpen(true);
   }, []);
 
-  const columns = useMemo(() => getColumns(supplierNameMap, getSupplierById, handleViewDetails), [supplierNameMap, getSupplierById, handleViewDetails]);
+  const columns = useMemo(() => getColumns(supplierNameMap, getSupplierById, categoryNameMap, handleViewDetails), [supplierNameMap, getSupplierById, categoryNameMap, handleViewDetails]);
 
 
   const filteredAssets = useMemo(() => {
@@ -63,7 +73,7 @@ export default function AssetsPage() {
       const nameMatch = asset.name.toLowerCase().includes(filters.name.toLowerCase());
       const supplierMatch = filters.supplier ? asset.supplier === filters.supplier : true; 
       const invoiceMatch = asset.invoiceNumber.toLowerCase().includes(filters.invoiceNumber.toLowerCase());
-      const categoryMatch = filters.category ? asset.category === filters.category : true;
+      const categoryMatch = filters.categoryId ? asset.categoryId === filters.categoryId : true; // Alterado para categoryId
       
       const dateFromMatch = dateFrom && isValid(purchaseDate) ? purchaseDate >= dateFrom : true;
       const dateToMatch = dateTo && isValid(purchaseDate) ? purchaseDate <= dateTo : true;
@@ -84,6 +94,7 @@ export default function AssetsPage() {
     const assetsForExport = filteredAssets.map(asset => ({
       ...asset,
       supplier: supplierNameMap.get(asset.supplier) || asset.supplier,
+      category: categoryNameMap.get(asset.categoryId) || asset.categoryId, // Adicionado para exportação
     }));
     exportToCSV(assetsForExport, 'ativos_filtrados.csv');
     toast({ title: "Exportação Concluída", description: "Ativos exportados para CSV." });
@@ -97,6 +108,7 @@ export default function AssetsPage() {
     const assetsForExport = filteredAssets.map(asset => ({
       ...asset,
       supplier: supplierNameMap.get(asset.supplier) || asset.supplier,
+      category: categoryNameMap.get(asset.categoryId) || asset.categoryId, // Adicionado para exportação
     }));
     exportToPDF(assetsForExport, 'ativos_filtrados.pdf');
     toast({ title: "Exportação Concluída", description: "Ativos exportados para PDF." });
@@ -117,6 +129,7 @@ export default function AssetsPage() {
         filters={filters} 
         setFilters={setFilters} 
         onResetFilters={handleResetFilters}
+        // categories and suppliers are now fetched from context within AssetFilters
       />
 
       <Card className="shadow-lg">

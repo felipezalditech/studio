@@ -1,6 +1,7 @@
 
 import type { Asset } from './types';
 
+// Certifique-se que os categoryId correspondem aos IDs em initialMockCategories em CategoryContext.tsx
 export const mockAssets: Asset[] = [
   {
     id: '1',
@@ -10,9 +11,9 @@ export const mockAssets: Asset[] = [
     serialNumber: 'SN-LP001',
     assetTag: 'AT-001',
     supplier: 'sup-001', 
-    category: 'Eletrônicos',
+    categoryId: 'cat-001', // Eletrônicos
     purchaseValue: 1200.00,
-    currentValue: 950.00,
+    currentValue: 1200.00,
     imageDateUris: [],
   },
   {
@@ -23,9 +24,9 @@ export const mockAssets: Asset[] = [
     serialNumber: 'N/A',
     assetTag: 'AT-002',
     supplier: 'sup-002', 
-    category: 'Móveis',
+    categoryId: 'cat-002', // Móveis
     purchaseValue: 350.00,
-    currentValue: 300.00,
+    currentValue: 350.00,
     imageDateUris: [],
   },
   {
@@ -36,9 +37,9 @@ export const mockAssets: Asset[] = [
     serialNumber: 'SN-M001',
     assetTag: 'AT-003',
     supplier: 'sup-003', 
-    category: 'Eletrônicos',
+    categoryId: 'cat-001', // Eletrônicos
     purchaseValue: 450.00,
-    currentValue: 380.00,
+    currentValue: 450.00,
     imageDateUris: [],
   },
   {
@@ -49,9 +50,9 @@ export const mockAssets: Asset[] = [
     serialNumber: 'N/A',
     assetTag: 'AT-004',
     supplier: 'sup-002', 
-    category: 'Móveis',
+    categoryId: 'cat-002', // Móveis
     purchaseValue: 220.00,
-    currentValue: 190.00,
+    currentValue: 220.00,
     imageDateUris: [],
   },
   {
@@ -62,9 +63,9 @@ export const mockAssets: Asset[] = [
     serialNumber: 'SN-NS001',
     assetTag: 'AT-005',
     supplier: 'sup-001', 
-    category: 'Redes',
+    categoryId: 'cat-004', // Redes
     purchaseValue: 280.00,
-    currentValue: 250.00,
+    currentValue: 280.00,
     imageDateUris: [],
   },
   {
@@ -75,9 +76,9 @@ export const mockAssets: Asset[] = [
     serialNumber: 'SN-PJ001',
     assetTag: 'AT-006',
     supplier: 'sup-003', 
-    category: 'Eletrônicos',
+    categoryId: 'cat-001', // Eletrônicos
     purchaseValue: 600.00,
-    currentValue: 450.00,
+    currentValue: 600.00,
     imageDateUris: [],
   },
   {
@@ -88,9 +89,9 @@ export const mockAssets: Asset[] = [
     serialNumber: 'N/A',
     assetTag: 'AT-007',
     supplier: 'sup-002', 
-    category: 'Móveis',
+    categoryId: 'cat-002', // Móveis
     purchaseValue: 150.00,
-    currentValue: 130.00,
+    currentValue: 150.00,
     imageDateUris: [],
   }
 ];

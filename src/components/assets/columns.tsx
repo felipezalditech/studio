@@ -4,6 +4,7 @@
 import type { ColumnDef, HeaderContext } from "@tanstack/react-table";
 import type { Asset } from "./types";
 import type { Supplier } from "@/contexts/SupplierContext";
+// import type { AssetCategory } from "@/types/category"; // Não é mais necessário aqui diretamente
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,12 +21,10 @@ import { ptBR } from 'date-fns/locale';
 import { useAssets } from "@/contexts/AssetContext";
 import { useToast } from "@/hooks/use-toast";
 
-// Helper function to format currency - Exportada
 export const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
 };
 
-// Helper function to format date - Exportada
 export const formatDate = (dateString: string) => {
   try {
     const date = parseISO(dateString);
@@ -36,16 +35,15 @@ export const formatDate = (dateString: string) => {
   }
 };
 
-// Reusable header component for sorting
 const SortableHeader = <TData, TValue>({ column, title }: { column: HeaderContext<TData, TValue>['column'], title: string }) => {
   return (
     <Button
       variant="ghost"
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      className="p-0 gap-1 h-auto focus-visible:ring-inset hover:bg-transparent" // Removido -ml-4
+      className="p-0 gap-1 h-auto focus-visible:ring-inset hover:bg-transparent"
     >
       {title}
-      <ArrowUpDown className="h-3 w-3" /> {/* Ícone menor */}
+      <ArrowUpDown className="h-3 w-3" />
     </Button>
   );
 };
@@ -53,7 +51,8 @@ const SortableHeader = <TData, TValue>({ column, title }: { column: HeaderContex
 export const getColumns = (
   supplierNameMap: Map<string, string>,
   getSupplierById: (id: string) => Supplier | undefined,
-  onViewDetails: (asset: Asset) => void // Callback para visualizar detalhes
+  categoryNameMap: Map<string, string>, // Adicionado
+  onViewDetails: (asset: Asset) => void
 ): ColumnDef<Asset>[] => [
   {
     id: "select",
@@ -99,8 +98,12 @@ export const getColumns = (
     header: ({ column }) => <SortableHeader column={column} title="Nº de Série" />,
   },
   {
-    accessorKey: "category",
+    accessorKey: "categoryId", // Alterado de category para categoryId
     header: ({ column }) => <SortableHeader column={column} title="Categoria" />,
+    cell: ({ row }) => {
+      const categoryId = row.getValue("categoryId") as string;
+      return categoryNameMap.get(categoryId) || categoryId || "Desconhecida";
+    },
   },
   {
     accessorKey: "supplier",
@@ -122,7 +125,7 @@ export const getColumns = (
   },
   {
     id: "actions",
-    header: () => <div className="text-right pr-0">Ações</div>, // Removido pr-2
+    header: () => <div className="text-right pr-0">Ações</div>,
     cell: function ActionsCell({ row }) {
       const asset = row.original;
       const { deleteAsset } = useAssets();

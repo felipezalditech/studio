@@ -6,10 +6,9 @@ export interface Asset {
   invoiceNumber: string;
   serialNumber: string;
   assetTag: string;
-  supplier: string;
-  category: string;
+  supplier: string; // Supplier ID
+  categoryId: string; // Changed from category: string to categoryId: string
   purchaseValue: number;
   currentValue: number;
-  imageDateUris?: string[]; // Alterado de imageDataUri para imageDateUris (array)
+  imageDateUris?: string[];
 }
-
