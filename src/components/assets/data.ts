@@ -1,6 +1,8 @@
 
 import type { Asset } from './types';
 
+// Estes são os dados iniciais que serão carregados no localStorage se nenhum dado existir.
+// A lista de ativos em tempo real será gerenciada pelo AssetContext.
 export const mockAssets: Asset[] = [
   {
     id: '1',
@@ -10,7 +12,7 @@ export const mockAssets: Asset[] = [
     serialNumber: 'SN-LP001',
     assetTag: 'AT-001',
     supplier: 'Tech Solutions Ltd.',
-    category: 'Eletrônicos', // Translated
+    category: 'Eletrônicos',
     purchaseValue: 1200.00,
     currentValue: 950.00,
   },
@@ -22,7 +24,7 @@ export const mockAssets: Asset[] = [
     serialNumber: 'N/A',
     assetTag: 'AT-002',
     supplier: 'Furniture World',
-    category: 'Móveis', // Translated
+    category: 'Móveis',
     purchaseValue: 350.00,
     currentValue: 300.00,
   },
@@ -34,10 +36,11 @@ export const mockAssets: Asset[] = [
     serialNumber: 'SN-M001',
     assetTag: 'AT-003',
     supplier: 'DisplayTech Inc.',
-    category: 'Eletrônicos', // Translated
+    category: 'Eletrônicos',
     purchaseValue: 450.00,
     currentValue: 380.00,
   },
+  // ... (manter os outros ativos mockados se desejar como dados iniciais)
   {
     id: '4',
     purchaseDate: '2023-03-10',
@@ -46,7 +49,7 @@ export const mockAssets: Asset[] = [
     serialNumber: 'N/A',
     assetTag: 'AT-004',
     supplier: 'Comfort Seating Co.',
-    category: 'Móveis', // Translated
+    category: 'Móveis',
     purchaseValue: 220.00,
     currentValue: 190.00,
   },
@@ -58,7 +61,7 @@ export const mockAssets: Asset[] = [
     serialNumber: 'SN-NS001',
     assetTag: 'AT-005',
     supplier: 'ConnectSys',
-    category: 'Redes', // Translated
+    category: 'Redes',
     purchaseValue: 280.00,
     currentValue: 250.00,
   },
@@ -70,7 +73,7 @@ export const mockAssets: Asset[] = [
     serialNumber: 'SN-PJ001',
     assetTag: 'AT-006',
     supplier: 'VisualPro',
-    category: 'Eletrônicos', // Translated
+    category: 'Eletrônicos',
     purchaseValue: 600.00,
     currentValue: 450.00,
   },
@@ -82,11 +85,13 @@ export const mockAssets: Asset[] = [
     serialNumber: 'N/A',
     assetTag: 'AT-007',
     supplier: 'Office Storage Inc.',
-    category: 'Móveis', // Translated
+    category: 'Móveis',
     purchaseValue: 150.00,
     currentValue: 130.00,
   }
 ];
 
-export const categories = Array.from(new Set(mockAssets.map(asset => asset.category)));
-export const suppliers = Array.from(new Set(mockAssets.map(asset => asset.supplier)));
+// As categorias e fornecedores agora são derivados dinamicamente no AssetContext e passados para AssetFilters.
+// Estas exportações não são mais necessárias aqui para a lógica principal.
+// export const categories = Array.from(new Set(mockAssets.map(asset => asset.category)));
+// export const suppliers = Array.from(new Set(mockAssets.map(asset => asset.supplier)));

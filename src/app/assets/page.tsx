@@ -1,10 +1,9 @@
 
 "use client";
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { AssetDataTable } from '@/components/assets/AssetDataTable';
 import { columns } from '@/components/assets/columns';
-import { mockAssets, categories as allCategories, suppliers as allSuppliers } from '@/components/assets/data';
 import type { Asset } from '@/components/assets/types';
 import { AssetFilters, type AssetFiltersState } from '@/components/assets/AssetFilters';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import { exportToCSV, exportToPDF } from '@/lib/export-utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { isValid, parseISO } from 'date-fns';
+import { useAssets } from '@/contexts/AssetContext'; // Importado
 
 const initialFilters: AssetFiltersState = {
   name: '',
@@ -24,13 +24,14 @@ const initialFilters: AssetFiltersState = {
 };
 
 export default function AssetsPage() {
-  const [assets] = useState<Asset[]>(mockAssets);
+  const { assets, categories: allCategories, suppliers: allSuppliers } = useAssets(); // Usando o contexto
   const [filters, setFilters] = useState<AssetFiltersState>(initialFilters);
   const { toast } = useToast();
 
   const filteredAssets = useMemo(() => {
     return assets.filter(asset => {
-      const purchaseDate = parseISO(asset.purchaseDate);
+      // A data já deve estar no formato 'yyyy-MM-dd' vindo do contexto/localStorage
+      const purchaseDate = parseISO(asset.purchaseDate); 
       const dateFrom = filters.purchaseDateFrom;
       const dateTo = filters.purchaseDateTo;
 
@@ -74,8 +75,8 @@ export default function AssetsPage() {
       <AssetFilters 
         filters={filters} 
         setFilters={setFilters} 
-        categories={allCategories}
-        suppliers={allSuppliers}
+        categories={allCategories} // Usando categorias do contexto
+        suppliers={allSuppliers}   // Usando fornecedores do contexto
         onResetFilters={handleResetFilters}
       />
 
