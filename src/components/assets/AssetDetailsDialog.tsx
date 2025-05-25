@@ -18,7 +18,7 @@ import type { Supplier } from "@/contexts/SupplierContext"; // Importar Supplier
 import { useAssets } from "@/contexts/AssetContext";
 import { useSuppliers } from "@/contexts/SupplierContext"; // Importar useSuppliers
 import { formatDate, formatCurrency } from "@/components/assets/columns"; // Importar helpers
-import { Trash2, Eye, ExternalLink } from 'lucide-react';
+import { Trash2, ExternalLink } from 'lucide-react'; // Mantido ExternalLink para a ação de abrir em nova aba
 import { useToast } from '@/hooks/use-toast';
 
 interface AssetDetailsDialogProps {
@@ -88,8 +88,8 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
                   <Image src={asset.imageDataUri} alt={`Foto de ${asset.name}`} layout="fill" objectFit="contain" />
                 </div>
                 <div className="flex space-x-2 mt-2">
-                  <Button variant="outline" size="sm" onClick={handleViewImageFull} title="Ampliar Foto">
-                    <ExternalLink className="h-4 w-4 mr-1 md:mr-2" /> <span className="hidden md:inline">Ampliar</span>
+                  <Button variant="outline" size="sm" onClick={handleViewImageFull} title="Visualizar Foto">
+                    <ExternalLink className="h-4 w-4 mr-1 md:mr-2" /> <span className="hidden md:inline">Visualizar</span>
                   </Button>
                   <Button variant="destructive" size="sm" onClick={handleRemoveImage} title="Excluir Foto">
                     <Trash2 className="h-4 w-4 mr-1 md:mr-2" /> <span className="hidden md:inline">Excluir Foto</span>
