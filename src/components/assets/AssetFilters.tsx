@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Dispatch, SetStateAction } from 'react';
@@ -5,7 +6,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, FilterXIcon, RotateCcwIcon } from 'lucide-react';
+import { CalendarIcon, RotateCcwIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
@@ -29,6 +30,8 @@ interface AssetFiltersProps {
   onResetFilters: () => void;
 }
 
+const ALL_ITEMS_SENTINEL_VALUE = "_ALL_";
+
 export function AssetFilters({ filters, setFilters, categories, suppliers, onResetFilters }: AssetFiltersProps) {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -36,7 +39,7 @@ export function AssetFilters({ filters, setFilters, categories, suppliers, onRes
   };
 
   const handleSelectChange = (name: keyof AssetFiltersState) => (value: string) => {
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setFilters(prev => ({ ...prev, [name]: value === ALL_ITEMS_SENTINEL_VALUE ? "" : value }));
   };
 
   const handleDateChange = (name: 'purchaseDateFrom' | 'purchaseDateTo') => (date: Date | undefined) => {
@@ -69,7 +72,7 @@ export function AssetFilters({ filters, setFilters, categories, suppliers, onRes
               <SelectValue placeholder="Filter by Supplier" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Suppliers</SelectItem>
+              <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>All Suppliers</SelectItem>
               {suppliers.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -78,7 +81,7 @@ export function AssetFilters({ filters, setFilters, categories, suppliers, onRes
               <SelectValue placeholder="Filter by Category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>All Categories</SelectItem>
               {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
             </SelectContent>
           </Select>
