@@ -18,7 +18,7 @@ import type { Supplier } from "@/contexts/SupplierContext"; // Importar Supplier
 import { useAssets } from "@/contexts/AssetContext";
 import { useSuppliers } from "@/contexts/SupplierContext"; // Importar useSuppliers
 import { formatDate, formatCurrency } from "@/components/assets/columns"; // Importar helpers
-import { Trash2, ExternalLink } from 'lucide-react'; // Mantido ExternalLink para a ação de abrir em nova aba
+import { Trash2, Download } from 'lucide-react'; // Alterado ExternalLink para Download
 import { useToast } from '@/hooks/use-toast';
 
 interface AssetDetailsDialogProps {
@@ -43,12 +43,34 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
         title: "Foto Removida",
         description: "A foto do ativo foi removida com sucesso.",
       });
+      // Fechar e reabrir o dialog para forçar a re-renderização sem a imagem
+      // ou gerenciar um estado interno para a imagem no dialog.
+      // Por simplicidade, o usuário pode precisar fechar e reabrir manualmente
+      // ou podemos forçar onOpenChange(false) e depois onOpenChange(true) se a experiência for ruim.
     }
   };
 
-  const handleViewImageFull = () => {
+  const handleDownloadImage = () => {
     if (asset.imageDataUri) {
-      window.open(asset.imageDataUri, '_blank');
+      const link = document.createElement('a');
+      link.href = asset.imageDataUri;
+      // Tenta extrair a extensão do MIME type, ou usa 'png' como padrão
+      const mimeType = asset.imageDataUri.match(/data:image\/([^;]+);/);
+      const extension = mimeType ? mimeType[1] : 'png';
+      link.download = `foto_ativo_${asset.assetTag || 'desconhecido'}.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({
+        title: "Download Iniciado",
+        description: "O download da foto do ativo foi iniciado.",
+      });
+    } else {
+      toast({
+        title: "Erro",
+        description: "Nenhuma imagem para baixar.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -84,12 +106,18 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
             {asset.imageDataUri && (
               <div className="mt-6">
                 <h3 className="font-semibold mb-2 text-lg">Foto do Ativo</h3>
-                <div className="relative w-full h-64 border rounded-md overflow-hidden">
-                  <Image src={asset.imageDataUri} alt={`Foto de ${asset.name}`} layout="fill" objectFit="contain" />
+                <div className="relative w-full h-64 border rounded-md overflow-hidden bg-muted/20">
+                  <Image 
+                    src={asset.imageDataUri} 
+                    alt={`Foto de ${asset.name}`} 
+                    layout="fill" 
+                    objectFit="contain" 
+                    data-ai-hint="asset photo"
+                  />
                 </div>
                 <div className="flex space-x-2 mt-2">
-                  <Button variant="outline" size="sm" onClick={handleViewImageFull} title="Visualizar Foto">
-                    <ExternalLink className="h-4 w-4 mr-1 md:mr-2" /> <span className="hidden md:inline">Visualizar</span>
+                  <Button variant="outline" size="sm" onClick={handleDownloadImage} title="Baixar Foto">
+                    <Download className="h-4 w-4 mr-1 md:mr-2" /> <span className="hidden md:inline">Baixar Foto</span>
                   </Button>
                   <Button variant="destructive" size="sm" onClick={handleRemoveImage} title="Excluir Foto">
                     <Trash2 className="h-4 w-4 mr-1 md:mr-2" /> <span className="hidden md:inline">Excluir Foto</span>
