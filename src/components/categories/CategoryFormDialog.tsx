@@ -123,7 +123,10 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+          <form 
+            onSubmit={form.handleSubmit(onSubmit)} 
+            className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-3"
+          >
             <FormField
               control={form.control}
               name="name"
@@ -239,17 +242,21 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
              {form.formState.errors.root && (
                 <p className="text-sm font-medium text-destructive">{form.formState.errors.root.message}</p>
             )}
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                <Save className="mr-2 h-4 w-4" />
-                {form.formState.isSubmitting ? "Salvando..." : (initialData ? "Salvar Alterações" : "Adicionar Categoria")}
-              </Button>
-            </DialogFooter>
           </form>
         </Form>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button 
+            type="button" 
+            onClick={form.handleSubmit(onSubmit)} // Alterado para chamar o submit do form
+            disabled={form.formState.isSubmitting}
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {form.formState.isSubmitting ? "Salvando..." : (initialData ? "Salvar Alterações" : "Adicionar Categoria")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
