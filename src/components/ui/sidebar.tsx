@@ -200,27 +200,14 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const { isMobile, state, openMobile, setOpenMobile, open } = useSidebar() // `open` (desktop state) is also from context
     
-    const effectiveCollapsible = isMobile ? "offcanvas" : collapsible;
+    const actualCollapsibleMode = isMobile ? "offcanvas" : collapsible;
+    // If on desktop AND collapsible is "none", force displayState to "expanded" for children.
+    // Otherwise, use the actual 'state' (which could be "collapsed" if 'open' is false, e.g. from cookie).
+    const displayState = (!isMobile && actualCollapsibleMode === "none") ? "expanded" : state;
 
-
-    if (effectiveCollapsible === "none") {
-      return (
-        <div
-          className={cn(
-            "flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground",
-            className
-          )}
-          ref={ref}
-          {...props}
-        >
-          {children}
-        </div>
-      )
-    }
-    
-    if (isMobile) {
+    if (isMobile) { // `actualCollapsibleMode` will be "offcanvas" here
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
           <SheetContent
@@ -240,18 +227,22 @@ const Sidebar = React.forwardRef<
       )
     }
     
+    // Desktop rendering
     return (
       <div
         ref={ref}
         className={cn(
           "group peer hidden md:flex flex-col text-sidebar-foreground bg-sidebar transition-all duration-300 ease-in-out",
-          state === "expanded" ? "w-[--sidebar-width]" : "w-[--sidebar-width-icon]",
-          collapsible === "offcanvas" && state === "collapsed" ? "!w-0 opacity-0" : "opacity-100",
+          // Width logic: if "none", always full width. Otherwise, depends on 'state'.
+          actualCollapsibleMode === "none" ? "w-[--sidebar-width]" : (state === "expanded" ? "w-[--sidebar-width]" : "w-[--sidebar-width-icon]"),
+          // Offcanvas hiding logic (should not apply if actualCollapsibleMode is "none" or "icon" on desktop)
+          actualCollapsibleMode === "offcanvas" && state === "collapsed" ? "!w-0 opacity-0" : "opacity-100",
+          // Variant styling
           variant === "floating" || variant === "inset" ? "m-2 rounded-lg shadow-lg border border-sidebar-border" : "border-r border-sidebar-border",
           className
         )}
-        data-state={state}
-        data-collapsible={collapsible}
+        data-state={displayState} // Use displayState to control children appearance
+        data-collapsible={actualCollapsibleMode}
         data-variant={variant}
         data-side={side}
         {...props}
@@ -327,9 +318,6 @@ const SidebarInset = React.forwardRef<
       ref={ref}
       className={cn(
         "relative flex min-h-svh flex-1 flex-col bg-background transition-all duration-300 ease-in-out overflow-x-hidden",
-        // Removed explicit margin classes:
-        // !isMobile && state === "expanded" ? "md:ml-[--sidebar-width]" : "md:ml-[--sidebar-width-icon]",
-        // (isMobile || (state === "collapsed" && props["data-sidebar-collapsible"] === "offcanvas")) && "md:ml-0",
         "peer-data-[variant=inset]:min-h-[calc(100svh-theme(spacing.4))] md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
         className
       )}
@@ -562,7 +550,7 @@ const SidebarMenuButton = React.forwardRef<
     ref
   ) => {
     const Comp = asChild ? Slot : "button"
-    const { isMobile, state } = useSidebar()
+    const { isMobile, state } = useSidebar() // `state` here is the original context state
 
     const buttonContent = (
       <Comp
@@ -589,7 +577,8 @@ const SidebarMenuButton = React.forwardRef<
         <TooltipContent
           side="right"
           align="center"
-          hidden={state !== "collapsed" || isMobile}
+          // Tooltip should only show if sidebar state is indeed collapsed and not on mobile
+          hidden={state !== "collapsed" || isMobile} 
           {...tooltipProps}
         />
       </Tooltip>

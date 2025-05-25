@@ -55,7 +55,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <Sidebar className="border-r border-sidebar-border" collapsible="icon">
+      <Sidebar className="border-r border-sidebar-border" collapsible="none"> {/* Alterado de "icon" para "none" */}
         <SidebarHeader className="p-4 bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 overflow-hidden">
             {brandingConfig.logoUrl ? (
@@ -79,8 +79,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               {brandingConfig.companyName || 'Zaldi Imo'}
             </span>
           </Link>
-           {/* SidebarTrigger for desktop icon collapse - visible when collapsible=icon and sidebar is expanded */}
-          <SidebarTrigger className="text-sidebar-primary-foreground hover:bg-sidebar-primary/90 data-[state=open]:hidden group-data-[state=expanded]:block group-data-[collapsible=offcanvas]:hidden hidden sm:flex" />
+           {/* SidebarTrigger para desktop foi removido */}
         </SidebarHeader>
         <SidebarContent className="p-2">
           <SidebarMenu>
@@ -103,7 +102,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </SidebarContent>
         <SidebarFooter className="p-2 border-t border-sidebar-border">
            <SidebarMenu>
-            <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+            <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center"> {/* Esta classe pode não ter mais efeito se collapsible for 'none' */}
               <ThemeToggleButton />
             </SidebarMenuItem>
              <SidebarMenuItem>
@@ -119,16 +118,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <SidebarInset>
         <header className={cn(
             "sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6",
-            "sm:justify-end" // On sm screens and up, only BrandingModal will be on the right
+            "sm:justify-end" 
         )}>
-          {/* SidebarTrigger for mobile/tablet - always visible on smaller screens */}
+          {/* SidebarTrigger para mobile/tablet - permanece para off-canvas */}
           <div className="sm:hidden">
             <SidebarTrigger>
               <PanelLeft />
             </SidebarTrigger>
           </div>
           
-          {/* Spacer for larger screens to push BrandingModal to the right */}
           <div className="hidden sm:flex flex-1" />
 
           <div className="flex items-center gap-2">
