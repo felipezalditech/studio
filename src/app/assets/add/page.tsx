@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react'; // Adicionado useState
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -16,12 +16,12 @@ import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { CalendarIcon, Save, UploadCloud, XCircle } from 'lucide-react'; // Adicionado UploadCloud, XCircle
+import { CalendarIcon, Save, UploadCloud, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Asset } from '@/components/assets/types';
-import Image from 'next/image'; // Adicionado Image do Next.js
+import Image from 'next/image';
 
 const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
@@ -35,7 +35,7 @@ const assetFormSchema = z.object({
   supplier: z.string().min(1, "Fornecedor é obrigatório."),
   category: z.string().min(1, "Categoria é obrigatória."),
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
-  imageDataUri: z.string().optional(), // Novo campo para a imagem
+  imageDataUri: z.string().optional(),
 });
 
 type AssetFormValues = z.infer<typeof assetFormSchema>;
@@ -60,7 +60,7 @@ export default function AddAssetPage() {
       supplier: '',
       category: '',
       purchaseValue: 0,
-      imageDataUri: '', // Valor inicial para o campo de imagem
+      imageDataUri: '',
     },
   });
 
@@ -68,8 +68,8 @@ export default function AddAssetPage() {
     const assetDataToSave: Omit<Asset, 'id'> = {
       ...data,
       purchaseDate: format(data.purchaseDate, 'yyyy-MM-dd'),
-      currentValue: data.purchaseValue, // Valor atual inicializado com o valor de compra
-      imageDataUri: data.imageDataUri || undefined, // Garante que seja undefined se vazio
+      currentValue: data.purchaseValue,
+      imageDataUri: data.imageDataUri || undefined,
     };
     addAsset(assetDataToSave);
     toast({
@@ -84,8 +84,9 @@ export default function AddAssetPage() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-        fieldOnChange(reader.result as string);
+        const result = reader.result as string;
+        setImagePreview(result);
+        fieldOnChange(result);
       };
       reader.readAsDataURL(file);
     } else {
@@ -98,7 +99,7 @@ export default function AddAssetPage() {
     setImagePreview(null);
     fieldOnChange('');
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''; // Reseta o input de arquivo visualmente
+      fileInputRef.current.value = '';
     }
   };
 
@@ -273,7 +274,6 @@ export default function AddAssetPage() {
                 />
               </div>
 
-              {/* Seção de Upload de Imagem */}
               <div className="space-y-2 pt-4">
                 <FormField
                   control={form.control}
@@ -304,13 +304,13 @@ export default function AddAssetPage() {
                   <div className="mt-4 space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">Pré-visualização:</p>
                     <div className="relative w-48 h-48 border rounded-md overflow-hidden">
-                       <Image src={imagePreview} alt="Pré-visualização do ativo" layout="fill" objectFit="contain" />
+                       <Image src={imagePreview} alt="Pré-visualização do ativo" layout="fill" objectFit="contain" data-ai-hint="asset photo preview" />
                     </div>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRemoveImage(form.setValue.bind(form, 'imageDataUri', ''))} // form.setValue.bind(form, 'imageDataUri', '')
+                      onClick={() => handleRemoveImage(form.setValue.bind(form, 'imageDataUri', ''))}
                       className="text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
                     >
                       <XCircle className="mr-2 h-4 w-4" />

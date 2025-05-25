@@ -14,11 +14,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Asset } from "./types";
-import type { Supplier } from "@/contexts/SupplierContext"; // Importar Supplier
+import type { Supplier } from "@/contexts/SupplierContext";
 import { useAssets } from "@/contexts/AssetContext";
-import { useSuppliers } from "@/contexts/SupplierContext"; // Importar useSuppliers
-import { formatDate, formatCurrency } from "@/components/assets/columns"; // Importar helpers
-import { Trash2, Download } from 'lucide-react'; // Alterado ExternalLink para Download
+import { useSuppliers } from "@/contexts/SupplierContext";
+import { formatDate, formatCurrency } from "@/components/assets/columns";
+import { Trash2, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AssetDetailsDialogProps {
@@ -29,24 +29,29 @@ interface AssetDetailsDialogProps {
 
 export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDialogProps) {
   const { updateAsset } = useAssets();
-  const { getSupplierById } = useSuppliers(); // Obter função para buscar fornecedor
+  const { getSupplierById } = useSuppliers();
   const { toast } = useToast();
 
   if (!asset) return null;
 
-  const supplier = getSupplierById(asset.supplier); // Buscar dados do fornecedor
+  const supplier = getSupplierById(asset.supplier);
 
   const handleRemoveImage = () => {
     if (confirm("Tem certeza que deseja remover a foto deste ativo?")) {
-      updateAsset({ ...asset, imageDataUri: undefined });
+      // Create a new asset object without imageDataUri
+      const { imageDataUri, ...assetWithoutImage } = asset;
+      updateAsset({ ...assetWithoutImage, imageDataUri: undefined });
       toast({
         title: "Foto Removida",
         description: "A foto do ativo foi removida com sucesso.",
       });
-      // Fechar e reabrir o dialog para forçar a re-renderização sem a imagem
-      // ou gerenciar um estado interno para a imagem no dialog.
-      // Por simplicidade, o usuário pode precisar fechar e reabrir manualmente
-      // ou podemos forçar onOpenChange(false) e depois onOpenChange(true) se a experiência for ruim.
+      // Consider closing and re-opening the dialog or managing internal state
+      // For simplicity, current asset data in dialog will update on next open
+      // or if the parent component forces a re-render of this dialog with new props.
+      // To immediately reflect, we can call onOpenChange(false) then onOpenChange(true)
+      // but this can be jarring. Best might be to manage asset data locally in dialog
+      // or ensure parent re-renders with fresh asset from context.
+      // For now, relying on context update and potential re-render.
     }
   };
 
@@ -54,10 +59,9 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
     if (asset.imageDataUri) {
       const link = document.createElement('a');
       link.href = asset.imageDataUri;
-      // Tenta extrair a extensão do MIME type, ou usa 'png' como padrão
-      const mimeType = asset.imageDataUri.match(/data:image\/([^;]+);/);
-      const extension = mimeType ? mimeType[1] : 'png';
-      link.download = `foto_ativo_${asset.assetTag || 'desconhecido'}.${extension}`;
+      const mimeTypeMatch = asset.imageDataUri.match(/data:image\/([^;]+);/);
+      const extension = mimeTypeMatch ? mimeTypeMatch[1] : 'png'; // Default to png if type not found
+      link.download = `foto_ativo_${asset.assetTag || asset.id}.${extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -67,9 +71,9 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
       });
     } else {
       toast({
-        title: "Erro",
-        description: "Nenhuma imagem para baixar.",
-        variant: "destructive",
+        title: "Sem Imagem",
+        description: "Este ativo não possui uma foto para baixar.",
+        variant: "default",
       });
     }
   };
@@ -103,7 +107,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
               <p><strong>Valor Atual:</strong> {formatCurrency(asset.currentValue)}</p>
             </div>
 
-            {asset.imageDataUri && (
+            {asset.imageDataUri ? (
               <div className="mt-6">
                 <h3 className="font-semibold mb-2 text-lg">Foto do Ativo</h3>
                 <div className="relative w-full h-64 border rounded-md overflow-hidden bg-muted/20">
@@ -111,8 +115,8 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
                     src={asset.imageDataUri} 
                     alt={`Foto de ${asset.name}`} 
                     layout="fill" 
-                    objectFit="contain" 
-                    data-ai-hint="asset photo"
+                    objectFit="contain"
+                    data-ai-hint="asset photo detail"
                   />
                 </div>
                 <div className="flex space-x-2 mt-2">
@@ -124,6 +128,11 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
                   </Button>
                 </div>
               </div>
+            ) : (
+                 <div className="mt-6">
+                    <h3 className="font-semibold mb-2 text-lg">Foto do Ativo</h3>
+                    <p className="text-sm text-muted-foreground">Nenhuma foto cadastrada para este ativo.</p>
+                </div>
             )}
           </div>
         </div>
