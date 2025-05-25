@@ -1,8 +1,6 @@
 
 import type { Asset } from './types';
 
-// Atualize os IDs de fornecedor para corresponder aos IDs dos mockSuppliers
-// Os IDs devem ser 'sup-001', 'sup-002', 'sup-003' etc.
 export const mockAssets: Asset[] = [
   {
     id: '1',
@@ -11,10 +9,11 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-001',
     serialNumber: 'SN-LP001',
     assetTag: 'AT-001',
-    supplier: 'sup-001', // ID do fornecedor Tech Solutions Ltd.
+    supplier: 'sup-001', 
     category: 'Eletrônicos',
     purchaseValue: 1200.00,
     currentValue: 950.00,
+    imageDateUris: [],
   },
   {
     id: '2',
@@ -23,10 +22,11 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-002',
     serialNumber: 'N/A',
     assetTag: 'AT-002',
-    supplier: 'sup-002', // ID do fornecedor Móveis Conforto
+    supplier: 'sup-002', 
     category: 'Móveis',
     purchaseValue: 350.00,
     currentValue: 300.00,
+    imageDateUris: [],
   },
   {
     id: '3',
@@ -35,10 +35,11 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-003',
     serialNumber: 'SN-M001',
     assetTag: 'AT-003',
-    supplier: 'sup-003', // ID do fornecedor DisplayTech Inc.
+    supplier: 'sup-003', 
     category: 'Eletrônicos',
     purchaseValue: 450.00,
     currentValue: 380.00,
+    imageDateUris: [],
   },
   {
     id: '4',
@@ -47,10 +48,11 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-004',
     serialNumber: 'N/A',
     assetTag: 'AT-004',
-    supplier: 'sup-002', // ID do fornecedor Móveis Conforto (Comfort Seating Co. nos mocks antigos)
+    supplier: 'sup-002', 
     category: 'Móveis',
     purchaseValue: 220.00,
     currentValue: 190.00,
+    imageDateUris: [],
   },
   {
     id: '5',
@@ -59,10 +61,11 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-005',
     serialNumber: 'SN-NS001',
     assetTag: 'AT-005',
-    supplier: 'sup-001', // Supondo que ConnectSys seja Tech Solutions
+    supplier: 'sup-001', 
     category: 'Redes',
     purchaseValue: 280.00,
     currentValue: 250.00,
+    imageDateUris: [],
   },
   {
     id: '6',
@@ -71,10 +74,11 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-006',
     serialNumber: 'SN-PJ001',
     assetTag: 'AT-006',
-    supplier: 'sup-003', // Supondo que VisualPro seja DisplayTech
+    supplier: 'sup-003', 
     category: 'Eletrônicos',
     purchaseValue: 600.00,
     currentValue: 450.00,
+    imageDateUris: [],
   },
   {
     id: '7',
@@ -83,9 +87,10 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-007',
     serialNumber: 'N/A',
     assetTag: 'AT-007',
-    supplier: 'sup-002', // Supondo Office Storage Inc. seja Móveis Conforto
+    supplier: 'sup-002', 
     category: 'Móveis',
     purchaseValue: 150.00,
     currentValue: 130.00,
+    imageDateUris: [],
   }
 ];

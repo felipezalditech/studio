@@ -1,3 +1,4 @@
+
 export interface Asset {
   id: string;
   purchaseDate: string; 
@@ -9,5 +10,6 @@ export interface Asset {
   category: string;
   purchaseValue: number;
   currentValue: number;
-  imageDataUri?: string; // Mantido como string única por enquanto
+  imageDateUris?: string[]; // Alterado de imageDataUri para imageDateUris (array)
 }
+

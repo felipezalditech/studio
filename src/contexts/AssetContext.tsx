@@ -9,7 +9,7 @@ import { mockAssets as initialMockAssets } from '@/components/assets/data';
 interface AssetContextType {
   assets: Asset[];
   addAsset: (asset: Omit<Asset, 'id'>) => void;
-  updateAsset: (updatedAsset: Asset) => void; // Nova função
+  updateAsset: (updatedAsset: Asset) => void; 
   deleteAsset: (assetId: string) => void;
   setAssets: Dispatch<SetStateAction<Asset[]>>;
   categories: string[];
@@ -32,13 +32,14 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
     const newAsset: Asset = {
       ...assetData,
       id: `asset-${Date.now().toString()}-${Math.random().toString(36).substring(2, 7)}`,
+      imageDateUris: assetData.imageDateUris || [], // Garante que seja um array
     };
     setAssets(prevAssets => [...prevAssets, newAsset]);
   };
 
   const updateAsset = (updatedAsset: Asset) => {
     setAssets(prevAssets =>
-      prevAssets.map(asset => (asset.id === updatedAsset.id ? updatedAsset : asset))
+      prevAssets.map(asset => (asset.id === updatedAsset.id ? { ...asset, ...updatedAsset } : asset))
     );
   };
 

@@ -23,6 +23,8 @@ import { ptBR } from 'date-fns/locale';
 import type { Asset } from '@/components/assets/types';
 import Image from 'next/image';
 
+const MAX_PHOTOS = 10;
+
 const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
   purchaseDate: z.date({
@@ -35,7 +37,7 @@ const assetFormSchema = z.object({
   supplier: z.string().min(1, "Fornecedor é obrigatório."),
   category: z.string().min(1, "Categoria é obrigatória."),
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
-  imageDataUri: z.string().optional(),
+  imageDateUris: z.array(z.string()).optional().max(MAX_PHOTOS, `Máximo de ${MAX_PHOTOS} fotos permitidas.`),
 });
 
 type AssetFormValues = z.infer<typeof assetFormSchema>;
@@ -45,9 +47,8 @@ export default function AddAssetPage() {
   const { suppliers } = useSuppliers();
   const { toast } = useToast();
   const router = useRouter();
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
@@ -60,7 +61,7 @@ export default function AddAssetPage() {
       supplier: '',
       category: '',
       purchaseValue: 0,
-      imageDataUri: '',
+      imageDateUris: [],
     },
   });
 
@@ -68,8 +69,8 @@ export default function AddAssetPage() {
     const assetDataToSave: Omit<Asset, 'id'> = {
       ...data,
       purchaseDate: format(data.purchaseDate, 'yyyy-MM-dd'),
-      currentValue: data.purchaseValue,
-      imageDataUri: data.imageDataUri || undefined,
+      currentValue: data.purchaseValue, // Valor atual inicializado com o valor de compra
+      imageDateUris: data.imageDateUris || [],
     };
     addAsset(assetDataToSave);
     toast({
@@ -79,28 +80,68 @@ export default function AddAssetPage() {
     router.push('/assets');
   }
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string) => void) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setImagePreview(result);
-        fieldOnChange(result);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setImagePreview(null);
-      fieldOnChange('');
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string[]) => void) => {
+    const files = event.target.files;
+    if (files) {
+      const currentUris = form.getValues('imageDateUris') || [];
+      const availableSlots = MAX_PHOTOS - currentUris.length;
+
+      if (availableSlots <= 0) {
+        toast({
+          title: "Limite de Fotos Atingido",
+          description: `Você já adicionou o máximo de ${MAX_PHOTOS} fotos.`,
+          variant: "destructive",
+        });
+        if (fileInputRef.current) fileInputRef.current.value = ''; // Limpa o input
+        return;
+      }
+
+      const filesToProcess = Array.from(files).slice(0, availableSlots);
+
+      if (files.length > filesToProcess.length) {
+        toast({
+          title: "Algumas Fotos Não Adicionadas",
+          description: `Você selecionou ${files.length} fotos, mas só ${availableSlots > 1 ? 'podiam' : 'podia'} ser adicionada${availableSlots > 1 ? 's' : ''} mais ${filesToProcess.length}. As primeiras ${filesToProcess.length} foram adicionadas.`,
+          variant: "default",
+        });
+      }
+      
+      const newPreviewsArray = [...imagePreviews];
+      const newUrisArray = [...currentUris];
+
+      let filesRead = 0;
+      if (filesToProcess.length === 0) { // Nenhum arquivo novo para processar (ex: se o usuário selecionou mais do que o permitido e já tínhamos o máximo)
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
+      filesToProcess.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          newPreviewsArray.push(result);
+          newUrisArray.push(result);
+          filesRead++;
+          if (filesRead === filesToProcess.length) {
+            setImagePreviews(newPreviewsArray);
+            fieldOnChange(newUrisArray); // Atualiza o form com o array de URIs
+            if (fileInputRef.current) fileInputRef.current.value = ''; // Limpa o input após processar
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
-  const handleRemoveImage = (fieldOnChange: (value: string) => void) => {
-    setImagePreview(null);
-    fieldOnChange('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const handleRemoveImage = (indexToRemove: number, fieldOnChange: (value: string[]) => void) => {
+    const currentPreviews = [...imagePreviews];
+    const currentUris = [...(form.getValues('imageDateUris') || [])];
+
+    currentPreviews.splice(indexToRemove, 1);
+    currentUris.splice(indexToRemove, 1);
+
+    setImagePreviews(currentPreviews);
+    fieldOnChange(currentUris);
   };
 
   return (
@@ -277,45 +318,52 @@ export default function AddAssetPage() {
               <div className="space-y-2 pt-4">
                 <FormField
                   control={form.control}
-                  name="imageDataUri"
-                  render={({ field }) => (
+                  name="imageDateUris"
+                  render={({ field }) => ( // field.onChange aqui espera um único valor, precisamos ajustar
                     <FormItem>
                       <FormLabel className="flex items-center">
                         <UploadCloud className="mr-2 h-5 w-5" />
-                        Foto do Ativo (Opcional)
+                        Fotos do Ativo (Máx. {MAX_PHOTOS})
                       </FormLabel>
                       <FormControl>
                         <Input
                           type="file"
                           accept="image/*"
+                          multiple // Permite seleção múltipla
                           ref={fileInputRef}
-                          onChange={(e) => handleImageChange(e, field.onChange)}
+                          onChange={(e) => handleImageChange(e, field.onChange as any)} // Passando field.onChange que espera um array
                           className="cursor-pointer"
+                          disabled={(form.getValues('imageDateUris')?.length || 0) >= MAX_PHOTOS}
                         />
                       </FormControl>
                       <FormDescription>
-                        Formatos suportados: JPG, PNG, GIF, etc.
+                        Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até {MAX_PHOTOS} fotos.
+                         Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/{MAX_PHOTOS}.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                {imagePreview && (
+                {imagePreviews.length > 0 && (
                   <div className="mt-4 space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground">Pré-visualização:</p>
-                    <div className="relative w-48 h-48 border rounded-md overflow-hidden">
-                       <Image src={imagePreview} alt="Pré-visualização do ativo" layout="fill" objectFit="contain" data-ai-hint="asset photo preview" />
+                    <p className="text-sm font-medium text-muted-foreground">Pré-visualização ({imagePreviews.length}/{MAX_PHOTOS}):</p>
+                    <div className="flex flex-wrap gap-4 p-2 border rounded-md">
+                      {imagePreviews.map((previewUrl, index) => (
+                        <div key={index} className="relative w-32 h-32 border rounded-md overflow-hidden group">
+                           <Image src={previewUrl} alt={`Pré-visualização ${index + 1}`} layout="fill" objectFit="contain" data-ai-hint="asset photo preview" />
+                           <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              onClick={() => handleRemoveImage(index, form.setValue.bind(form, 'imageDateUris') as any)}
+                              className="absolute top-1 right-1 h-6 w-6 opacity-70 group-hover:opacity-100"
+                              title="Remover esta imagem"
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                        </div>
+                      ))}
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRemoveImage(form.setValue.bind(form, 'imageDataUri', ''))}
-                      className="text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
-                    >
-                      <XCircle className="mr-2 h-4 w-4" />
-                      Remover Imagem
-                    </Button>
                   </div>
                 )}
               </div>

@@ -18,7 +18,7 @@ import type { Supplier } from "@/contexts/SupplierContext";
 import { useAssets } from "@/contexts/AssetContext";
 import { useSuppliers } from "@/contexts/SupplierContext";
 import { formatDate, formatCurrency } from "@/components/assets/columns";
-import { Trash2, Download } from 'lucide-react';
+import { Trash2, Download, XCircle } from 'lucide-react'; // Adicionado XCircle
 import { useToast } from '@/hooks/use-toast';
 
 interface AssetDetailsDialogProps {
@@ -36,61 +36,46 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
 
   const supplier = getSupplierById(asset.supplier);
 
-  const handleRemoveImage = () => {
-    if (confirm("Tem certeza que deseja remover a foto deste ativo?")) {
-      // Create a new asset object without imageDataUri
-      const { imageDataUri, ...assetWithoutImage } = asset;
-      updateAsset({ ...assetWithoutImage, imageDataUri: undefined });
+  const handleRemoveImage = (indexToRemove: number) => {
+    if (!asset || !asset.imageDateUris) return;
+    if (confirm(`Tem certeza que deseja remover esta foto do ativo ${asset.name}?`)) {
+      const updatedImageUris = asset.imageDateUris.filter((_, index) => index !== indexToRemove);
+      updateAsset({ ...asset, imageDateUris: updatedImageUris });
       toast({
         title: "Foto Removida",
-        description: "A foto do ativo foi removida com sucesso.",
+        description: "A foto selecionada foi removida com sucesso.",
       });
-      // Consider closing and re-opening the dialog or managing internal state
-      // For simplicity, current asset data in dialog will update on next open
-      // or if the parent component forces a re-render of this dialog with new props.
-      // To immediately reflect, we can call onOpenChange(false) then onOpenChange(true)
-      // but this can be jarring. Best might be to manage asset data locally in dialog
-      // or ensure parent re-renders with fresh asset from context.
-      // For now, relying on context update and potential re-render.
     }
   };
 
-  const handleDownloadImage = () => {
-    if (asset.imageDataUri) {
-      const link = document.createElement('a');
-      link.href = asset.imageDataUri;
-      const mimeTypeMatch = asset.imageDataUri.match(/data:image\/([^;]+);/);
-      const extension = mimeTypeMatch ? mimeTypeMatch[1] : 'png'; // Default to png if type not found
-      link.download = `foto_ativo_${asset.assetTag || asset.id}.${extension}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast({
-        title: "Download Iniciado",
-        description: "O download da foto do ativo foi iniciado.",
-      });
-    } else {
-      toast({
-        title: "Sem Imagem",
-        description: "Este ativo não possui uma foto para baixar.",
-        variant: "default",
-      });
-    }
+  const handleDownloadImage = (imageDataUri: string, index: number) => {
+    const link = document.createElement('a');
+    link.href = imageDataUri;
+    const mimeTypeMatch = imageDataUri.match(/data:image\/([^;]+);/);
+    const extension = mimeTypeMatch ? mimeTypeMatch[1] : 'png';
+    link.download = `foto_ativo_${asset.assetTag || asset.id}_${index + 1}.${extension}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({
+      title: "Download Iniciado",
+      description: "O download da foto do ativo foi iniciado.",
+    });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto"> {/* Aumentado max-width */}
         <DialogHeader>
           <DialogTitle>Detalhes do Ativo: {asset.name}</DialogTitle>
           <DialogDescription>
             Informações completas sobre o ativo selecionado.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 py-4">
           <div>
             <h3 className="font-semibold mb-2 text-lg">Informações Gerais</h3>
-            <div className="space-y-2 text-sm">
+            <div className="space-y-1.5 text-sm">
               <p><strong>Nome:</strong> {asset.name}</p>
               <p><strong>Patrimônio:</strong> {asset.assetTag}</p>
               <p><strong>Categoria:</strong> {asset.category}</p>
@@ -102,41 +87,55 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
           </div>
           <div>
             <h3 className="font-semibold mb-2 text-lg">Valores</h3>
-            <div className="space-y-2 text-sm">
+            <div className="space-y-1.5 text-sm">
               <p><strong>Valor de Compra:</strong> {formatCurrency(asset.purchaseValue)}</p>
               <p><strong>Valor Atual:</strong> {formatCurrency(asset.currentValue)}</p>
             </div>
+          </div>
+        </div>
 
-            {asset.imageDataUri ? (
-              <div className="mt-6">
-                <h3 className="font-semibold mb-2 text-lg">Foto do Ativo</h3>
-                <div className="relative w-full h-64 border rounded-md overflow-hidden bg-muted/20">
+        <div className="mt-2">
+          <h3 className="font-semibold mb-3 text-lg">Fotos do Ativo</h3>
+          {asset.imageDateUris && asset.imageDateUris.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-2 border rounded-md bg-muted/10">
+              {asset.imageDateUris.map((uri, index) => (
+                <div key={index} className="relative group aspect-square border rounded-md overflow-hidden">
                   <Image 
-                    src={asset.imageDataUri} 
-                    alt={`Foto de ${asset.name}`} 
+                    src={uri} 
+                    alt={`Foto ${index + 1} de ${asset.name}`} 
                     layout="fill" 
                     objectFit="contain"
                     data-ai-hint="asset photo detail"
                   />
+                  <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex justify-center space-x-1">
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-7 w-7 border-gray-300 text-gray-300 hover:bg-white/20 hover:text-white"
+                      onClick={() => handleDownloadImage(uri, index)} 
+                      title="Baixar Foto"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="icon" 
+                      className="h-7 w-7"
+                      onClick={() => handleRemoveImage(index)} 
+                      title="Excluir Foto"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex space-x-2 mt-2">
-                  <Button variant="outline" size="sm" onClick={handleDownloadImage} title="Baixar Foto">
-                    <Download className="h-4 w-4 mr-1 md:mr-2" /> <span className="hidden md:inline">Baixar Foto</span>
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={handleRemoveImage} title="Excluir Foto">
-                    <Trash2 className="h-4 w-4 mr-1 md:mr-2" /> <span className="hidden md:inline">Excluir Foto</span>
-                  </Button>
-                </div>
-              </div>
-            ) : (
-                 <div className="mt-6">
-                    <h3 className="font-semibold mb-2 text-lg">Foto do Ativo</h3>
-                    <p className="text-sm text-muted-foreground">Nenhuma foto cadastrada para este ativo.</p>
-                </div>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhuma foto cadastrada para este ativo.</p>
+          )}
         </div>
-        <DialogFooter>
+
+        <DialogFooter className="mt-6">
           <DialogClose asChild>
             <Button type="button" variant="outline">
               Fechar
