@@ -1,6 +1,7 @@
+
 "use client";
 
-import React from "react"; // Added React import
+import React, { useState } from "react"; // Added React import
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -24,12 +25,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useBranding } from "@/contexts/BrandingContext";
-import { Image as ImageIcon, Settings } from "lucide-react";
-import { useState } from "react";
+import { Settings } from "lucide-react";
+
 
 const brandingFormSchema = z.object({
-  companyName: z.string().min(1, "Company name is required").max(50, "Company name is too long"),
-  logoUrl: z.string().url("Please enter a valid URL for the logo").or(z.literal("")),
+  companyName: z.string().min(1, "Nome da empresa é obrigatório").max(50, "Nome da empresa muito longo"),
+  logoUrl: z.string().url("Por favor, insira uma URL válida para o logo").or(z.literal("")),
 });
 
 type BrandingFormValues = z.infer<typeof brandingFormSchema>;
@@ -58,14 +59,14 @@ export function BrandingModal() {
       <DialogTrigger asChild>
         <Button variant="outline" size="icon" className="w-9 h-9">
           <Settings className="h-[1.2rem] w-[1.2rem]" />
-          <span className="sr-only">Customize Branding</span>
+          <span className="sr-only">Personalizar Marca</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Customize Branding</DialogTitle>
+          <DialogTitle>Personalizar Marca</DialogTitle>
           <DialogDescription>
-            Set your company name and logo. Click save when you're done.
+            Defina o nome e o logo da sua empresa. Clique em salvar quando terminar.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -75,9 +76,9 @@ export function BrandingModal() {
               name="companyName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Company Name</FormLabel>
+                  <FormLabel>Nome da Empresa</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your Company LLC" {...field} />
+                    <Input placeholder="Sua Empresa LTDA" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -88,16 +89,16 @@ export function BrandingModal() {
               name="logoUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Logo URL</FormLabel>
+                  <FormLabel>URL do Logo</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com/logo.png" {...field} />
+                    <Input placeholder="https://exemplo.com/logo.png" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="submit">Save changes</Button>
+              <Button type="submit">Salvar Alterações</Button>
             </DialogFooter>
           </form>
         </Form>

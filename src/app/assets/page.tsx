@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -51,20 +52,20 @@ export default function AssetsPage() {
 
   const handleExportCSV = () => {
     if (filteredAssets.length === 0) {
-      toast({ title: "Export Notice", description: "No assets to export.", variant: "destructive" });
+      toast({ title: "Aviso de Exportação", description: "Nenhum ativo para exportar.", variant: "destructive" });
       return;
     }
     exportToCSV(filteredAssets);
-    toast({ title: "Export Successful", description: "Assets exported to CSV." });
+    toast({ title: "Exportação Concluída", description: "Ativos exportados para CSV." });
   };
 
   const handleExportPDF = () => {
      if (filteredAssets.length === 0) {
-      toast({ title: "Export Notice", description: "No assets to export.", variant: "destructive" });
+      toast({ title: "Aviso de Exportação", description: "Nenhum ativo para exportar.", variant: "destructive" });
       return;
     }
     exportToPDF(filteredAssets);
-    toast({ title: "Export Successful", description: "Assets exported to PDF." });
+    toast({ title: "Exportação Concluída", description: "Ativos exportados para PDF." });
   };
 
   return (

@@ -1,3 +1,4 @@
+
 import type { Asset } from '@/components/assets/types';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -8,9 +9,9 @@ declare module 'jspdf' {
   }
 }
 
-export const exportToCSV = (assets: Asset[], filename: string = 'assets.csv') => {
+export const exportToCSV = (assets: Asset[], filename: string = 'ativos.csv') => {
   if (assets.length === 0) {
-    alert('No data to export.');
+    alert('Nenhum dado para exportar.');
     return;
   }
 
@@ -38,21 +39,41 @@ export const exportToCSV = (assets: Asset[], filename: string = 'assets.csv') =>
   }
 };
 
-export const exportToPDF = (assets: Asset[], filename: string = 'assets.pdf') => {
+export const exportToPDF = (assets: Asset[], filename: string = 'ativos.pdf') => {
   if (assets.length === 0) {
-    alert('No data to export.');
+    alert('Nenhum dado para exportar.');
     return;
   }
 
   const doc = new jsPDF();
-  const tableColumn = Object.keys(assets[0]).map(key => ({
-    header: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()), // Add space before capitals and capitalize first letter
+  // Mapeia os nomes das colunas para português para o cabeçalho do PDF
+  const columnMapping: { [key in keyof Asset]?: string } = {
+    id: 'ID',
+    purchaseDate: 'Data da Compra',
+    name: 'Nome',
+    invoiceNumber: 'Nº Fatura',
+    serialNumber: 'Nº Série',
+    assetTag: 'Etiqueta do Ativo',
+    supplier: 'Fornecedor',
+    category: 'Categoria',
+    purchaseValue: 'Valor de Compra',
+    currentValue: 'Valor Atual',
+  };
+
+  const tableColumn = (Object.keys(assets[0]) as (keyof Asset)[]).map(key => ({
+    header: columnMapping[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
     dataKey: key
   }));
+  
   const tableRows = assets.map(asset => {
     const row: { [key: string]: any } = {};
     tableColumn.forEach(col => {
-      row[col.dataKey] = (asset as any)[col.dataKey];
+      // Formata valores monetários para o PDF
+      if (col.dataKey === 'purchaseValue' || col.dataKey === 'currentValue') {
+         row[col.dataKey] = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((asset as any)[col.dataKey]);
+      } else {
+        row[col.dataKey] = (asset as any)[col.dataKey];
+      }
     });
     return row;
   });
@@ -62,10 +83,10 @@ export const exportToPDF = (assets: Asset[], filename: string = 'assets.pdf') =>
     body: tableRows.map(row => tableColumn.map(col => row[col.dataKey])),
     startY: 20,
     theme: 'grid',
-    headStyles: { fillColor: [63, 81, 181] }, // #3F51B5
+    headStyles: { fillColor: [63, 81, 181] }, // #3F51B5 (Cor Primária)
     styles: { fontSize: 8 },
   });
 
-  doc.text('Fixed Assets Report', 14, 15);
+  doc.text('Relatório de Ativos Imobilizados', 14, 15);
   doc.save(filename);
 };

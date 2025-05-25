@@ -1,3 +1,4 @@
+
 import type { Asset } from './types';
 
 export const mockAssets: Asset[] = [
@@ -9,7 +10,7 @@ export const mockAssets: Asset[] = [
     serialNumber: 'SN-LP001',
     assetTag: 'AT-001',
     supplier: 'Tech Solutions Ltd.',
-    category: 'Electronics',
+    category: 'Eletrônicos', // Translated
     purchaseValue: 1200.00,
     currentValue: 950.00,
   },
@@ -21,7 +22,7 @@ export const mockAssets: Asset[] = [
     serialNumber: 'N/A',
     assetTag: 'AT-002',
     supplier: 'Furniture World',
-    category: 'Furniture',
+    category: 'Móveis', // Translated
     purchaseValue: 350.00,
     currentValue: 300.00,
   },
@@ -33,7 +34,7 @@ export const mockAssets: Asset[] = [
     serialNumber: 'SN-M001',
     assetTag: 'AT-003',
     supplier: 'DisplayTech Inc.',
-    category: 'Electronics',
+    category: 'Eletrônicos', // Translated
     purchaseValue: 450.00,
     currentValue: 380.00,
   },
@@ -45,7 +46,7 @@ export const mockAssets: Asset[] = [
     serialNumber: 'N/A',
     assetTag: 'AT-004',
     supplier: 'Comfort Seating Co.',
-    category: 'Furniture',
+    category: 'Móveis', // Translated
     purchaseValue: 220.00,
     currentValue: 190.00,
   },
@@ -57,7 +58,7 @@ export const mockAssets: Asset[] = [
     serialNumber: 'SN-NS001',
     assetTag: 'AT-005',
     supplier: 'ConnectSys',
-    category: 'Networking',
+    category: 'Redes', // Translated
     purchaseValue: 280.00,
     currentValue: 250.00,
   },
@@ -69,7 +70,7 @@ export const mockAssets: Asset[] = [
     serialNumber: 'SN-PJ001',
     assetTag: 'AT-006',
     supplier: 'VisualPro',
-    category: 'Electronics',
+    category: 'Eletrônicos', // Translated
     purchaseValue: 600.00,
     currentValue: 450.00,
   },
@@ -81,7 +82,7 @@ export const mockAssets: Asset[] = [
     serialNumber: 'N/A',
     assetTag: 'AT-007',
     supplier: 'Office Storage Inc.',
-    category: 'Furniture',
+    category: 'Móveis', // Translated
     purchaseValue: 150.00,
     currentValue: 130.00,
   }

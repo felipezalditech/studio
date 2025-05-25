@@ -62,19 +62,24 @@ export function AssetDataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
     },
+    // Tradução para paginação e seleção
+    // Esta é uma forma de customizar textos, mas para alguns textos fixos como "No results",
+    // a tradução é feita diretamente no componente TableCell abaixo.
+    // A biblioteca @tanstack/react-table não tem um sistema de i18n embutido simples para todos os textos.
+    // Manualmente ajustamos os textos mais visíveis.
   })
 
   return (
     <div className="rounded-md border shadow-sm bg-card">
       <div className="p-4 flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-            {table.getFilteredSelectedRowModel().rows.length} of{" "}
-            {table.getFilteredRowModel().rows.length} row(s) selected.
+            {table.getFilteredSelectedRowModel().rows.length} de{" "}
+            {table.getFilteredRowModel().rows.length} linha(s) selecionada(s).
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
-              Columns <ChevronDown className="ml-2 h-4 w-4" />
+              Colunas <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -84,6 +89,20 @@ export function AssetDataTable<TData, TValue>({
                 (column) => column.getCanHide()
               )
               .map((column) => {
+                // Para traduzir IDs de coluna, seria necessário um mapeamento.
+                // Por simplicidade, mantemos os IDs originais (ex: "purchaseDate")
+                // mas os cabeçalhos são traduzidos em `columns.tsx`.
+                const columnDisplayName = column.id === "select" ? "Seleção" :
+                                          column.id === "purchaseDate" ? "Data da Compra" :
+                                          column.id === "name" ? "Nome" :
+                                          column.id === "invoiceNumber" ? "Nº Fatura" :
+                                          column.id === "serialNumber" ? "Nº Série" :
+                                          column.id === "assetTag" ? "Etiqueta do Ativo" :
+                                          column.id === "supplier" ? "Fornecedor" :
+                                          column.id === "category" ? "Categoria" :
+                                          column.id === "purchaseValue" ? "Valor de Compra" :
+                                          column.id === "currentValue" ? "Valor Atual" :
+                                          column.id;
                 return (
                   <DropdownMenuCheckboxItem
                     key={column.id}
@@ -93,7 +112,7 @@ export function AssetDataTable<TData, TValue>({
                       column.toggleVisibility(!!value)
                     }
                   >
-                    {column.id}
+                    {columnDisplayName}
                   </DropdownMenuCheckboxItem>
                 )
               })}
@@ -137,7 +156,7 @@ export function AssetDataTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                  Nenhum resultado.
                 </TableCell>
               </TableRow>
             )}
@@ -151,7 +170,7 @@ export function AssetDataTable<TData, TValue>({
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            Previous
+            Anterior
         </Button>
         <Button
             variant="outline"
@@ -159,7 +178,7 @@ export function AssetDataTable<TData, TValue>({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            Next
+            Próximo
         </Button>
       </div>
     </div>

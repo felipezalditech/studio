@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ColumnDef, HeaderContext } from "@tanstack/react-table";
@@ -6,19 +7,19 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { parseISO, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 // Helper function to format currency
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
 };
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
   try {
     const date = parseISO(dateString);
-    return format(date, 'PPP'); // e.g. Jan 15th, 2023
+    return format(date, 'PPP', { locale: ptBR }); // e.g. 15 de jan. de 2023
   } catch (error) {
-    // console.error('Error formatting date:', dateString, error); // You can uncomment this for debugging
     return dateString; // Fallback if date is invalid
   }
 };
@@ -48,14 +49,14 @@ export const columns: ColumnDef<Asset>[] = [
           (table.getIsSomePageRowsSelected() && "indeterminate")
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
+        aria-label="Selecionar tudo"
       />
     ),
     cell: ({ row }) => (
       <Checkbox
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
+        aria-label="Selecionar linha"
       />
     ),
     enableSorting: false,
@@ -63,41 +64,41 @@ export const columns: ColumnDef<Asset>[] = [
   },
   {
     accessorKey: "purchaseDate",
-    header: ({ column }) => <SortableHeader column={column} title="Purchase Date" />,
+    header: ({ column }) => <SortableHeader column={column} title="Data da Compra" />,
     cell: ({ row }) => formatDate(row.getValue("purchaseDate")),
   },
   {
     accessorKey: "name",
-    header: ({ column }) => <SortableHeader column={column} title="Name" />,
+    header: ({ column }) => <SortableHeader column={column} title="Nome" />,
   },
   {
     accessorKey: "invoiceNumber",
-    header: ({ column }) => <SortableHeader column={column} title="Invoice #" />,
+    header: ({ column }) => <SortableHeader column={column} title="Nº Fatura" />,
   },
   {
     accessorKey: "serialNumber",
-    header: ({ column }) => <SortableHeader column={column} title="Serial #" />,
+    header: ({ column }) => <SortableHeader column={column} title="Nº Série" />,
   },
   {
     accessorKey: "assetTag",
-    header: ({ column }) => <SortableHeader column={column} title="Asset Tag" />,
+    header: ({ column }) => <SortableHeader column={column} title="Etiqueta do Ativo" />,
   },
   {
     accessorKey: "supplier",
-    header: ({ column }) => <SortableHeader column={column} title="Supplier" />,
+    header: ({ column }) => <SortableHeader column={column} title="Fornecedor" />,
   },
   {
     accessorKey: "category",
-    header: ({ column }) => <SortableHeader column={column} title="Category" />,
+    header: ({ column }) => <SortableHeader column={column} title="Categoria" />,
   },
   {
     accessorKey: "purchaseValue",
-    header: ({ column }) => <SortableHeader column={column} title="Purchase Value" />,
+    header: ({ column }) => <SortableHeader column={column} title="Valor de Compra" />,
     cell: ({ row }) => formatCurrency(row.getValue("purchaseValue")),
   },
   {
     accessorKey: "currentValue",
-    header: ({ column }) => <SortableHeader column={column} title="Current Value" />,
+    header: ({ column }) => <SortableHeader column={column} title="Valor Atual" />,
     cell: ({ row }) => formatCurrency(row.getValue("currentValue")),
   },
 ];

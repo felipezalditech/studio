@@ -1,9 +1,10 @@
+
 import type { Metadata } from 'next';
 import { Inter as FontSans } from 'next/font/google';
 import './globals.css';
 import { AppProviders } from '@/components/providers/AppProviders';
 import { Toaster } from "@/components/ui/toaster";
-import { AppLayout } from '@/components/layout/AppLayout'; // Alterado
+import { AppLayout } from '@/components/layout/AppLayout'; 
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -11,8 +12,8 @@ const fontSans = FontSans({
 });
 
 export const metadata: Metadata = {
-  title: 'Zaldi Imo - Fixed Asset Management',
-  description: 'Manage your fixed assets efficiently with Zaldi Imo.',
+  title: 'Zaldi Imo - Gestão de Ativos Imobilizados',
+  description: 'Gerencie seus ativos imobilizados de forma eficiente com o Zaldi Imo.',
 };
 
 export default function RootLayout({
@@ -21,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${fontSans.variable} antialiased flex flex-col min-h-screen`}>
         <AppProviders>
           <AppLayout>{children}</AppLayout>
