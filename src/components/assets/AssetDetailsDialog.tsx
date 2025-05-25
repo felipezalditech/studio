@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react'; // Adicionado useState
 import Image from 'next/image';
 import {
   Dialog,
@@ -16,10 +16,11 @@ import { Button } from "@/components/ui/button";
 import type { Asset } from "./types";
 import { useAssets } from "@/contexts/AssetContext";
 import { useSuppliers } from "@/contexts/SupplierContext";
-import { useCategories } from "@/contexts/CategoryContext"; // Importado
+import { useCategories } from "@/contexts/CategoryContext";
 import { formatDate, formatCurrency } from "@/components/assets/columns";
 import { Trash2, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'; // Importado
 
 interface AssetDetailsDialogProps {
   asset: Asset | null;
@@ -30,25 +31,34 @@ interface AssetDetailsDialogProps {
 export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDialogProps) {
   const { updateAsset } = useAssets();
   const { getSupplierById } = useSuppliers();
-  const { getCategoryById } = useCategories(); // Usando o contexto de categorias
+  const { getCategoryById } = useCategories();
   const { toast } = useToast();
+
+  const [imageIndexToDelete, setImageIndexToDelete] = useState<number | null>(null);
+  const [isConfirmDeleteImageDialogOpen, setIsConfirmDeleteImageDialogOpen] = useState(false);
 
   if (!asset) return null;
 
   const supplier = getSupplierById(asset.supplier);
-  const category = getCategoryById(asset.categoryId); // Obtendo nome da categoria
+  const category = getCategoryById(asset.categoryId);
 
-  const handleRemoveImage = (indexToRemove: number) => {
-    if (!asset || !asset.imageDateUris) return;
-    if (confirm(`Tem certeza que deseja remover esta foto do ativo ${asset.name}?`)) {
-      const updatedImageUris = asset.imageDateUris.filter((_, index) => index !== indexToRemove);
-      updateAsset({ ...asset, imageDateUris: updatedImageUris });
-      toast({
-        title: "Foto Removida",
-        description: "A foto selecionada foi removida com sucesso.",
-      });
-    }
+  const handleRemoveImageRequest = (indexToRemove: number) => {
+    setImageIndexToDelete(indexToRemove);
+    setIsConfirmDeleteImageDialogOpen(true);
   };
+
+  const confirmRemoveImage = () => {
+    if (!asset || !asset.imageDateUris || imageIndexToDelete === null) return;
+    
+    const updatedImageUris = asset.imageDateUris.filter((_, index) => index !== imageIndexToDelete);
+    updateAsset({ ...asset, imageDateUris: updatedImageUris });
+    toast({
+      title: "Foto Removida",
+      description: "A foto selecionada foi removida com sucesso.",
+    });
+    setImageIndexToDelete(null); // Resetar o índice
+  };
+
 
   const handleDownloadImage = (imageDataUri: string, index: number) => {
     const link = document.createElement('a');
@@ -80,7 +90,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
             <div className="space-y-1.5 text-sm">
               <p><strong>Nome:</strong> {asset.name}</p>
               <p><strong>Patrimônio:</strong> {asset.assetTag}</p>
-              <p><strong>Categoria:</strong> {category?.name || asset.categoryId}</p> {/* Exibindo nome da categoria */}
+              <p><strong>Categoria:</strong> {category?.name || asset.categoryId}</p>
               <p><strong>Fornecedor:</strong> {supplier?.nomeFantasia || asset.supplier}</p>
               <p><strong>Data da Compra:</strong> {formatDate(asset.purchaseDate)}</p>
               <p><strong>Nº Nota Fiscal:</strong> {asset.invoiceNumber}</p>
@@ -123,7 +133,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
                       variant="destructive" 
                       size="icon" 
                       className="h-7 w-7"
-                      onClick={() => handleRemoveImage(index)} 
+                      onClick={() => handleRemoveImageRequest(index)} 
                       title="Excluir Foto"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -145,6 +155,16 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
           </DialogClose>
         </DialogFooter>
       </DialogContent>
+
+      {imageIndexToDelete !== null && (
+        <ConfirmationDialog
+          open={isConfirmDeleteImageDialogOpen}
+          onOpenChange={setIsConfirmDeleteImageDialogOpen}
+          onConfirm={confirmRemoveImage}
+          title="Confirmar Exclusão de Foto"
+          description={`Tem certeza que deseja remover esta foto do ativo ${asset.name}?`}
+        />
+      )}
     </Dialog>
   );
 }

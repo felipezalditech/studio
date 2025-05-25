@@ -15,14 +15,15 @@ import { useToast } from '@/hooks/use-toast';
 import { isValid, parseISO } from 'date-fns';
 import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
-import { useCategories } from '@/contexts/CategoryContext'; // Importado
+import { useCategories } from '@/contexts/CategoryContext';
 import { AssetDetailsDialog } from '@/components/assets/AssetDetailsDialog';
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'; // Importado
 
 const initialFilters: AssetFiltersState = {
   name: '',
   supplier: '',
   invoiceNumber: '',
-  categoryId: '', // Alterado de category para categoryId
+  categoryId: '',
   purchaseDateFrom: undefined,
   purchaseDateTo: undefined,
 };
@@ -32,13 +33,16 @@ const formatCurrency = (amount: number) => {
 };
 
 export default function AssetsPage() {
-  const { assets, getCategoryNameById } = useAssets();
+  const { assets, deleteAsset } = useAssets(); // Adicionado deleteAsset
   const { suppliers: allSuppliersFromContext, getSupplierById } = useSuppliers();
-  const { categories: allCategoriesFromContext } = useCategories(); // Para o AssetFilters
+  const { categories: allCategoriesFromContext, getCategoryById } = useCategories();
   const [filters, setFilters] = useState<AssetFiltersState>(initialFilters);
   const { toast } = useToast();
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<Asset | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+
+  const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null); // Para o diálogo de confirmação
+  const [isConfirmDeleteAssetDialogOpen, setIsConfirmDeleteAssetDialogOpen] = useState(false);
 
   const supplierNameMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -61,7 +65,23 @@ export default function AssetsPage() {
     setIsDetailsDialogOpen(true);
   }, []);
 
-  const columns = useMemo(() => getColumns(supplierNameMap, getSupplierById, categoryNameMap, handleViewDetails), [supplierNameMap, getSupplierById, categoryNameMap, handleViewDetails]);
+  const handleDeleteAssetRequest = useCallback((asset: Asset) => {
+    setAssetToDelete(asset);
+    setIsConfirmDeleteAssetDialogOpen(true);
+  }, []);
+
+  const confirmDeleteAsset = () => {
+    if (assetToDelete) {
+      deleteAsset(assetToDelete.id);
+      toast({
+        title: "Sucesso!",
+        description: `Ativo "${assetToDelete.name}" deletado.`,
+      });
+      setAssetToDelete(null);
+    }
+  };
+
+  const columns = useMemo(() => getColumns(supplierNameMap, getSupplierById, categoryNameMap, handleViewDetails, handleDeleteAssetRequest), [supplierNameMap, getSupplierById, categoryNameMap, handleViewDetails, handleDeleteAssetRequest]);
 
 
   const filteredAssets = useMemo(() => {
@@ -73,7 +93,7 @@ export default function AssetsPage() {
       const nameMatch = asset.name.toLowerCase().includes(filters.name.toLowerCase());
       const supplierMatch = filters.supplier ? asset.supplier === filters.supplier : true; 
       const invoiceMatch = asset.invoiceNumber.toLowerCase().includes(filters.invoiceNumber.toLowerCase());
-      const categoryMatch = filters.categoryId ? asset.categoryId === filters.categoryId : true; // Alterado para categoryId
+      const categoryMatch = filters.categoryId ? asset.categoryId === filters.categoryId : true;
       
       const dateFromMatch = dateFrom && isValid(purchaseDate) ? purchaseDate >= dateFrom : true;
       const dateToMatch = dateTo && isValid(purchaseDate) ? purchaseDate <= dateTo : true;
@@ -88,13 +108,13 @@ export default function AssetsPage() {
 
   const handleExportCSV = () => {
     if (filteredAssets.length === 0) {
-      toast({ title: "Aviso de Exportação", description: "Nenhum ativo para exportar.", variant: "destructive" });
+      toast({ title: "Aviso de Exportação", description: "Nenhum ativo para exportar.", variant: "default" });
       return;
     }
     const assetsForExport = filteredAssets.map(asset => ({
       ...asset,
       supplier: supplierNameMap.get(asset.supplier) || asset.supplier,
-      category: categoryNameMap.get(asset.categoryId) || asset.categoryId, // Adicionado para exportação
+      category: categoryNameMap.get(asset.categoryId) || getCategoryById(asset.categoryId)?.name || asset.categoryId,
     }));
     exportToCSV(assetsForExport, 'ativos_filtrados.csv');
     toast({ title: "Exportação Concluída", description: "Ativos exportados para CSV." });
@@ -102,13 +122,13 @@ export default function AssetsPage() {
 
   const handleExportPDF = () => {
      if (filteredAssets.length === 0) {
-      toast({ title: "Aviso de Exportação", description: "Nenhum ativo para exportar.", variant: "destructive" });
+      toast({ title: "Aviso de Exportação", description: "Nenhum ativo para exportar.", variant: "default" });
       return;
     }
     const assetsForExport = filteredAssets.map(asset => ({
       ...asset,
       supplier: supplierNameMap.get(asset.supplier) || asset.supplier,
-      category: categoryNameMap.get(asset.categoryId) || asset.categoryId, // Adicionado para exportação
+      category: categoryNameMap.get(asset.categoryId) || getCategoryById(asset.categoryId)?.name || asset.categoryId,
     }));
     exportToPDF(assetsForExport, 'ativos_filtrados.pdf');
     toast({ title: "Exportação Concluída", description: "Ativos exportados para PDF." });
@@ -129,7 +149,6 @@ export default function AssetsPage() {
         filters={filters} 
         setFilters={setFilters} 
         onResetFilters={handleResetFilters}
-        // categories and suppliers are now fetched from context within AssetFilters
       />
 
       <Card className="shadow-lg">
@@ -174,6 +193,16 @@ export default function AssetsPage() {
         open={isDetailsDialogOpen}
         onOpenChange={setIsDetailsDialogOpen}
       />
+
+      {assetToDelete && (
+        <ConfirmationDialog
+          open={isConfirmDeleteAssetDialogOpen}
+          onOpenChange={setIsConfirmDeleteAssetDialogOpen}
+          onConfirm={confirmDeleteAsset}
+          title="Confirmar Exclusão de Ativo"
+          description={`Tem certeza que deseja excluir o ativo "${assetToDelete.name}"? Esta ação não pode ser desfeita.`}
+        />
+      )}
     </div>
   );
 }

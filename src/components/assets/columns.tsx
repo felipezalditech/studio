@@ -4,7 +4,6 @@
 import type { ColumnDef, HeaderContext } from "@tanstack/react-table";
 import type { Asset } from "./types";
 import type { Supplier } from "@/contexts/SupplierContext";
-// import type { AssetCategory } from "@/types/category"; // Não é mais necessário aqui diretamente
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,8 +17,8 @@ import { ArrowUpDown, MoreHorizontal, Eye, Edit2, Archive, Trash2 } from "lucide
 import { Checkbox } from "@/components/ui/checkbox";
 import { parseISO, format as formatDateFn } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useAssets } from "@/contexts/AssetContext";
-import { useToast } from "@/hooks/use-toast";
+// import { useAssets } from "@/contexts/AssetContext"; // Não mais necessário aqui
+// import { useToast } from "@/hooks/use-toast"; // Não mais necessário aqui
 
 export const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
@@ -51,8 +50,9 @@ const SortableHeader = <TData, TValue>({ column, title }: { column: HeaderContex
 export const getColumns = (
   supplierNameMap: Map<string, string>,
   getSupplierById: (id: string) => Supplier | undefined,
-  categoryNameMap: Map<string, string>, // Adicionado
-  onViewDetails: (asset: Asset) => void
+  categoryNameMap: Map<string, string>,
+  onViewDetails: (asset: Asset) => void,
+  onDeleteAssetRequest: (asset: Asset) => void // Nova prop para solicitar exclusão
 ): ColumnDef<Asset>[] => [
   {
     id: "select",
@@ -98,7 +98,7 @@ export const getColumns = (
     header: ({ column }) => <SortableHeader column={column} title="Nº de Série" />,
   },
   {
-    accessorKey: "categoryId", // Alterado de category para categoryId
+    accessorKey: "categoryId",
     header: ({ column }) => <SortableHeader column={column} title="Categoria" />,
     cell: ({ row }) => {
       const categoryId = row.getValue("categoryId") as string;
@@ -128,17 +128,11 @@ export const getColumns = (
     header: () => <div className="text-right pr-0">Ações</div>,
     cell: function ActionsCell({ row }) {
       const asset = row.original;
-      const { deleteAsset } = useAssets();
-      const { toast } = useToast();
+      // const { deleteAsset } = useAssets(); // Movido para AssetsPage
+      // const { toast } = useToast(); // Movido para AssetsPage
 
-      const handleDelete = () => {
-        if (confirm(`Tem certeza que deseja deletar permanentemente o ativo: ${asset.name}?`)) {
-          deleteAsset(asset.id);
-          toast({
-            title: "Sucesso!",
-            description: `Ativo "${asset.name}" deletado.`,
-          });
-        }
+      const handleDeleteRequest = () => {
+        onDeleteAssetRequest(asset); // Chama a função passada por props
       };
 
       return (
@@ -156,17 +150,17 @@ export const getColumns = (
                 <Eye className="mr-2 h-4 w-4" />
                 Visualizar Detalhes
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log(`Editar ativo: ${asset.name}`)}>
+              <DropdownMenuItem onClick={() => console.log(`Editar ativo: ${asset.name}`)} disabled> {/* Editar desabilitado por enquanto */}
                 <Edit2 className="mr-2 h-4 w-4" />
                 Editar
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log(`Baixar ativo: ${asset.name}`)}>
+              <DropdownMenuItem onClick={() => console.log(`Baixar ativo: ${asset.name}`)} disabled> {/* Baixar desabilitado por enquanto */}
                 <Archive className="mr-2 h-4 w-4" />
                 Baixar Ativo
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={handleDelete}
+                onClick={handleDeleteRequest} // Alterado
                 className="text-red-600 hover:!text-red-600 focus:text-red-600 focus:!bg-red-100 dark:focus:!bg-red-700/50"
               >
                 <Trash2 className="mr-2 h-4 w-4" />

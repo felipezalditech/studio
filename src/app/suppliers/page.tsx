@@ -9,12 +9,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, PlusCircle, Edit2, Trash2 } from 'lucide-react';
 import { useSuppliers, type Supplier } from '@/contexts/SupplierContext';
 import { SupplierFormDialog, type SupplierFormValues } from '@/components/suppliers/SupplierFormDialog';
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'; // Importado
 import { useToast } from '@/hooks/use-toast';
 
 export default function SuppliersPage() {
   const { suppliers, addSupplier, updateSupplier, deleteSupplier } = useSuppliers();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false); // Estado para o diálogo de confirmação
+  const [supplierToDeleteId, setSupplierToDeleteId] = useState<string | null>(null); // Estado para o ID do fornecedor a ser excluído
   const { toast } = useToast();
 
   const handleOpenDialog = (supplier: Supplier | null = null) => {
@@ -33,10 +36,16 @@ export default function SuppliersPage() {
     setIsDialogOpen(false);
   };
 
-  const handleDeleteSupplier = (supplierId: string) => {
-    if (confirm("Tem certeza que deseja excluir este fornecedor? Esta ação não pode ser desfeita.")) {
-      deleteSupplier(supplierId);
+  const handleDeleteSupplierRequest = (supplierId: string) => {
+    setSupplierToDeleteId(supplierId);
+    setIsConfirmDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteSupplier = () => {
+    if (supplierToDeleteId) {
+      deleteSupplier(supplierToDeleteId);
       toast({ title: "Sucesso!", description: "Fornecedor excluído." });
+      setSupplierToDeleteId(null);
     }
   };
 
@@ -92,7 +101,7 @@ export default function SuppliersPage() {
                             Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleDeleteSupplier(supplier.id)}
+                            onClick={() => handleDeleteSupplierRequest(supplier.id)} // Alterado
                             className="text-red-600 hover:!text-red-600 focus:text-red-600 focus:!bg-red-100 dark:focus:!bg-red-700/50"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -117,6 +126,14 @@ export default function SuppliersPage() {
           initialData={editingSupplier}
         />
       )}
+
+      <ConfirmationDialog
+        open={isConfirmDeleteDialogOpen}
+        onOpenChange={setIsConfirmDeleteDialogOpen}
+        onConfirm={confirmDeleteSupplier}
+        title="Confirmar Exclusão de Fornecedor"
+        description={`Tem certeza que deseja excluir o fornecedor "${suppliers.find(s => s.id === supplierToDeleteId)?.nomeFantasia || ''}"? Esta ação não pode ser desfeita.`}
+      />
     </div>
   );
 }

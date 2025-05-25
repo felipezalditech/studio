@@ -9,12 +9,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Layers, SettingsIcon, PlusCircle, Edit2, Trash2, MoreHorizontal } from "lucide-react";
 import { useCategories, type AssetCategory } from '@/contexts/CategoryContext';
 import { CategoryFormDialog, type CategoryFormValues } from '@/components/categories/CategoryFormDialog';
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'; // Importado
 import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
   const { categories, addCategory, updateCategory, deleteCategory } = useCategories();
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<AssetCategory | null>(null);
+  const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false); // Estado para o diálogo de confirmação
+  const [categoryToDeleteId, setCategoryToDeleteId] = useState<string | null>(null); // Estado para o ID da categoria a ser excluída
   const { toast } = useToast();
 
   const handleOpenCategoryDialog = (category: AssetCategory | null = null) => {
@@ -23,7 +26,6 @@ export default function SettingsPage() {
   };
 
   const handleSubmitCategory = (data: CategoryFormValues) => {
-    // Certificar que usefulLifeInYears é number ou undefined
     const categoryDataToSave: Omit<AssetCategory, 'id'> = {
       name: data.name,
       depreciationMethod: data.depreciationMethod,
@@ -32,7 +34,6 @@ export default function SettingsPage() {
       depreciationRateType: data.depreciationRateType,
       depreciationRateValue: data.depreciationRateValue === null || data.depreciationRateValue === undefined ? undefined : Number(data.depreciationRateValue),
     };
-
 
     if (editingCategory) {
       updateCategory({ ...editingCategory, ...categoryDataToSave });
@@ -44,11 +45,17 @@ export default function SettingsPage() {
     setIsCategoryDialogOpen(false);
   };
 
-  const handleDeleteCategory = (categoryId: string) => {
-    // TODO: Adicionar verificação se a categoria está em uso por algum ativo antes de excluir.
-    if (confirm("Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.")) {
-      deleteCategory(categoryId);
+  const handleDeleteCategoryRequest = (categoryId: string) => {
+    setCategoryToDeleteId(categoryId);
+    setIsConfirmDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteCategory = () => {
+    if (categoryToDeleteId) {
+      // TODO: Adicionar verificação se a categoria está em uso por algum ativo antes de excluir.
+      deleteCategory(categoryToDeleteId);
       toast({ title: "Sucesso!", description: "Categoria excluída." });
+      setCategoryToDeleteId(null);
     }
   };
 
@@ -125,7 +132,7 @@ export default function SettingsPage() {
                             Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleDeleteCategory(category.id)}
+                            onClick={() => handleDeleteCategoryRequest(category.id)} // Alterado
                             className="text-red-600 hover:!text-red-600 focus:text-red-600 focus:!bg-red-100 dark:focus:!bg-red-700/50"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -170,7 +177,14 @@ export default function SettingsPage() {
           initialData={editingCategory}
         />
       )}
+
+      <ConfirmationDialog
+        open={isConfirmDeleteDialogOpen}
+        onOpenChange={setIsConfirmDeleteDialogOpen}
+        onConfirm={confirmDeleteCategory}
+        title="Confirmar Exclusão de Categoria"
+        description={`Tem certeza que deseja excluir a categoria selecionada? Esta ação não pode ser desfeita.`}
+      />
     </div>
   );
 }
-
