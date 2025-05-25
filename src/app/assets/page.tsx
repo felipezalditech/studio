@@ -10,7 +10,7 @@ import { AssetFilters, type AssetFiltersState } from '@/components/assets/AssetF
 import { Button } from '@/components/ui/button';
 import { DownloadIcon, FileTextIcon, PlusCircle } from 'lucide-react';
 import { exportToCSV, exportToPDF } from '@/lib/export-utils';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { isValid, parseISO } from 'date-fns';
 import { useAssets } from '@/contexts/AssetContext';
@@ -23,6 +23,11 @@ const initialFilters: AssetFiltersState = {
   category: '',
   purchaseDateFrom: undefined,
   purchaseDateTo: undefined,
+};
+
+// Helper function to format currency
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
 };
 
 export default function AssetsPage() {
@@ -76,7 +81,7 @@ export default function AssetsPage() {
       ...asset,
       supplier: supplierNameMap.get(asset.supplier) || asset.supplier, // Substitui ID por nome
     }));
-    exportToCSV(assetsForExport);
+    exportToCSV(assetsForExport, 'ativos_filtrados.csv');
     toast({ title: "Exportação Concluída", description: "Ativos exportados para CSV." });
   };
 
@@ -89,9 +94,17 @@ export default function AssetsPage() {
       ...asset,
       supplier: supplierNameMap.get(asset.supplier) || asset.supplier, // Substitui ID por nome
     }));
-    exportToPDF(assetsForExport);
+    exportToPDF(assetsForExport, 'ativos_filtrados.pdf');
     toast({ title: "Exportação Concluída", description: "Ativos exportados para PDF." });
   };
+
+  const totalPurchaseValueFiltered = useMemo(() => {
+    return filteredAssets.reduce((sum, asset) => sum + asset.purchaseValue, 0);
+  }, [filteredAssets]);
+
+  const totalCurrentValueFiltered = useMemo(() => {
+    return filteredAssets.reduce((sum, asset) => sum + asset.currentValue, 0);
+  }, [filteredAssets]);
 
   return (
     <div className="space-y-8">
@@ -126,6 +139,18 @@ export default function AssetsPage() {
         <CardContent>
           <AssetDataTable columns={columns} data={filteredAssets} />
         </CardContent>
+        {filteredAssets.length > 0 && (
+          <CardFooter className="flex flex-col items-end space-y-2 pt-4 border-t">
+            <div className="flex justify-between w-full max-w-xs">
+              <span className="font-semibold text-muted-foreground">Total Geral Compra:</span>
+              <span className="font-bold">{formatCurrency(totalPurchaseValueFiltered)}</span>
+            </div>
+            <div className="flex justify-between w-full max-w-xs">
+              <span className="font-semibold text-muted-foreground">Total Geral Atual:</span>
+              <span className="font-bold text-green-600 dark:text-green-500">{formatCurrency(totalCurrentValueFiltered)}</span>
+            </div>
+          </CardFooter>
+        )}
       </Card>
     </div>
   );
