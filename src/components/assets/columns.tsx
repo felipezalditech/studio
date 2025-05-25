@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ArrowUpDown, MoreHorizontal, Eye, Edit2, Archive, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { parseISO, format, isValid } from 'date-fns';
+import { parseISO, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 // Helper function to format currency
@@ -26,30 +26,10 @@ const formatCurrency = (amount: number) => {
 const formatDate = (dateString: string) => {
   try {
     const date = parseISO(dateString);
-    // Updated date format to dd/MM/yyyy
-    return format(date, 'dd/MM/yyyy', { locale: ptBR }); 
+    return format(date, 'dd/MM/yyyy', { locale: ptBR });
   } catch (error) {
-    if (dateString && typeof dateString === 'string') {
-        // Attempt to handle if dateString is already in dd/MM/yyyy or similar
-        const parts = dateString.split(/[-/]/);
-        if (parts.length === 3) {
-            // Assuming dd/MM/yyyy or yyyy/MM/dd or MM/dd/yyyy
-            // For simplicity, if it's already somewhat formatted, return as is or a specific known input format
-            // This fallback might need refinement based on actual invalid date strings received
-            if (parts[0].length === 4) { // yyyy-MM-dd
-                return format(new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])), 'dd/MM/yyyy', { locale: ptBR });
-            } else if (parts[2].length === 4) { // dd-MM-yyyy or MM-dd-yyyy
-                 // Check if parts[0] is month or day based on value
-                const d = parseInt(parts[0]);
-                const m = parseInt(parts[1]);
-                if (m > 0 && m <=12) { // Likely dd/MM/yyyy
-                    return format(new Date(parseInt(parts[2]), m - 1, d), 'dd/MM/yyyy', { locale: ptBR });
-                }
-                // Could be MM/dd/yyyy - this part can get complex without knowing exact formats
-            }
-        }
-    }
-    return dateString; // Fallback if date is invalid or not in expected ISO format
+    // Fallback for potentially already formatted or invalid dates
+    return dateString; 
   }
 };
 
@@ -59,10 +39,10 @@ const SortableHeader = <TData, TValue>({ column, title }: { column: HeaderContex
     <Button
       variant="ghost"
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      className="-ml-4"
+      className="p-0 gap-1 h-auto focus-visible:ring-inset" // Ajustado para ser mais compacto
     >
       {title}
-      <ArrowUpDown className="ml-2 h-4 w-4" />
+      <ArrowUpDown className="h-4 w-4" />
     </Button>
   );
 };
@@ -98,19 +78,19 @@ export const columns: ColumnDef<Asset>[] = [
   },
   {
     accessorKey: "name",
-    header: ({ column }) => <SortableHeader column={column} title="Nome do Ativo" />, // Traduzido
+    header: ({ column }) => <SortableHeader column={column} title="Nome do Ativo" />,
   },
   {
-    accessorKey: "assetTag", // "Patrimônio"
-    header: ({ column }) => <SortableHeader column={column} title="Patrimônio" />, // Traduzido
+    accessorKey: "assetTag", 
+    header: ({ column }) => <SortableHeader column={column} title="Patrimônio" />,
   },
   {
     accessorKey: "invoiceNumber",
-    header: ({ column }) => <SortableHeader column={column} title="Nota Fiscal" />, // Traduzido
+    header: ({ column }) => <SortableHeader column={column} title="Nota Fiscal" />,
   },
   {
     accessorKey: "serialNumber",
-    header: ({ column }) => <SortableHeader column={column} title="Nº de Série" />, // Traduzido
+    header: ({ column }) => <SortableHeader column={column} title="Nº de Série" />,
   },
   {
     accessorKey: "category",
@@ -132,7 +112,7 @@ export const columns: ColumnDef<Asset>[] = [
   },
   {
     id: "actions",
-    header: () => <div className="text-right pr-4">Ações</div>, // Adicionado padding para alinhar com botão
+    header: () => <div className="text-right">Ações</div>, // Removido pr-4, o padding da célula TableHead (px-1) cuidará disso
     cell: ({ row }) => {
       const asset = row.original;
       return (
