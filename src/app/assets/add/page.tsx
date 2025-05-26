@@ -13,13 +13,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useLocations } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { CalendarIcon, Save, UploadCloud, XCircle } from 'lucide-react';
+import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -219,7 +220,17 @@ export default function AddAssetPage() {
                   name="categoryId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Categoria</FormLabel>
+                      <div className="flex items-center">
+                        <FormLabel>Categoria</FormLabel>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Cadastre categorias na tela de "Configurações".</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -238,9 +249,6 @@ export default function AddAssetPage() {
                           )}
                         </SelectContent>
                       </Select>
-                      <FormDescription>
-                        Cadastre categorias na tela de "Configurações".
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -252,7 +260,17 @@ export default function AddAssetPage() {
                   name="supplier"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fornecedor</FormLabel>
+                      <div className="flex items-center">
+                        <FormLabel>Fornecedor</FormLabel>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Cadastre fornecedores na tela de "Fornecedores".</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -271,9 +289,6 @@ export default function AddAssetPage() {
                           )}
                         </SelectContent>
                       </Select>
-                      <FormDescription>
-                        Cadastre fornecedores na tela de "Fornecedores".
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -283,7 +298,17 @@ export default function AddAssetPage() {
                   name="locationId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Local Alocado</FormLabel>
+                       <div className="flex items-center">
+                        <FormLabel>Local Alocado</FormLabel>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Cadastre locais na tela de "Configurações".</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <Select
                         onValueChange={(selectedValue) => {
                           field.onChange(selectedValue === NO_LOCATION_SELECTED_VALUE ? '' : selectedValue);
@@ -308,9 +333,6 @@ export default function AddAssetPage() {
                           )}
                         </SelectContent>
                       </Select>
-                      <FormDescription>
-                        Cadastre locais na tela de "Configurações".
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -405,13 +427,20 @@ export default function AddAssetPage() {
                   name="previouslyDepreciatedValue"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Valor Depreciado R$ (Opcional)</FormLabel>
+                      <div className="flex items-center">
+                        <FormLabel>Valor Depreciado R$ (Opcional)</FormLabel>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Informe se o ativo foi adquirido usado e já possuía depreciação acumulada.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                       <FormControl>
                         <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} />
                       </FormControl>
-                      <FormDescription>
-                        Informe se o ativo foi adquirido usado e já possuía depreciação acumulada.
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -444,6 +473,14 @@ export default function AddAssetPage() {
                       <FormLabel className="flex items-center">
                         <UploadCloud className="mr-2 h-5 w-5" />
                         Fotos do Ativo (Máx. {MAX_PHOTOS})
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até {MAX_PHOTOS} fotos.</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -457,7 +494,6 @@ export default function AddAssetPage() {
                         />
                       </FormControl>
                       <FormDescription>
-                        Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até {MAX_PHOTOS} fotos.
                          Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/{MAX_PHOTOS}.
                       </FormDescription>
                       <FormMessage />
@@ -504,3 +540,5 @@ export default function AddAssetPage() {
     </div>
   );
 }
+
+    
