@@ -1,17 +1,18 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Adicionado useRef
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import Image from 'next/image'; // Adicionado Image
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Layers, SettingsIcon, PlusCircle, Edit2, Trash2, MoreHorizontal, MapPin, Building2 } from "lucide-react"; // Changed Palette to Building2
+import { Layers, SettingsIcon, PlusCircle, Edit2, Trash2, MoreHorizontal, MapPin, Building2, UploadCloud, XCircle } from "lucide-react";
 import { useCategories, type AssetCategory } from '@/contexts/CategoryContext';
 import { CategoryFormDialog, type CategoryFormValues } from '@/components/categories/CategoryFormDialog';
 import { useLocations, type Location } from '@/contexts/LocationContext';
@@ -22,7 +23,7 @@ import { useBranding } from '@/contexts/BrandingContext';
 
 const brandingFormSchema = z.object({
   companyName: z.string().min(1, "Nome da empresa é obrigatório").max(50, "Nome da empresa muito longo"),
-  logoUrl: z.string().url("Por favor, insira uma URL válida para o logo").or(z.literal("")),
+  logoUrl: z.string().optional(), // Alterado para aceitar Data URI ou string vazia
 });
 type BrandingFormValues = z.infer<typeof brandingFormSchema>;
 
@@ -38,6 +39,7 @@ export default function SettingsPage() {
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; type: 'category' | 'location' } | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const brandingForm = useForm<BrandingFormValues>({
     resolver: zodResolver(brandingFormSchema),
@@ -51,6 +53,17 @@ export default function SettingsPage() {
   const onBrandingSubmit = (data: BrandingFormValues) => {
     setBrandingConfig(data);
     toast({ title: "Sucesso!", description: "Configurações de marca atualizadas." });
+  };
+
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string) => void) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        fieldOnChange(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleOpenCategoryDialog = (category: AssetCategory | null = null) => {
@@ -135,7 +148,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center text-xl">
-            <Building2 className="mr-2 h-5 w-5" /> {/* Changed icon here */}
+            <Building2 className="mr-2 h-5 w-5" />
             Dados da empresa
           </CardTitle>
           <CardDescription>
@@ -163,14 +176,52 @@ export default function SettingsPage() {
                 name="logoUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>URL do Logo</FormLabel>
+                    <FormLabel className="flex items-center">
+                      <UploadCloud className="mr-2 h-5 w-5" />
+                      Logo da Empresa
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="https://exemplo.com/logo.png" {...field} />
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        ref={logoInputRef}
+                        onChange={(e) => handleLogoChange(e, field.onChange)}
+                        className="cursor-pointer"
+                      />
                     </FormControl>
                      <FormDescription>
-                        Use URLs seguras (HTTPS). Cole a URL completa da imagem.
+                        Selecione uma imagem (PNG, JPG, etc.). O logo aparecerá nos relatórios.
                       </FormDescription>
                     <FormMessage />
+                    {field.value && (
+                      <div className="mt-4 space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground">Pré-visualização do Logo:</p>
+                        <div className="relative w-40 h-40 border rounded-md overflow-hidden group">
+                           <Image 
+                            src={field.value} 
+                            alt="Pré-visualização do Logo" 
+                            layout="fill" 
+                            objectFit="contain" 
+                            data-ai-hint="company logo preview"
+                           />
+                           <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              onClick={() => {
+                                field.onChange('');
+                                if (logoInputRef.current) {
+                                  logoInputRef.current.value = ''; // Limpa o input de arquivo
+                                }
+                              }}
+                              className="absolute top-1 right-1 h-7 w-7 opacity-70 group-hover:opacity-100"
+                              title="Remover Logo"
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                        </div>
+                      </div>
+                    )}
                   </FormItem>
                 )}
               />
@@ -365,8 +416,5 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-
-  
-
+    
     

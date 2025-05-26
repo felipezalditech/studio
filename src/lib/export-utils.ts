@@ -52,20 +52,45 @@ interface PdfColumn {
 export const exportToPDF = (
   assets: AssetWithCalculatedValues[],
   filename: string = 'ativos.pdf',
-  columns?: PdfColumn[]
+  columns?: PdfColumn[],
+  logoDataUri?: string // Novo parâmetro para o logo
 ) => {
   if (assets.length === 0) {
     return;
   }
 
   const doc = new jsPDF({ orientation: 'landscape' });
+  const pageMargin = 10; // Margem da página
+  let logoFinalWidth = 0;
+  let logoFinalHeight = 0;
 
+  if (logoDataUri) {
+    try {
+      const imgProps = doc.getImageProperties(logoDataUri);
+      const aspectRatio = imgProps.width / imgProps.height;
+      let logoWidth = 30; 
+      let logoHeight = logoWidth / aspectRatio;
+      const maxLogoHeight = 15; 
+      if (logoHeight > maxLogoHeight) {
+        logoHeight = maxLogoHeight;
+        logoWidth = logoHeight * aspectRatio;
+      }
+      logoFinalWidth = logoWidth;
+      logoFinalHeight = logoHeight;
+      // Adiciona o logo no canto superior esquerdo
+      doc.addImage(logoDataUri, imgProps.format.toUpperCase(), pageMargin, pageMargin, logoFinalWidth, logoFinalHeight);
+    } catch (e) {
+      console.error("Erro ao adicionar logo ao PDF:", e);
+      // Prossegue sem o logo se houver erro
+    }
+  }
+  
   const defaultColumns: PdfColumn[] = [
     { header: 'ID', dataKey: 'id' },
     { header: 'Data Compra', dataKey: 'purchaseDate' },
     { header: 'Nome', dataKey: 'name' },
     { header: 'Patrimônio', dataKey: 'assetTag' },
-    { header: 'Nº Fiscal', dataKey: 'invoiceNumber' },
+    { header: 'Nota Fiscal', dataKey: 'invoiceNumber' },
     { header: 'Nº Série', dataKey: 'serialNumber' },
     { header: 'Categoria', dataKey: 'categoryName' },
     { header: 'Fornecedor', dataKey: 'supplierName' },
@@ -101,10 +126,13 @@ export const exportToPDF = (
     return row;
   });
 
+  const tableStartY = pageMargin + (logoDataUri && logoFinalHeight > 0 ? logoFinalHeight + 5 : 0);
+
+
   doc.autoTable({
     head: [tableColumnsToUse.map(col => col.header)],
     body: tableRows.map(row => tableColumnsToUse.map(col => row[col.dataKey])),
-    startY: 20,
+    startY: tableStartY,
     theme: 'grid',
     headStyles: { fillColor: [63, 81, 181] }, // Azul Indigo
     styles: { fontSize: 5, cellPadding: 1, overflow: 'linebreak' },
@@ -124,19 +152,24 @@ export const exportToPDF = (
       calculatedCurrentValue: {cellWidth: 15, halign: 'right'},
       additionalInfo: { cellWidth: 25}
     },
-    didDrawPage: (data) => {
+    didDrawPage: (dataHook) => { // Renomeado para evitar conflito de escopo
         doc.setFontSize(16);
         doc.setTextColor(40);
-        doc.text('Relatório de Ativos Imobilizados', data.settings.margin.left, 15);
+        // Ajusta a posição X do título se o logo existir
+        const titleX = pageMargin + (logoDataUri && logoFinalWidth > 0 ? logoFinalWidth + 5 : 0);
+        // Ajusta a posição Y do título para estar alinhado verticalmente com o centro do logo, se houver, ou na margem.
+        const titleY = pageMargin + (logoDataUri && logoFinalHeight > 0 ? logoFinalHeight / 2 : 0); 
+        
+        doc.text('Relatório de Ativos Imobilizados', titleX, titleY, { baseline: 'middle' });
+
 
         const pageCount = doc.getNumberOfPages ? doc.getNumberOfPages() : (doc.internal as any).getNumberOfPages();
         doc.setFontSize(8);
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.text(`Página ${i} de ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
-        }
+        doc.text(`Página ${dataHook.pageNumber} de ${pageCount}`, dataHook.settings.margin.left, doc.internal.pageSize.height - 10);
     }
   });
 
   doc.save(filename);
 };
+    
+    

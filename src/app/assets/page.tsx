@@ -17,16 +17,17 @@ import { isValid, parseISO, addDays, differenceInCalendarMonths } from 'date-fns
 import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useCategories } from '@/contexts/CategoryContext';
-import { useLocations } from '@/contexts/LocationContext'; // Importado
+import { useLocations } from '@/contexts/LocationContext'; 
 import { AssetDetailsDialog } from '@/components/assets/AssetDetailsDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
+import { useBranding } from '@/contexts/BrandingContext'; // Importado
 
 const initialFilters: AssetFiltersState = {
   name: '',
   supplier: '',
   invoiceNumber: '',
   categoryId: '',
-  locationId: '', // Novo
+  locationId: '', 
   purchaseDateFrom: undefined,
   purchaseDateTo: undefined,
 };
@@ -40,14 +41,15 @@ export interface AssetWithCalculatedValues extends Asset {
   calculatedCurrentValue: number;
   categoryName?: string;
   supplierName?: string;
-  locationName?: string; // Novo
+  locationName?: string; 
 }
 
 export default function AssetsPage() {
   const { assets, deleteAsset } = useAssets();
   const { suppliers: allSuppliersFromContext, getSupplierById } = useSuppliers();
   const { categories: allCategoriesFromContext, getCategoryById } = useCategories();
-  const { locations: allLocationsFromContext, getLocationById } = useLocations(); // Novo
+  const { locations: allLocationsFromContext, getLocationById } = useLocations(); 
+  const { brandingConfig } = useBranding(); // Adicionado
   const [filters, setFilters] = useState<AssetFiltersState>(initialFilters);
   const { toast } = useToast();
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<AssetWithCalculatedValues | null>(null);
@@ -73,7 +75,7 @@ export default function AssetsPage() {
     return map;
   }, [allCategoriesFromContext]);
 
-  const locationNameMap = useMemo(() => { // Novo
+  const locationNameMap = useMemo(() => { 
     const map = new Map<string, string>();
     allLocationsFromContext.forEach(location => {
       map.set(location.id, location.name);
@@ -126,7 +128,7 @@ export default function AssetsPage() {
         const supplierMatch = filters.supplier ? asset.supplier === filters.supplier : true;
         const invoiceMatch = asset.invoiceNumber.toLowerCase().includes(filters.invoiceNumber.toLowerCase());
         const categoryMatch = filters.categoryId ? asset.categoryId === filters.categoryId : true;
-        const locationMatch = filters.locationId ? asset.locationId === filters.locationId : true; // Novo filtro
+        const locationMatch = filters.locationId ? asset.locationId === filters.locationId : true; 
 
         const dateFromMatch = dateFrom && isValid(purchaseDate) ? purchaseDate >= dateFrom : true;
         const dateToMatch = dateTo && isValid(purchaseDate) ? purchaseDate <= dateTo : true;
@@ -184,7 +186,7 @@ export default function AssetsPage() {
           calculatedCurrentValue,
           categoryName: categoryNameMap.get(asset.categoryId) || asset.categoryId,
           supplierName: supplierNameMap.get(asset.supplier) || asset.supplier,
-          locationName: asset.locationId ? locationNameMap.get(asset.locationId) || asset.locationId : 'N/A', // Novo
+          locationName: asset.locationId ? locationNameMap.get(asset.locationId) || asset.locationId : 'N/A', 
         };
       });
   }, [assets, filters, getCategoryById, categoryNameMap, supplierNameMap, locationNameMap]);
@@ -209,11 +211,12 @@ export default function AssetsPage() {
       'Nº Série': asset.serialNumber || 'N/A',
       'Categoria': asset.categoryName,
       'Fornecedor': asset.supplierName,
-      'Local Alocado': asset.locationName || 'N/A', // Novo
+      'Local Alocado': asset.locationName || 'N/A', 
       'Valor Compra': asset.purchaseValue,
       'Valor Já Depreciado (Inicial)': asset.previouslyDepreciatedValue || 0,
       'Valor Depreciado Total': asset.depreciatedValue,
       'Valor Atual': asset.calculatedCurrentValue,
+      'Informações Adicionais': asset.additionalInfo || 'N/A',
     }));
     exportToCSV(assetsForExport, 'ativos_filtrados.csv');
     toast({ title: "Exportação Concluída", description: "Ativos exportados para CSV." });
@@ -234,11 +237,12 @@ export default function AssetsPage() {
       serialNumber: asset.serialNumber || 'N/A',
       category: asset.categoryName,
       supplier: asset.supplierName,
-      location: asset.locationName || 'N/A', // Novo
+      location: asset.locationName || 'N/A', 
       purchaseValue: asset.purchaseValue,
       previouslyDepreciatedValue: asset.previouslyDepreciatedValue || 0,
       depreciatedValue: asset.depreciatedValue,
       currentValue: asset.calculatedCurrentValue,
+      additionalInfo: asset.additionalInfo || 'N/A',
     }));
     exportToPDF(assetsForExport, 'ativos_filtrados.pdf', [
       { header: 'ID', dataKey: 'id' },
@@ -247,12 +251,13 @@ export default function AssetsPage() {
       { header: 'Patrimônio', dataKey: 'assetTag' },
       { header: 'Categoria', dataKey: 'category' },
       { header: 'Fornecedor', dataKey: 'supplier' },
-      { header: 'Local', dataKey: 'location' }, // Novo
+      { header: 'Local', dataKey: 'location' }, 
       { header: 'Valor Compra', dataKey: 'purchaseValue' },
       { header: 'Valor Já Deprec.', dataKey: 'previouslyDepreciatedValue' },
       { header: 'Depreciação Total', dataKey: 'depreciatedValue' },
       { header: 'Valor Atual', dataKey: 'currentValue' },
-    ]);
+      { header: 'Info Adicional', dataKey: 'additionalInfo' },
+    ], brandingConfig.logoUrl); // Passa o logoUrl
     toast({ title: "Exportação Concluída", description: "Ativos exportados para PDF." });
   };
 
@@ -388,3 +393,5 @@ export default function AssetsPage() {
     </div>
   );
 }
+    
+    
