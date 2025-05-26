@@ -187,7 +187,7 @@ export default function AddAssetPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Linha 1 */}
+                {/* Linha 1 - Nome, Patrimônio, Categoria */}
                 <FormField
                   control={form.control}
                   name="name"
@@ -246,7 +246,7 @@ export default function AddAssetPage() {
                   )}
                 />
                 
-                {/* Linha 2 */}
+                {/* Linha 2 - Fornecedor, Local Alocado, Data da Compra */}
                 <FormField
                   control={form.control}
                   name="supplier"
@@ -358,7 +358,7 @@ export default function AddAssetPage() {
                   )}
                 />
 
-                {/* Linha 3 */}
+                {/* Linha 3 - Nº NF, Nº Série, Valor Compra */}
                 <FormField
                   control={form.control}
                   name="invoiceNumber"
@@ -399,7 +399,7 @@ export default function AddAssetPage() {
                   )}
                 />
 
-                {/* Linha 4 */}
+                {/* Linha 4 - Valor Depreciado, Info Adicionais */}
                 <FormField
                   control={form.control}
                   name="previouslyDepreciatedValue"
@@ -420,12 +420,12 @@ export default function AddAssetPage() {
                   control={form.control}
                   name="additionalInfo"
                   render={({ field }) => (
-                    <FormItem className="lg:col-span-2 md:col-span-2"> {/* Ocupa 2 colunas em LG e MD */}
+                    <FormItem className="lg:col-span-2 md:col-span-2">
                       <FormLabel>Informações Adicionais (Opcional)</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Detalhes extras sobre o ativo, condições, observações, etc."
-                          className="resize-y min-h-[80px]"
+                          className="resize-y h-10 min-h-[40px]"
                           {...field}
                         />
                       </FormControl>
@@ -504,5 +504,3 @@ export default function AddAssetPage() {
     </div>
   );
 }
-
-    
