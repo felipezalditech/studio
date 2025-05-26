@@ -187,6 +187,7 @@ export default function AddAssetPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Linha 1 */}
                 <FormField
                   control={form.control}
                   name="name"
@@ -244,6 +245,8 @@ export default function AddAssetPage() {
                     </FormItem>
                   )}
                 />
+                
+                {/* Linha 2 */}
                 <FormField
                   control={form.control}
                   name="supplier"
@@ -316,7 +319,7 @@ export default function AddAssetPage() {
                   control={form.control}
                   name="purchaseDate"
                   render={({ field }) => (
-                    <FormItem> {/* Removido className="flex flex-col" */}
+                    <FormItem>
                       <FormLabel>Data da Compra</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
@@ -354,6 +357,8 @@ export default function AddAssetPage() {
                     </FormItem>
                   )}
                 />
+
+                {/* Linha 3 */}
                 <FormField
                   control={form.control}
                   name="invoiceNumber"
@@ -393,12 +398,14 @@ export default function AddAssetPage() {
                     </FormItem>
                   )}
                 />
+
+                {/* Linha 4 */}
                 <FormField
                   control={form.control}
                   name="previouslyDepreciatedValue"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Valor Já Depreciado (R$, Opcional)</FormLabel>
+                      <FormLabel>Valor Depreciado R$ (Opcional)</FormLabel>
                       <FormControl>
                         <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} />
                       </FormControl>
@@ -413,7 +420,7 @@ export default function AddAssetPage() {
                   control={form.control}
                   name="additionalInfo"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2 lg:col-span-2">
+                    <FormItem className="lg:col-span-2 md:col-span-2"> {/* Ocupa 2 colunas em LG e MD */}
                       <FormLabel>Informações Adicionais (Opcional)</FormLabel>
                       <FormControl>
                         <Textarea
