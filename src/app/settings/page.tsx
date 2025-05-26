@@ -1,29 +1,57 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Layers, SettingsIcon, PlusCircle, Edit2, Trash2, MoreHorizontal, MapPin } from "lucide-react";
+import { Layers, SettingsIcon, PlusCircle, Edit2, Trash2, MoreHorizontal, MapPin, Palette } from "lucide-react";
 import { useCategories, type AssetCategory } from '@/contexts/CategoryContext';
 import { CategoryFormDialog, type CategoryFormValues } from '@/components/categories/CategoryFormDialog';
-import { useLocations, type Location } from '@/contexts/LocationContext'; // Importado
-import { LocationFormDialog, type LocationFormValues } from '@/components/locations/LocationFormDialog'; // Importado
+import { useLocations, type Location } from '@/contexts/LocationContext';
+import { LocationFormDialog, type LocationFormValues } from '@/components/locations/LocationFormDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
+import { useBranding } from '@/contexts/BrandingContext';
+
+const brandingFormSchema = z.object({
+  companyName: z.string().min(1, "Nome da empresa é obrigatório").max(50, "Nome da empresa muito longo"),
+  logoUrl: z.string().url("Por favor, insira uma URL válida para o logo").or(z.literal("")),
+});
+type BrandingFormValues = z.infer<typeof brandingFormSchema>;
 
 export default function SettingsPage() {
   const { categories, addCategory, updateCategory, deleteCategory } = useCategories();
-  const { locations, addLocation, updateLocation, deleteLocation } = useLocations(); // Hooks de Local
+  const { locations, addLocation, updateLocation, deleteLocation } = useLocations();
+  const { brandingConfig, setBrandingConfig } = useBranding();
+  const { toast } = useToast();
+
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<AssetCategory | null>(null);
-  const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false); // Estado para diálogo de Local
-  const [editingLocation, setEditingLocation] = useState<Location | null>(null); // Estado para editar Local
+  const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false);
+  const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; type: 'category' | 'location' } | null>(null);
-  const { toast } = useToast();
+
+  const brandingForm = useForm<BrandingFormValues>({
+    resolver: zodResolver(brandingFormSchema),
+    defaultValues: brandingConfig,
+  });
+
+  useEffect(() => {
+    brandingForm.reset(brandingConfig);
+  }, [brandingConfig, brandingForm]);
+
+  const onBrandingSubmit = (data: BrandingFormValues) => {
+    setBrandingConfig(data);
+    toast({ title: "Sucesso!", description: "Configurações de marca atualizadas." });
+  };
 
   const handleOpenCategoryDialog = (category: AssetCategory | null = null) => {
     setEditingCategory(category);
@@ -75,11 +103,9 @@ export default function SettingsPage() {
     if (!itemToDelete) return;
 
     if (itemToDelete.type === 'category') {
-      // TODO: Adicionar verificação se a categoria está em uso.
       deleteCategory(itemToDelete.id);
       toast({ title: "Sucesso!", description: "Categoria excluída." });
     } else if (itemToDelete.type === 'location') {
-      // TODO: Adicionar verificação se o local está em uso.
       deleteLocation(itemToDelete.id);
       toast({ title: "Sucesso!", description: "Local excluído." });
     }
@@ -105,6 +131,56 @@ export default function SettingsPage() {
         <h1 className="text-3xl font-bold mb-2">Configurações</h1>
         <p className="text-muted-foreground">Gerencie as configurações gerais da aplicação e as regras de negócio.</p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center text-xl">
+            <Palette className="mr-2 h-5 w-5" />
+            Personalizar Marca
+          </CardTitle>
+          <CardDescription>
+            Defina o nome e o logo da sua empresa.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...brandingForm}>
+            <form onSubmit={brandingForm.handleSubmit(onBrandingSubmit)} className="space-y-6">
+              <FormField
+                control={brandingForm.control}
+                name="companyName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome da Empresa</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Sua Empresa LTDA" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={brandingForm.control}
+                name="logoUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL do Logo</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://exemplo.com/logo.png" {...field} />
+                    </FormControl>
+                     <FormDescription>
+                        Use URLs seguras (HTTPS). Cole a URL completa da imagem.
+                      </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end">
+                <Button type="submit">Salvar Alterações de Marca</Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -177,7 +253,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Seção de Gerenciar Locais */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>

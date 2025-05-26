@@ -18,7 +18,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { ThemeToggleButton } from '@/components/theme/ThemeToggleButton';
-import { BrandingModal } from '@/components/branding/BrandingModal';
+// import { BrandingModal } from '@/components/branding/BrandingModal'; // Removed
 import { useBranding } from '@/contexts/BrandingContext';
 import {
   Home,
@@ -55,7 +55,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <Sidebar className="border-r border-sidebar-border" collapsible="none"> {/* Alterado de "icon" para "none" */}
+      <Sidebar className="border-r border-sidebar-border" collapsible="none">
         <SidebarHeader className="p-4 bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 overflow-hidden">
             {brandingConfig.logoUrl ? (
@@ -79,7 +79,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
               {brandingConfig.companyName || 'Zaldi Imo'}
             </span>
           </Link>
-           {/* SidebarTrigger para desktop foi removido */}
         </SidebarHeader>
         <SidebarContent className="p-2">
           <SidebarMenu>
@@ -102,7 +101,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </SidebarContent>
         <SidebarFooter className="p-2 border-t border-sidebar-border">
            <SidebarMenu>
-            <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center"> {/* Esta classe pode não ter mais efeito se collapsible for 'none' */}
+            <SidebarMenuItem>
               <ThemeToggleButton />
             </SidebarMenuItem>
              <SidebarMenuItem>
@@ -120,7 +119,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
             "sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6",
             "sm:justify-end" 
         )}>
-          {/* SidebarTrigger para mobile/tablet - permanece para off-canvas */}
           <div className="sm:hidden">
             <SidebarTrigger>
               <PanelLeft />
@@ -129,9 +127,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
           
           <div className="hidden sm:flex flex-1" />
 
-          <div className="flex items-center gap-2">
+          {/* BrandingModal trigger was here, now removed */}
+          {/* <div className="flex items-center gap-2">
             <BrandingModal />
-          </div>
+          </div> */}
         </header>
         <main className="flex-grow p-4 sm:p-6 overflow-y-auto overflow-x-hidden">
           {children}
