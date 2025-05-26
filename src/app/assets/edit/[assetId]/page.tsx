@@ -51,7 +51,7 @@ const assetFormSchema = z.object({
 type AssetFormValues = z.infer<typeof assetFormSchema>;
 
 export default function EditAssetPage() {
-  const { assets, updateAsset, getAssetById } = useAssets(); // Adicionado getAssetById
+  const { assets, updateAsset, getAssetById } = useAssets();
   const { suppliers } = useSuppliers();
   const { categories } = useCategories();
   const { locations } = useLocations();
@@ -90,17 +90,20 @@ export default function EditAssetPage() {
         form.reset({
           ...assetToEdit,
           purchaseDate: assetToEdit.purchaseDate ? parseISO(assetToEdit.purchaseDate) : undefined,
+          previouslyDepreciatedValue: assetToEdit.previouslyDepreciatedValue || undefined,
           locationId: assetToEdit.locationId || '',
+          additionalInfo: assetToEdit.additionalInfo || '',
           imageDateUris: assetToEdit.imageDateUris || [],
         });
         setImagePreviews(assetToEdit.imageDateUris || []);
         setIsLoading(false);
+        setAssetNotFound(false);
       } else {
         setAssetNotFound(true);
         setIsLoading(false);
       }
     }
-  }, [assetId, form, getAssetById]);
+  }, [assetId, form, getAssetById, assets]); // Adicionado 'assets' à lista de dependências
 
 
   function onSubmit(data: AssetFormValues) {
@@ -230,7 +233,6 @@ export default function EditAssetPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Linha 1 */}
                 <FormField
                   control={form.control}
                   name="name"
@@ -302,7 +304,6 @@ export default function EditAssetPage() {
                   )}
                 />
                 
-                {/* Linha 2 */}
                 <FormField
                   control={form.control}
                   name="supplier"
@@ -434,7 +435,6 @@ export default function EditAssetPage() {
                   )}
                 />
 
-                {/* Linha 3 */}
                 <FormField
                   control={form.control}
                   name="invoiceNumber"
@@ -481,7 +481,6 @@ export default function EditAssetPage() {
                   )}
                 />
 
-                {/* Linha 4 */}
                 <FormField
                   control={form.control}
                   name="previouslyDepreciatedValue"
@@ -608,6 +607,5 @@ export default function EditAssetPage() {
     </div>
   );
 }
-
 
     
