@@ -13,10 +13,10 @@ import { DownloadIcon, FileTextIcon, PlusCircle } from 'lucide-react';
 import { exportToCSV, exportToPDF } from '@/lib/export-utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { isValid, parseISO, addDays, differenceInMonths, differenceInCalendarMonths } from 'date-fns';
+import { isValid, parseISO, addDays, differenceInCalendarMonths } from 'date-fns';
 import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
-import { useCategories, type AssetCategory } from '@/contexts/CategoryContext';
+import { useCategories } from '@/contexts/CategoryContext';
 import { AssetDetailsDialog } from '@/components/assets/AssetDetailsDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 
@@ -316,7 +316,7 @@ export default function AssetsPage() {
           />
         </CardContent>
         {(assetsWithCalculatedValues.length > 0 || hasSelectedItems) && (
-          <CardFooter className="flex flex-col items-end space-y-2 pt-4 border-t">
+          <CardFooter className="flex flex-col items-start space-y-2 pt-4 border-t">
             {hasSelectedItems && (
               <>
                 <div className="flex justify-between w-full max-w-xs">
@@ -372,5 +372,7 @@ export default function AssetsPage() {
     </div>
   );
 }
+
+    
 
     
