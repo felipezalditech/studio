@@ -16,6 +16,8 @@ export function ThemeToggleButton() {
   }, []);
 
   if (!mounted) {
+    // Retorna um botão desabilitado com um ícone padrão para evitar hydration mismatch
+    // e fornecer um placeholder visual enquanto o tema real não é conhecido no cliente.
     return <Button variant="outline" size="icon" className="w-9 h-9" disabled><Sun className="h-[1.2rem] w-[1.2rem]" /></Button>;
   }
 
@@ -33,9 +35,6 @@ export function ThemeToggleButton() {
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme('dark')}>
           Escuro
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('system')}>
-          Sistema
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
