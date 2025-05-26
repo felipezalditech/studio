@@ -15,18 +15,20 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAssets } from '@/contexts/AssetContext';
-import { useSuppliers } from '@/contexts/SupplierContext';
+// import { useSuppliers } from '@/contexts/SupplierContext'; // Removido, pois o SupplierCombobox lida com isso
 import { useCategories } from '@/contexts/CategoryContext';
 import { useLocations } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle, PlusCircle } from 'lucide-react';
+import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Asset } from '@/components/assets/types';
 import Image from 'next/image';
-import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog';
+// import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog'; // Removido
+import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox';
+
 
 const MAX_PHOTOS = 10;
 const NO_LOCATION_SELECTED_VALUE = "__NO_LOCATION_SELECTED__";
@@ -53,14 +55,14 @@ type AssetFormValues = z.infer<typeof assetFormSchema>;
 
 export default function AddAssetPage() {
   const { addAsset } = useAssets();
-  const { suppliers } = useSuppliers();
+  // const { suppliers } = useSuppliers(); // Removido
   const { categories } = useCategories();
   const { locations } = useLocations();
   const { toast } = useToast();
   const router = useRouter();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
+  // const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false); // Removido
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
@@ -191,6 +193,7 @@ export default function AddAssetPage() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  
                   <FormField
                     control={form.control}
                     name="name"
@@ -221,7 +224,7 @@ export default function AddAssetPage() {
                       </FormItem>
                     )}
                   />
-                  <FormField
+                   <FormField
                     control={form.control}
                     name="categoryId"
                     render={({ field }) => (
@@ -267,8 +270,7 @@ export default function AddAssetPage() {
                     name="supplier"
                     render={({ field }) => (
                       <FormItem>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
+                         <div className="flex items-center">
                             <FormLabel>Fornecedor</FormLabel>
                             <TooltipProvider>
                               <Tooltip>
@@ -276,40 +278,15 @@ export default function AddAssetPage() {
                                   <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Cadastre fornecedores na tela de "Fornecedores" ou clique em "Novo Fornecedor".</p>
+                                  <p>Digite para buscar. Se o fornecedor não existir, a opção para cadastrá-lo aparecerá. Clique no campo para ver todos os fornecedores.</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
                           </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsSupplierDialogOpen(true)}
-                            className="whitespace-nowrap"
-                          >
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Novo Fornecedor
-                          </Button>
-                        </div>
-                        <Select onValueChange={field.onChange} value={field.value || undefined} defaultValue={field.value || undefined}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione um fornecedor" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {suppliers.length === 0 ? (
-                              <SelectItem value="no-suppliers" disabled>Nenhum fornecedor cadastrado</SelectItem>
-                            ) : (
-                              suppliers.map((supplier) => (
-                                <SelectItem key={supplier.id} value={supplier.id}>
-                                  {supplier.nomeFantasia} ({supplier.razaoSocial})
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
+                        <SupplierCombobox
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -409,7 +386,7 @@ export default function AddAssetPage() {
                     name="invoiceNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <div className="flex items-center">
+                         <div className="flex items-center">
                           <FormLabel>Nº da Nota Fiscal</FormLabel>
                         </div>
                         <FormControl>
@@ -474,7 +451,7 @@ export default function AddAssetPage() {
                       </FormItem>
                     )}
                   />
-                  <FormField
+                   <FormField
                     control={form.control}
                     name="additionalInfo"
                     render={({ field }) => (
@@ -573,18 +550,13 @@ export default function AddAssetPage() {
           </CardContent>
         </Card>
       </div>
-      {isSupplierDialogOpen && (
-        <SupplierFormDialog
-          open={isSupplierDialogOpen}
-          onOpenChange={setIsSupplierDialogOpen}
-          initialData={null}
-          onSupplierAdded={(newSupplierId) => {
-            form.setValue('supplier', newSupplierId, { shouldValidate: true, shouldDirty: true });
-            setIsSupplierDialogOpen(false);
-            // Toast já é mostrado pelo SupplierFormDialog
-          }}
-        />
-      )}
+      {/* 
+      O SupplierFormDialog não é mais aberto diretamente desta página,
+      mas sim pelo SupplierCombobox. 
+      Se necessário, o SupplierCombobox pode ter sua própria instância interna do diálogo.
+      */}
     </>
   );
 }
+
+    
