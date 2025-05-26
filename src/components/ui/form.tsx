@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -90,12 +91,13 @@ const FormLabel = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
 >(({ className, ...props }, ref) => {
-  const { error, formItemId } = useFormField()
+  const { error, formItemId, isTouched } = useFormField()
+  const { formState } = useFormContext()
 
   return (
     <Label
       ref={ref}
-      className={cn(error && "text-destructive", className)}
+      className={cn(error && (formState.isSubmitted || isTouched) && "text-destructive", className)}
       htmlFor={formItemId}
       {...props}
     />
@@ -146,11 +148,17 @@ const FormMessage = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, children, ...props }, ref) => {
-  const { error, formMessageId } = useFormField()
+  const { error, formMessageId, isTouched } = useFormField()
+  const { formState } = useFormContext()
   const body = error ? String(error?.message ?? "") : children
 
   if (!body) {
     return null
+  }
+
+  // Only show the message if there's an error AND (the form has been submitted OR the field has been touched)
+  if (!(error && (formState.isSubmitted || isTouched))) {
+    return null;
   }
 
   return (
