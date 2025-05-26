@@ -1,7 +1,7 @@
 
 "use client";
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext } from 'react'; // Removed useEffect
 import useLocalStorage from '@/lib/hooks/use-local-storage';
 import type { AssetCategory } from '@/types/category';
 
@@ -16,7 +16,6 @@ interface CategoryContextType {
 
 const CategoryContext = createContext<CategoryContextType | undefined>(undefined);
 
-// Dados mock iniciais para categorias
 const initialMockCategories: AssetCategory[] = [
   { id: 'cat-001', name: 'Eletrônicos', depreciationMethod: 'linear', usefulLifeInYears: 5, residualValuePercentage: 10, depreciationRateType: 'annual', depreciationRateValue: 20 },
   { id: 'cat-002', name: 'Móveis', depreciationMethod: 'linear', usefulLifeInYears: 10, residualValuePercentage: 5 },
@@ -25,14 +24,10 @@ const initialMockCategories: AssetCategory[] = [
 ];
 
 export const CategoryProvider = ({ children }: { children: ReactNode }) => {
-  const [categories, setCategories] = useLocalStorage<AssetCategory[]>('assetCategories', []);
+  const [categories, setCategories] = useLocalStorage<AssetCategory[]>('assetCategories', initialMockCategories);
 
-  useEffect(() => {
-    const storedCategories = window.localStorage.getItem('assetCategories');
-    if (!storedCategories || JSON.parse(storedCategories).length === 0) {
-      setCategories(initialMockCategories);
-    }
-  }, [setCategories]);
+  // The useEffect to set initialMockCategories if localStorage is empty is no longer needed.
+  // useLocalStorage handles this with initialMockCategories as the default.
 
   const addCategory = (categoryData: Omit<AssetCategory, 'id'>) => {
     const newCategory: AssetCategory = {
@@ -70,4 +65,3 @@ export const useCategories = (): CategoryContextType => {
   }
   return context;
 };
-

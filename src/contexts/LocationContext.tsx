@@ -1,7 +1,7 @@
 
 "use client";
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext } from 'react'; // Removed useEffect
 import useLocalStorage from '@/lib/hooks/use-local-storage';
 import type { Location } from '@/types/location';
 
@@ -24,14 +24,10 @@ const initialMockLocations: Location[] = [
 ];
 
 export const LocationProvider = ({ children }: { children: ReactNode }) => {
-  const [locations, setLocations] = useLocalStorage<Location[]>('assetLocations', []);
+  const [locations, setLocations] = useLocalStorage<Location[]>('assetLocations', initialMockLocations);
 
-  useEffect(() => {
-    const storedLocations = window.localStorage.getItem('assetLocations');
-    if (!storedLocations || JSON.parse(storedLocations).length === 0) {
-      setLocations(initialMockLocations);
-    }
-  }, [setLocations]);
+  // The useEffect to set initialMockLocations if localStorage is empty is no longer needed.
+  // useLocalStorage handles this with initialMockLocations as the default.
 
   const addLocation = (locationData: Omit<Location, 'id'>) => {
     const newLocation: Location = {

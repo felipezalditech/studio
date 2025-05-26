@@ -1,7 +1,7 @@
 
 "use client";
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext } from 'react'; // Removed useEffect
 import useLocalStorage from '@/lib/hooks/use-local-storage';
 
 export interface Supplier {
@@ -9,7 +9,7 @@ export interface Supplier {
   razaoSocial: string;
   nomeFantasia: string;
   cnpj: string;
-  contato: string; // Pode ser telefone, email, etc.
+  contato: string; 
   endereco: string;
 }
 
@@ -19,12 +19,11 @@ interface SupplierContextType {
   updateSupplier: (supplierData: Supplier) => void;
   deleteSupplier: (supplierId: string) => void;
   getSupplierById: (supplierId: string) => Supplier | undefined;
-  setSuppliers: Dispatch<SetStateAction<Supplier[]>>; // Para consistência com AssetContext
+  setSuppliers: Dispatch<SetStateAction<Supplier[]>>;
 }
 
 const SupplierContext = createContext<SupplierContextType | undefined>(undefined);
 
-// Dados mock iniciais para fornecedores
 const initialMockSuppliers: Supplier[] = [
   { id: 'sup-001', razaoSocial: 'Tech Solutions LTDA', nomeFantasia: 'Tech Solutions', cnpj: '12.345.678/0001-99', contato: '(11) 98765-4321', endereco: 'Rua Exemplo, 123, São Paulo, SP' },
   { id: 'sup-002', razaoSocial: 'Móveis Conforto & Cia', nomeFantasia: 'Móveis Conforto', cnpj: '98.765.432/0001-11', contato: 'contato@moveisconforto.com', endereco: 'Av. Principal, 456, Rio de Janeiro, RJ' },
@@ -33,16 +32,10 @@ const initialMockSuppliers: Supplier[] = [
 
 
 export const SupplierProvider = ({ children }: { children: ReactNode }) => {
-  const [suppliers, setSuppliers] = useLocalStorage<Supplier[]>('suppliers', []);
+  const [suppliers, setSuppliers] = useLocalStorage<Supplier[]>('suppliers', initialMockSuppliers);
 
-   // Carregar dados mock apenas se o localStorage estiver vazio
-   useEffect(() => {
-    const storedSuppliers = window.localStorage.getItem('suppliers');
-    if (!storedSuppliers || JSON.parse(storedSuppliers).length === 0) {
-      setSuppliers(initialMockSuppliers);
-    }
-  }, [setSuppliers]);
-
+  // The useEffect to set initialMockSuppliers if localStorage is empty is no longer needed.
+  // useLocalStorage handles this with initialMockSuppliers as the default.
 
   const addSupplier = (supplierData: Omit<Supplier, 'id'>) => {
     const newSupplier: Supplier = {
