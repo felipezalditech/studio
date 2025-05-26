@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import Image from 'next/image'; // Still needed for AvatarImage if URL is used, but system logo image removed
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import {
@@ -28,9 +28,15 @@ import {
   Settings,
   LogOut,
   PanelLeft,
-  Building, // Added for Avatar fallback
+  Building,
 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Added
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 
 interface MenuItem {
@@ -48,7 +54,6 @@ const menuItems: MenuItem[] = [
   { href: '/settings', label: 'Configurações', icon: Settings },
 ];
 
-// Helper function to get initials
 const getInitials = (name: string) => {
   if (!name) return "";
   const words = name.split(" ");
@@ -68,7 +73,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <Sidebar className="border-r border-sidebar-border" collapsible="none">
         <SidebarHeader className="p-4 bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 overflow-hidden">
-            {/* System icon/name - only text "Zaldi Imo" as requested */}
             <span className="font-semibold text-lg truncate">
               Zaldi Imo
             </span>
@@ -98,12 +102,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <SidebarMenuItem>
               <ThemeToggleButton />
             </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton className="w-full justify-start" tooltip={{ children: 'Sair', side: 'right', align: 'center' }}>
-                    <LogOut className="h-5 w-5 flex-shrink-0" />
-                    <span className="truncate">Sair</span>
-                </SidebarMenuButton>
-             </SidebarMenuItem>
+            {/* Removido o botão de Sair daqui */}
            </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
@@ -118,23 +117,33 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </SidebarTrigger>
           </div>
           
-          <div className="flex-1" /> {/* Spacer to push items to the right */}
+          <div className="flex-1" />
 
           <div className="flex items-center gap-2">
-            <Avatar className="h-9 w-9">
-              <AvatarImage 
-                src={brandingConfig.logoUrl || undefined} // Pass undefined if empty to trigger fallback
-                alt={brandingConfig.companyName ? `${brandingConfig.companyName} Logo` : 'Logo da Empresa'} 
-                data-ai-hint="company logo avatar"
-              />
-              <AvatarFallback>
-                {brandingConfig.companyName ? (
-                  getInitials(brandingConfig.companyName)
-                ) : (
-                  <Building className="h-5 w-5" />
-                )}
-              </AvatarFallback>
-            </Avatar>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="h-9 w-9 cursor-pointer">
+                  <AvatarImage 
+                    src={brandingConfig.logoUrl || undefined}
+                    alt={brandingConfig.companyName ? `${brandingConfig.companyName} Logo` : 'Logo da Empresa'} 
+                    data-ai-hint="company logo avatar"
+                  />
+                  <AvatarFallback>
+                    {brandingConfig.companyName ? (
+                      getInitials(brandingConfig.companyName)
+                    ) : (
+                      <Building className="h-5 w-5" />
+                    )}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => console.log('Sair clicado')}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
         <main className="flex-grow p-4 sm:p-6 overflow-y-auto overflow-x-hidden">
