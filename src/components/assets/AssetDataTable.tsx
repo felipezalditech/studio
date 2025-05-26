@@ -62,11 +62,6 @@ export function AssetDataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
     },
-    // Tradução para paginação e seleção
-    // Esta é uma forma de customizar textos, mas para alguns textos fixos como "No results",
-    // a tradução é feita diretamente no componente TableCell abaixo.
-    // A biblioteca @tanstack/react-table não tem um sistema de i18n embutido simples para todos os textos.
-    // Manualmente ajustamos os textos mais visíveis.
   })
 
   return (
@@ -89,21 +84,19 @@ export function AssetDataTable<TData, TValue>({
                 (column) => column.getCanHide()
               )
               .map((column) => {
-                // Para traduzir IDs de coluna, seria necessário um mapeamento.
-                // Por simplicidade, mantemos os IDs originais (ex: "purchaseDate")
-                // mas os cabeçalhos são traduzidos em `columns.tsx`.
-                const columnDisplayName = column.id === "select" ? "Seleção" :
-                                          column.id === "purchaseDate" ? "Data da Compra" :
-                                          column.id === "name" ? "Nome" :
-                                          column.id === "invoiceNumber" ? "Nº Fatura" :
-                                          column.id === "serialNumber" ? "Nº Série" :
-                                          column.id === "assetTag" ? "Etiqueta do Ativo" :
-                                          column.id === "supplier" ? "Fornecedor" :
-                                          column.id === "category" ? "Categoria" :
-                                          column.id === "purchaseValue" ? "Valor de Compra" :
-                                          column.id === "currentValue" ? "Valor Atual" :
-                                          column.id === "actions" ? "Ações" : // Adicionado para a nova coluna
-                                          column.id;
+                const columnDisplayName =
+                  column.id === "select" ? "Seleção" :
+                  column.id === "purchaseDate" ? "Data Compra" :
+                  column.id === "name" ? "Nome do Ativo" :
+                  column.id === "assetTag" ? "Patrimônio" :
+                  column.id === "invoiceNumber" ? "Nota Fiscal" :
+                  column.id === "serialNumber" ? "Nº de Série" :
+                  column.id === "categoryId" ? "Categoria" :
+                  column.id === "supplier" ? "Fornecedor" :
+                  column.id === "purchaseValue" ? "Valor de Compra" :
+                  column.id === "currentValue" ? "Valor Atual" :
+                  column.id === "actions" ? "Ações" :
+                  column.id; // Fallback to column.id if no match
                 return (
                   <DropdownMenuCheckboxItem
                     key={column.id}
@@ -185,4 +178,3 @@ export function AssetDataTable<TData, TValue>({
     </div>
   )
 }
-
