@@ -316,39 +316,41 @@ export default function AssetsPage() {
           />
         </CardContent>
         {(assetsWithCalculatedValues.length > 0 || hasSelectedItems) && (
-          <CardFooter className="flex flex-col items-start space-y-2 pt-4 border-t">
-            {hasSelectedItems && (
-              <>
-                <div className="flex justify-between w-full max-w-xs">
-                  <span className="font-semibold text-primary">Total Compra Selecionado:</span>
-                  <span className="font-bold text-primary">{formatCurrency(totalPurchaseValueSelected)}</span>
-                </div>
-                <div className="flex justify-between w-full max-w-xs">
-                  <span className="font-semibold text-primary">Total Depreciado Selecionado:</span>
-                  <span className="font-bold text-primary">{formatCurrency(totalDepreciatedValueSelected)}</span>
-                </div>
-                <div className="flex justify-between w-full max-w-xs">
-                  <span className="font-semibold text-primary">Total Atual Selecionado:</span>
-                  <span className="font-bold text-primary">{formatCurrency(totalCurrentValueSelected)}</span>
-                </div>
-                <hr className="w-full max-w-xs my-1 border-border" />
-              </>
-            )}
+          <CardFooter className="flex flex-row justify-between items-start pt-4 border-t">
+            <div className="space-y-1">
+              {hasSelectedItems && (
+                <>
+                  <div className="flex justify-between w-full max-w-xs">
+                    <span className="font-semibold text-primary">Total Compra Selecionado:</span>
+                    <span className="font-bold text-primary ml-2">{formatCurrency(totalPurchaseValueSelected)}</span>
+                  </div>
+                  <div className="flex justify-between w-full max-w-xs">
+                    <span className="font-semibold text-primary">Total Depreciado Selecionado:</span>
+                    <span className="font-bold text-primary ml-2">{formatCurrency(totalDepreciatedValueSelected)}</span>
+                  </div>
+                  <div className="flex justify-between w-full max-w-xs">
+                    <span className="font-semibold text-primary">Total Atual Selecionado:</span>
+                    <span className="font-bold text-primary ml-2">{formatCurrency(totalCurrentValueSelected)}</span>
+                  </div>
+                </>
+              )}
+            </div>
+            
             {assetsWithCalculatedValues.length > 0 && (
-              <>
-                <div className="flex justify-between w-full max-w-xs">
-                  <span className="font-semibold text-muted-foreground">Total Geral Compra:</span>
-                  <span className="font-bold">{formatCurrency(totalPurchaseValueFiltered)}</span>
-                </div>
-                <div className="flex justify-between w-full max-w-xs">
-                  <span className="font-semibold text-muted-foreground">Total Geral Depreciado:</span>
-                  <span className="font-bold text-orange-600 dark:text-orange-500">{formatCurrency(totalDepreciatedValueFiltered)}</span>
-                </div>
-                <div className="flex justify-between w-full max-w-xs">
-                  <span className="font-semibold text-muted-foreground">Total Geral Atual:</span>
-                  <span className="font-bold text-green-600 dark:text-green-500">{formatCurrency(totalCurrentValueFiltered)}</span>
-                </div>
-              </>
+              <div className="space-y-1 text-right">
+                 <div className="flex justify-between w-full max-w-xs">
+                    <span className="font-semibold text-muted-foreground">Total Geral Compra:</span>
+                    <span className="font-bold ml-2">{formatCurrency(totalPurchaseValueFiltered)}</span>
+                  </div>
+                  <div className="flex justify-between w-full max-w-xs">
+                    <span className="font-semibold text-muted-foreground">Total Geral Depreciado:</span>
+                    <span className="font-bold text-orange-600 dark:text-orange-500 ml-2">{formatCurrency(totalDepreciatedValueFiltered)}</span>
+                  </div>
+                  <div className="flex justify-between w-full max-w-xs">
+                    <span className="font-semibold text-muted-foreground">Total Geral Atual:</span>
+                    <span className="font-bold text-green-600 dark:text-green-500 ml-2">{formatCurrency(totalCurrentValueFiltered)}</span>
+                  </div>
+              </div>
             )}
           </CardFooter>
         )}
@@ -372,7 +374,3 @@ export default function AssetsPage() {
     </div>
   );
 }
-
-    
-
-    
