@@ -14,13 +14,13 @@ import { format, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSuppliers } from '@/contexts/SupplierContext';
-import { useCategories } from '@/contexts/CategoryContext'; // Alterado de useAssets para useCategories
+import { useCategories } from '@/contexts/CategoryContext';
 
 export interface AssetFiltersState {
-  name: string;
-  supplier: string; // Supplier ID
+  name: string; // Agora busca por nome, patrimônio ou nº de série
+  supplier: string;
   invoiceNumber: string;
-  categoryId: string; // Alterado de category para categoryId
+  categoryId: string;
   purchaseDateFrom: Date | undefined;
   purchaseDateTo: Date | undefined;
 }
@@ -35,7 +35,7 @@ const ALL_ITEMS_SENTINEL_VALUE = "_ALL_";
 
 export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFiltersProps) {
   const { suppliers: allSuppliersFromContext } = useSuppliers();
-  const { categories: allCategoriesFromContext } = useCategories(); // Usando o contexto de categorias
+  const { categories: allCategoriesFromContext } = useCategories();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -58,7 +58,7 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Input
-            placeholder="Filtrar por Nome..."
+            placeholder="Nome, Patrimônio ou Nº Série..."
             name="name"
             value={filters.name}
             onChange={handleInputChange}
@@ -147,3 +147,5 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
     </Card>
   );
 }
+
+    

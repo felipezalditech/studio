@@ -17,10 +17,10 @@ import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { AssetDetailsDialog } from '@/components/assets/AssetDetailsDialog';
-import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'; // Importado
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 
 const initialFilters: AssetFiltersState = {
-  name: '',
+  name: '', // Este campo será usado para nome, patrimônio ou nº de série
   supplier: '',
   invoiceNumber: '',
   categoryId: '',
@@ -33,7 +33,7 @@ const formatCurrency = (amount: number) => {
 };
 
 export default function AssetsPage() {
-  const { assets, deleteAsset } = useAssets(); // Adicionado deleteAsset
+  const { assets, deleteAsset } = useAssets();
   const { suppliers: allSuppliersFromContext, getSupplierById } = useSuppliers();
   const { categories: allCategoriesFromContext, getCategoryById } = useCategories();
   const [filters, setFilters] = useState<AssetFiltersState>(initialFilters);
@@ -41,7 +41,7 @@ export default function AssetsPage() {
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<Asset | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
-  const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null); // Para o diálogo de confirmação
+  const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null);
   const [isConfirmDeleteAssetDialogOpen, setIsConfirmDeleteAssetDialogOpen] = useState(false);
 
   const supplierNameMap = useMemo(() => {
@@ -89,8 +89,14 @@ export default function AssetsPage() {
       const purchaseDate = parseISO(asset.purchaseDate); 
       const dateFrom = filters.purchaseDateFrom;
       const dateTo = filters.purchaseDateTo;
+      const searchTerm = filters.name.toLowerCase();
 
-      const nameMatch = asset.name.toLowerCase().includes(filters.name.toLowerCase());
+      const searchTermMatch = searchTerm 
+        ? asset.name.toLowerCase().includes(searchTerm) ||
+          asset.assetTag.toLowerCase().includes(searchTerm) ||
+          (asset.serialNumber && asset.serialNumber.toLowerCase().includes(searchTerm))
+        : true;
+
       const supplierMatch = filters.supplier ? asset.supplier === filters.supplier : true; 
       const invoiceMatch = asset.invoiceNumber.toLowerCase().includes(filters.invoiceNumber.toLowerCase());
       const categoryMatch = filters.categoryId ? asset.categoryId === filters.categoryId : true;
@@ -98,7 +104,7 @@ export default function AssetsPage() {
       const dateFromMatch = dateFrom && isValid(purchaseDate) ? purchaseDate >= dateFrom : true;
       const dateToMatch = dateTo && isValid(purchaseDate) ? purchaseDate <= dateTo : true;
 
-      return nameMatch && supplierMatch && invoiceMatch && categoryMatch && dateFromMatch && dateToMatch;
+      return searchTermMatch && supplierMatch && invoiceMatch && categoryMatch && dateFromMatch && dateToMatch;
     });
   }, [assets, filters]);
 
@@ -206,3 +212,5 @@ export default function AssetsPage() {
     </div>
   );
 }
+
+    
