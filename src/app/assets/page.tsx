@@ -3,6 +3,7 @@
 
 import React, { useMemo, useCallback, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Importado
 import type { RowSelectionState } from '@tanstack/react-table';
 import { AssetDataTable } from '@/components/assets/AssetDataTable';
 import { getColumns } from '@/components/assets/columns';
@@ -20,7 +21,7 @@ import { useCategories } from '@/contexts/CategoryContext';
 import { useLocations } from '@/contexts/LocationContext'; 
 import { AssetDetailsDialog } from '@/components/assets/AssetDetailsDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
-import { useBranding } from '@/contexts/BrandingContext'; // Importado
+import { useBranding } from '@/contexts/BrandingContext';
 
 const initialFilters: AssetFiltersState = {
   name: '',
@@ -49,12 +50,13 @@ export default function AssetsPage() {
   const { suppliers: allSuppliersFromContext, getSupplierById } = useSuppliers();
   const { categories: allCategoriesFromContext, getCategoryById } = useCategories();
   const { locations: allLocationsFromContext, getLocationById } = useLocations(); 
-  const { brandingConfig } = useBranding(); // Adicionado
+  const { brandingConfig } = useBranding();
   const [filters, setFilters] = useState<AssetFiltersState>(initialFilters);
   const { toast } = useToast();
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<AssetWithCalculatedValues | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const router = useRouter(); // Adicionado
 
   const [assetToDelete, setAssetToDelete] = useState<AssetWithCalculatedValues | null>(null);
   const [isConfirmDeleteAssetDialogOpen, setIsConfirmDeleteAssetDialogOpen] = useState(false);
@@ -93,6 +95,11 @@ export default function AssetsPage() {
     setIsConfirmDeleteAssetDialogOpen(true);
   }, []);
 
+  const handleEditAsset = useCallback((asset: AssetWithCalculatedValues) => {
+    // TODO: Adicionar verificação de permissão aqui no futuro, se necessário
+    router.push(`/assets/edit/${asset.id}`);
+  }, [router]);
+
   const confirmDeleteAsset = () => {
     if (assetToDelete) {
       deleteAsset(assetToDelete.id);
@@ -106,8 +113,8 @@ export default function AssetsPage() {
   };
 
   const columns = useMemo(
-    () => getColumns(handleViewDetails, handleDeleteAssetRequest),
-    [handleViewDetails, handleDeleteAssetRequest]
+    () => getColumns(handleViewDetails, handleDeleteAssetRequest, handleEditAsset), // Adicionado handleEditAsset
+    [handleViewDetails, handleDeleteAssetRequest, handleEditAsset]
   );
 
   const assetsWithCalculatedValues = useMemo(() => {
@@ -257,7 +264,7 @@ export default function AssetsPage() {
       { header: 'Depreciação Total', dataKey: 'depreciatedValue' },
       { header: 'Valor Atual', dataKey: 'currentValue' },
       { header: 'Info Adicional', dataKey: 'additionalInfo' },
-    ], brandingConfig.logoUrl); // Passa o logoUrl
+    ], brandingConfig.logoUrl);
     toast({ title: "Exportação Concluída", description: "Ativos exportados para PDF." });
   };
 
@@ -393,5 +400,3 @@ export default function AssetsPage() {
     </div>
   );
 }
-    
-    

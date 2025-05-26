@@ -13,6 +13,7 @@ interface AssetContextType {
   addAsset: (asset: Omit<Asset, 'id'>) => void;
   updateAsset: (updatedAsset: Asset) => void;
   deleteAsset: (assetId: string) => void;
+  getAssetById: (assetId: string) => Asset | undefined; // Adicionado
   setAssets: Dispatch<SetStateAction<Asset[]>>;
   getCategoryNameById: (categoryId: string) => string | undefined;
   getLocationNameById: (locationId?: string) => string | undefined;
@@ -40,6 +41,7 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
       imageDateUris: assetData.imageDateUris || [],
       locationId: assetData.locationId || undefined,
       additionalInfo: assetData.additionalInfo || undefined,
+      previouslyDepreciatedValue: assetData.previouslyDepreciatedValue,
     };
     setAssets(prevAssets => [...prevAssets, newAsset]);
   };
@@ -52,6 +54,10 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteAsset = (assetId: string) => {
     setAssets(prevAssets => prevAssets.filter(asset => asset.id !== assetId));
+  };
+
+  const getAssetById = (assetId: string): Asset | undefined => {
+    return assets.find(asset => asset.id === assetId);
   };
 
   const getCategoryNameById = (categoryId: string): string | undefined => {
@@ -67,7 +73,7 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <AssetContext.Provider value={{ assets, addAsset, updateAsset, deleteAsset, setAssets, getCategoryNameById, getLocationNameById }}>
+    <AssetContext.Provider value={{ assets, addAsset, updateAsset, deleteAsset, getAssetById, setAssets, getCategoryNameById, getLocationNameById }}>
       {children}
     </AssetContext.Provider>
   );

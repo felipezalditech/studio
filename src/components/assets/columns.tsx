@@ -48,7 +48,8 @@ const SortableHeader = <TData, TValue>({ column, title }: { column: HeaderContex
 
 export const getColumns = (
   onViewDetails: (asset: AssetWithCalculatedValues) => void,
-  onDeleteAssetRequest: (asset: AssetWithCalculatedValues) => void
+  onDeleteAssetRequest: (asset: AssetWithCalculatedValues) => void,
+  onEditAsset: (asset: AssetWithCalculatedValues) => void // Adicionado
 ): ColumnDef<AssetWithCalculatedValues>[] => [
   {
     id: "select",
@@ -108,7 +109,7 @@ export const getColumns = (
       return row.original.supplierName || "Desconhecido";
     },
   },
-  { // Nova coluna
+  { 
     accessorKey: "locationName",
     header: ({ column }) => <SortableHeader column={column} title="Local Alocado" />,
     cell: ({ row }) => {
@@ -140,6 +141,11 @@ export const getColumns = (
         onDeleteAssetRequest(asset);
       };
 
+      const handleEditRequest = () => {
+        // TODO: Adicionar verificação de permissão aqui no futuro
+        onEditAsset(asset);
+      };
+
       return (
         <div className="text-right">
           <DropdownMenu>
@@ -155,7 +161,7 @@ export const getColumns = (
                 <Eye className="mr-2 h-4 w-4" />
                 Visualizar Detalhes
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log(`Editar ativo: ${asset.name}`)} disabled>
+              <DropdownMenuItem onClick={handleEditRequest}>
                 <Edit2 className="mr-2 h-4 w-4" />
                 Editar
               </DropdownMenuItem>
