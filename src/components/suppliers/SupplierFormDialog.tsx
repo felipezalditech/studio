@@ -8,6 +8,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Dialog,
   DialogContent,
@@ -24,25 +25,42 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { useSuppliers, type Supplier } from '@/contexts/SupplierContext'; // Import useSuppliers
-import { useToast } from '@/hooks/use-toast'; // Import useToast
+import { useSuppliers, type Supplier } from '@/contexts/SupplierContext';
+import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
 
-const supplierFormSchema = z.object({
-  razaoSocial: z.string().min(3, "Razão social deve ter no mínimo 3 caracteres."),
-  nomeFantasia: z.string().min(2, "Nome fantasia deve ter no mínimo 2 caracteres."),
-  cnpj: z.string().refine(value => /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value) || /^\d{14}$/.test(value) , "CNPJ inválido. Use XX.XXX.XXX/XXXX-XX ou XXXXXXXXXXXXXX."),
-  contato: z.string().min(5, "Contato é obrigatório."),
-  endereco: z.string().min(5, "Endereço é obrigatório."),
-});
+const supplierFormSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("juridica"),
+    razaoSocial: z.string().min(3, "Razão Social deve ter no mínimo 3 caracteres."),
+    nomeFantasia: z.string().min(2, "Nome Fantasia deve ter no mínimo 2 caracteres."),
+    cnpj: z.string().refine(value => /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value) || /^\d{14}$/.test(value), {
+        message: "CNPJ inválido. Use XX.XXX.XXX/XXXX-XX ou XXXXXXXXXXXXXX.",
+    }),
+    contato: z.string().min(5, "Contato é obrigatório."),
+    endereco: z.string().min(5, "Endereço é obrigatório."),
+    cpf: z.string().optional(), // Para manter a estrutura do formulário consistente
+  }),
+  z.object({
+    type: z.literal("fisica"),
+    razaoSocial: z.string().min(3, "Nome Completo deve ter no mínimo 3 caracteres."),
+    nomeFantasia: z.string().optional(),
+    cpf: z.string().refine(value => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(value) || /^\d{11}$/.test(value), {
+        message: "CPF inválido. Use XXX.XXX.XXX-XX ou XXXXXXXXXXX.",
+    }),
+    contato: z.string().min(5, "Contato é obrigatório."),
+    endereco: z.string().min(5, "Endereço é obrigatório."),
+    cnpj: z.string().optional(), // Para manter a estrutura do formulário consistente
+  }),
+]);
 
 export type SupplierFormValues = z.infer<typeof supplierFormSchema>;
 
 interface SupplierFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: Supplier | Partial<Supplier> | null; // Permitir Partial para nomeFantasia
-  onSupplierAdded?: (supplierId: string) => void; // Callback para quando um novo fornecedor é adicionado
+  initialData?: Supplier | Partial<Supplier> | null;
+  onSupplierAdded?: (supplierId: string) => void;
 }
 
 export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplierAdded }: SupplierFormDialogProps) {
@@ -52,32 +70,63 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(supplierFormSchema),
     defaultValues: {
+      type: (initialData as Supplier)?.type || 'juridica',
       razaoSocial: initialData?.razaoSocial || '',
       nomeFantasia: initialData?.nomeFantasia || '',
-      cnpj: initialData?.cnpj || '',
+      cnpj: (initialData as Supplier)?.cnpj || '',
+      cpf: (initialData as Supplier)?.cpf || '',
       contato: initialData?.contato || '',
       endereco: initialData?.endereco || '',
     },
   });
 
+  const selectedType = form.watch('type');
+
   useEffect(() => {
-    if (open) { 
+    if (open) {
       form.reset({
+        type: (initialData as Supplier)?.type || 'juridica',
         razaoSocial: initialData?.razaoSocial || '',
         nomeFantasia: initialData?.nomeFantasia || '',
-        cnpj: initialData?.cnpj || '',
+        cnpj: (initialData as Supplier)?.cnpj || '',
+        cpf: (initialData as Supplier)?.cpf || '',
         contato: initialData?.contato || '',
         endereco: initialData?.endereco || '',
       });
     }
   }, [initialData, form, open]);
 
+  useEffect(() => {
+    // Limpa campos irrelevantes ao mudar o tipo
+    if (selectedType === 'fisica') {
+      form.setValue('cnpj', undefined);
+      form.trigger('cpf'); // Revalidar CPF se necessário
+    } else if (selectedType === 'juridica') {
+      form.setValue('cpf', undefined);
+      form.trigger('cnpj'); // Revalidar CNPJ se necessário
+      if (!form.getValues('nomeFantasia')) { // Se PJ e nome fantasia estiver vazio, pode ser preenchido
+        form.trigger('nomeFantasia');
+      }
+    }
+  }, [selectedType, form]);
+
+
   function onSubmit(data: SupplierFormValues) {
-    if (initialData && 'id' in initialData && initialData.id) { // Editando - verifica se initialData tem 'id'
-      updateSupplierInContext({ ...initialData, ...data, id: initialData.id });
+    const dataToSave: Omit<Supplier, 'id'> = {
+        type: data.type,
+        razaoSocial: data.razaoSocial,
+        nomeFantasia: data.nomeFantasia || '', // Garante que nomeFantasia seja string
+        cnpj: data.type === 'juridica' ? data.cnpj : undefined,
+        cpf: data.type === 'fisica' ? data.cpf : undefined,
+        contato: data.contato,
+        endereco: data.endereco,
+    };
+
+    if (initialData && 'id' in initialData && initialData.id) {
+      updateSupplierInContext({ ...dataToSave, id: initialData.id });
       toast({ title: "Sucesso!", description: "Fornecedor atualizado." });
-    } else { // Adicionando
-      const newSupplier = addSupplierToContext(data);
+    } else {
+      const newSupplier = addSupplierToContext(dataToSave);
       toast({ title: "Sucesso!", description: "Fornecedor adicionado." });
       if (onSupplierAdded && newSupplier) {
         onSupplierAdded(newSupplier.id);
@@ -96,15 +145,46 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-3">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-3">
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Tipo de Cadastro</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex space-x-4"
+                    >
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="juridica" />
+                        </FormControl>
+                        <FormLabel className="font-normal">Pessoa Jurídica</FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="fisica" />
+                        </FormControl>
+                        <FormLabel className="font-normal">Pessoa Física</FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="razaoSocial"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Razão Social</FormLabel>
+                  <FormLabel>{selectedType === 'fisica' ? 'Nome Completo' : 'Razão Social'}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Empresa Exemplo LTDA ME" {...field} />
+                    <Input placeholder={selectedType === 'fisica' ? 'Ex: João da Silva' : 'Ex: Empresa Exemplo LTDA ME'} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,27 +195,47 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
               name="nomeFantasia"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome Fantasia</FormLabel>
+                  <FormLabel>Nome Fantasia {selectedType === 'fisica' && '(Opcional)'}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Loja Exemplo" {...field} />
+                    <Input placeholder="Ex: Loja Exemplo ou Apelido" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="cnpj"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>CNPJ</FormLabel>
-                  <FormControl>
-                    <Input placeholder="XX.XXX.XXX/XXXX-XX" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+            {selectedType === 'juridica' && (
+              <FormField
+                control={form.control}
+                name="cnpj"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CNPJ</FormLabel>
+                    <FormControl>
+                      <Input placeholder="XX.XXX.XXX/XXXX-XX" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {selectedType === 'fisica' && (
+              <FormField
+                control={form.control}
+                name="cpf"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CPF</FormLabel>
+                    <FormControl>
+                      <Input placeholder="XXX.XXX.XXX-XX" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               control={form.control}
               name="contato"
@@ -166,9 +266,9 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button 
-                type="button" // Alterado de submit para button
-                onClick={form.handleSubmit(onSubmit)} // Adicionado onClick para submeter o formulário do diálogo
+              <Button
+                type="button"
+                onClick={form.handleSubmit(onSubmit)}
                 disabled={form.formState.isSubmitting}
               >
                 <Save className="mr-2 h-4 w-4" />
@@ -181,4 +281,3 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
     </Dialog>
   );
 }
-

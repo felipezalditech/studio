@@ -8,12 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle, Edit2, Trash2 } from 'lucide-react';
 import { useSuppliers, type Supplier } from '@/contexts/SupplierContext';
-import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog'; // Removido SupplierFormValues
+import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
 
 export default function SuppliersPage() {
-  const { suppliers, deleteSupplier } = useSuppliers(); // Removido addSupplier, updateSupplier
+  const { suppliers, deleteSupplier } = useSuppliers();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
@@ -24,8 +24,6 @@ export default function SuppliersPage() {
     setEditingSupplier(supplier);
     setIsDialogOpen(true);
   };
-
-  // handleSubmitSupplier não é mais necessário aqui, o diálogo lida com isso.
 
   const handleDeleteSupplierRequest = (supplierId: string) => {
     setSupplierToDeleteId(supplierId);
@@ -38,6 +36,17 @@ export default function SuppliersPage() {
       toast({ title: "Sucesso!", description: "Fornecedor excluído." });
       setSupplierToDeleteId(null);
     }
+  };
+
+  const getDocument = (supplier: Supplier) => {
+    if (supplier.type === 'juridica') {
+      return supplier.cnpj || 'N/A';
+    }
+    return supplier.cpf || 'N/A';
+  };
+
+  const getSupplierTypeLabel = (type: 'fisica' | 'juridica') => {
+    return type === 'fisica' ? 'Física' : 'Jurídica';
   };
 
   return (
@@ -65,8 +74,9 @@ export default function SuppliersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome Fantasia</TableHead>
-                  <TableHead>Razão Social</TableHead>
-                  <TableHead>CNPJ</TableHead>
+                  <TableHead>Razão Social / Nome Completo</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>CNPJ/CPF</TableHead>
                   <TableHead>Contato</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -74,9 +84,10 @@ export default function SuppliersPage() {
               <TableBody>
                 {suppliers.map((supplier) => (
                   <TableRow key={supplier.id}>
-                    <TableCell>{supplier.nomeFantasia}</TableCell>
+                    <TableCell>{supplier.nomeFantasia || (supplier.type === 'fisica' ? 'N/A' : supplier.razaoSocial)}</TableCell>
                     <TableCell>{supplier.razaoSocial}</TableCell>
-                    <TableCell>{supplier.cnpj}</TableCell>
+                    <TableCell>{getSupplierTypeLabel(supplier.type)}</TableCell>
+                    <TableCell>{getDocument(supplier)}</TableCell>
                     <TableCell>{supplier.contato}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -114,7 +125,6 @@ export default function SuppliersPage() {
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           initialData={editingSupplier}
-          // onSupplierAdded não é necessário aqui, a lista já se atualiza via contexto.
         />
       )}
 
@@ -123,7 +133,7 @@ export default function SuppliersPage() {
         onOpenChange={setIsConfirmDeleteDialogOpen}
         onConfirm={confirmDeleteSupplier}
         title="Confirmar Exclusão de Fornecedor"
-        description={`Tem certeza que deseja excluir o fornecedor "${suppliers.find(s => s.id === supplierToDeleteId)?.nomeFantasia || ''}"? Esta ação não pode ser desfeita.`}
+        description={`Tem certeza que deseja excluir o fornecedor "${suppliers.find(s => s.id === supplierToDeleteId)?.nomeFantasia || suppliers.find(s => s.id === supplierToDeleteId)?.razaoSocial || ''}"? Esta ação não pode ser desfeita.`}
       />
     </div>
   );
