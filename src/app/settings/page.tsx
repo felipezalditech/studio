@@ -136,7 +136,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center text-xl">
             <Palette className="mr-2 h-5 w-5" />
-            Personalizar Marca
+            Dados da empresa
           </CardTitle>
           <CardDescription>
             Defina o nome e o logo da sua empresa.
