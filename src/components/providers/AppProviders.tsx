@@ -6,7 +6,8 @@ import { ThemeProvider } from 'next-themes';
 import { BrandingProvider } from '@/contexts/BrandingContext';
 import { AssetProvider } from '@/contexts/AssetContext';
 import { SupplierProvider } from '@/contexts/SupplierContext';
-import { CategoryProvider } from '@/contexts/CategoryContext'; // Importado
+import { CategoryProvider } from '@/contexts/CategoryContext';
+import { LocationProvider } from '@/contexts/LocationContext'; // Importado
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function AppProviders({ children }: { children: ReactNode }) {
@@ -14,12 +15,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <BrandingProvider>
         <SupplierProvider>
-          <CategoryProvider> {/* Adicionado */}
-            <AssetProvider>
-              <TooltipProvider>
-                {children}
-              </TooltipProvider>
-            </AssetProvider>
+          <CategoryProvider>
+            <LocationProvider> {/* Adicionado */}
+              <AssetProvider>
+                <TooltipProvider>
+                  {children}
+                </TooltipProvider>
+              </AssetProvider>
+            </LocationProvider>
           </CategoryProvider>
         </SupplierProvider>
       </BrandingProvider>

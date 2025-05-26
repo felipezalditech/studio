@@ -1,0 +1,123 @@
+
+"use client";
+
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import type { Location } from '@/types/location';
+import { Save } from 'lucide-react';
+
+const locationFormSchema = z.object({
+  name: z.string().min(2, "Nome do local deve ter no mínimo 2 caracteres."),
+  address: z.string().optional(),
+});
+
+export type LocationFormValues = z.infer<typeof locationFormSchema>;
+
+interface LocationFormDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmitAction: (data: LocationFormValues) => void;
+  initialData?: Location | null;
+}
+
+export function LocationFormDialog({ open, onOpenChange, onSubmitAction, initialData }: LocationFormDialogProps) {
+  const form = useForm<LocationFormValues>({
+    resolver: zodResolver(locationFormSchema),
+    defaultValues: initialData || {
+      name: '',
+      address: '',
+    },
+  });
+
+  useEffect(() => {
+    if (initialData) {
+      form.reset(initialData);
+    } else {
+      form.reset({
+        name: '',
+        address: '',
+      });
+    }
+  }, [initialData, form, open]);
+
+  function onSubmit(data: LocationFormValues) {
+    onSubmitAction(data);
+    onOpenChange(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[525px]">
+        <DialogHeader>
+          <DialogTitle>{initialData ? 'Editar Local' : 'Adicionar Novo Local'}</DialogTitle>
+          <DialogDescription>
+            {initialData ? 'Modifique os dados do local abaixo.' : 'Preencha os dados para cadastrar um novo local.'}
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-3">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome do Local</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: Escritório Central, Almoxarifado" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Endereço (Opcional)</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Rua Exemplo, 123, Bairro, Cidade - UF" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={form.formState.isSubmitting}
+              >
+                <Save className="mr-2 h-4 w-4" />
+                {form.formState.isSubmitting ? "Salvando..." : (initialData ? "Salvar Alterações" : "Adicionar Local")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}

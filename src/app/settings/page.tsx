@@ -6,18 +6,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Layers, SettingsIcon, PlusCircle, Edit2, Trash2, MoreHorizontal } from "lucide-react";
+import { Layers, SettingsIcon, PlusCircle, Edit2, Trash2, MoreHorizontal, MapPin } from "lucide-react";
 import { useCategories, type AssetCategory } from '@/contexts/CategoryContext';
 import { CategoryFormDialog, type CategoryFormValues } from '@/components/categories/CategoryFormDialog';
-import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'; // Importado
+import { useLocations, type Location } from '@/contexts/LocationContext'; // Importado
+import { LocationFormDialog, type LocationFormValues } from '@/components/locations/LocationFormDialog'; // Importado
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
   const { categories, addCategory, updateCategory, deleteCategory } = useCategories();
+  const { locations, addLocation, updateLocation, deleteLocation } = useLocations(); // Hooks de Local
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<AssetCategory | null>(null);
-  const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false); // Estado para o diálogo de confirmação
-  const [categoryToDeleteId, setCategoryToDeleteId] = useState<string | null>(null); // Estado para o ID da categoria a ser excluída
+  const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false); // Estado para diálogo de Local
+  const [editingLocation, setEditingLocation] = useState<Location | null>(null); // Estado para editar Local
+  const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; type: 'category' | 'location' } | null>(null);
   const { toast } = useToast();
 
   const handleOpenCategoryDialog = (category: AssetCategory | null = null) => {
@@ -45,19 +50,42 @@ export default function SettingsPage() {
     setIsCategoryDialogOpen(false);
   };
 
-  const handleDeleteCategoryRequest = (categoryId: string) => {
-    setCategoryToDeleteId(categoryId);
+  const handleOpenLocationDialog = (location: Location | null = null) => {
+    setEditingLocation(location);
+    setIsLocationDialogOpen(true);
+  };
+
+  const handleSubmitLocation = (data: LocationFormValues) => {
+    if (editingLocation) {
+      updateLocation({ ...editingLocation, ...data });
+      toast({ title: "Sucesso!", description: "Local atualizado." });
+    } else {
+      addLocation(data);
+      toast({ title: "Sucesso!", description: "Local adicionado." });
+    }
+    setIsLocationDialogOpen(false);
+  };
+
+  const handleDeleteRequest = (id: string, type: 'category' | 'location') => {
+    setItemToDelete({ id, type });
     setIsConfirmDeleteDialogOpen(true);
   };
 
-  const confirmDeleteCategory = () => {
-    if (categoryToDeleteId) {
-      // TODO: Adicionar verificação se a categoria está em uso por algum ativo antes de excluir.
-      deleteCategory(categoryToDeleteId);
+  const confirmDelete = () => {
+    if (!itemToDelete) return;
+
+    if (itemToDelete.type === 'category') {
+      // TODO: Adicionar verificação se a categoria está em uso.
+      deleteCategory(itemToDelete.id);
       toast({ title: "Sucesso!", description: "Categoria excluída." });
-      setCategoryToDeleteId(null);
+    } else if (itemToDelete.type === 'location') {
+      // TODO: Adicionar verificação se o local está em uso.
+      deleteLocation(itemToDelete.id);
+      toast({ title: "Sucesso!", description: "Local excluído." });
     }
+    setItemToDelete(null);
   };
+
 
   const getDepreciationMethodLabel = (method: AssetCategory['depreciationMethod']) => {
     if (method === 'linear') return 'Linear';
@@ -132,7 +160,7 @@ export default function SettingsPage() {
                             Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleDeleteCategoryRequest(category.id)} // Alterado
+                            onClick={() => handleDeleteRequest(category.id, 'category')}
                             className="text-red-600 hover:!text-red-600 focus:text-red-600 focus:!bg-red-100 dark:focus:!bg-red-700/50"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -148,6 +176,71 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Seção de Gerenciar Locais */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center text-xl">
+              <MapPin className="mr-2 h-5 w-5" />
+              Gerenciar Locais dos Ativos
+            </CardTitle>
+            <CardDescription>
+              Defina os locais onde os ativos podem ser alocados.
+            </CardDescription>
+          </div>
+          <Button onClick={() => handleOpenLocationDialog()}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Local
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {locations.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">Nenhum local cadastrado.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome do Local</TableHead>
+                  <TableHead>Endereço</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {locations.map((location) => (
+                  <TableRow key={location.id}>
+                    <TableCell>{location.name}</TableCell>
+                    <TableCell>{location.address || 'N/A'}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleOpenLocationDialog(location)}>
+                            <Edit2 className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteRequest(location.id, 'location')}
+                            className="text-red-600 hover:!text-red-600 focus:text-red-600 focus:!bg-red-100 dark:focus:!bg-red-700/50"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader>
@@ -178,12 +271,21 @@ export default function SettingsPage() {
         />
       )}
 
+      {isLocationDialogOpen && (
+        <LocationFormDialog
+          open={isLocationDialogOpen}
+          onOpenChange={setIsLocationDialogOpen}
+          onSubmitAction={handleSubmitLocation}
+          initialData={editingLocation}
+        />
+      )}
+
       <ConfirmationDialog
         open={isConfirmDeleteDialogOpen}
         onOpenChange={setIsConfirmDeleteDialogOpen}
-        onConfirm={confirmDeleteCategory}
-        title="Confirmar Exclusão de Categoria"
-        description={`Tem certeza que deseja excluir a categoria selecionada? Esta ação não pode ser desfeita.`}
+        onConfirm={confirmDelete}
+        title={`Confirmar Exclusão de ${itemToDelete?.type === 'category' ? 'Categoria' : 'Local'}`}
+        description={`Tem certeza que deseja excluir ${itemToDelete?.type === 'category' ? 'a categoria selecionada' : 'o local selecionado'}? Esta ação não pode ser desfeita.`}
       />
     </div>
   );

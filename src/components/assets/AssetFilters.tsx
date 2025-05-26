@@ -15,12 +15,14 @@ import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useCategories } from '@/contexts/CategoryContext';
+import { useLocations } from '@/contexts/LocationContext'; // Importado
 
 export interface AssetFiltersState {
-  name: string; // Agora busca por nome, patrimônio ou nº de série
+  name: string;
   supplier: string;
   invoiceNumber: string;
   categoryId: string;
+  locationId: string; // Novo
   purchaseDateFrom: Date | undefined;
   purchaseDateTo: Date | undefined;
 }
@@ -36,6 +38,7 @@ const ALL_ITEMS_SENTINEL_VALUE = "_ALL_";
 export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFiltersProps) {
   const { suppliers: allSuppliersFromContext } = useSuppliers();
   const { categories: allCategoriesFromContext } = useCategories();
+  const { locations: allLocationsFromContext } = useLocations(); // Novo
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -56,7 +59,7 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
         <CardTitle className="text-xl">Filtrar Ativos</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Input
             placeholder="Nome, Patrimônio ou Nº Série..."
             name="name"
@@ -87,6 +90,16 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
             <SelectContent>
               <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todas as Categorias</SelectItem>
               {allCategoriesFromContext.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {/* Novo filtro de Local Alocado */}
+          <Select value={filters.locationId || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('locationId')}>
+            <SelectTrigger className="text-sm">
+              <SelectValue placeholder="Filtrar por Local Alocado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todos os Locais</SelectItem>
+              {allLocationsFromContext.map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}
             </SelectContent>
           </Select>
 
@@ -137,15 +150,14 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
               />
             </PopoverContent>
           </Popover>
-        </div>
-        <div className="mt-4 flex justify-end">
-            <Button onClick={onResetFilters} variant="outline">
+           {/* Espaço para manter o layout de 4 colunas, ou um botão de reset */}
+           <div className="flex items-end justify-end">
+            <Button onClick={onResetFilters} variant="outline" className="w-full md:w-auto">
                 <RotateCcwIcon className="mr-2 h-4 w-4" /> Redefinir Filtros
             </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
   );
 }
-
-    

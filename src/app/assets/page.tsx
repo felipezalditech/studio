@@ -17,6 +17,7 @@ import { isValid, parseISO, addDays, differenceInCalendarMonths } from 'date-fns
 import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useCategories } from '@/contexts/CategoryContext';
+import { useLocations } from '@/contexts/LocationContext'; // Importado
 import { AssetDetailsDialog } from '@/components/assets/AssetDetailsDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 
@@ -25,6 +26,7 @@ const initialFilters: AssetFiltersState = {
   supplier: '',
   invoiceNumber: '',
   categoryId: '',
+  locationId: '', // Novo
   purchaseDateFrom: undefined,
   purchaseDateTo: undefined,
 };
@@ -34,16 +36,18 @@ const formatCurrency = (amount: number) => {
 };
 
 export interface AssetWithCalculatedValues extends Asset {
-  depreciatedValue: number; // Total accumulated depreciation
+  depreciatedValue: number;
   calculatedCurrentValue: number;
   categoryName?: string;
   supplierName?: string;
+  locationName?: string; // Novo
 }
 
 export default function AssetsPage() {
   const { assets, deleteAsset } = useAssets();
   const { suppliers: allSuppliersFromContext, getSupplierById } = useSuppliers();
   const { categories: allCategoriesFromContext, getCategoryById } = useCategories();
+  const { locations: allLocationsFromContext, getLocationById } = useLocations(); // Novo
   const [filters, setFilters] = useState<AssetFiltersState>(initialFilters);
   const { toast } = useToast();
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<AssetWithCalculatedValues | null>(null);
@@ -69,6 +73,14 @@ export default function AssetsPage() {
     return map;
   }, [allCategoriesFromContext]);
 
+  const locationNameMap = useMemo(() => { // Novo
+    const map = new Map<string, string>();
+    allLocationsFromContext.forEach(location => {
+      map.set(location.id, location.name);
+    });
+    return map;
+  }, [allLocationsFromContext]);
+
   const handleViewDetails = useCallback((asset: AssetWithCalculatedValues) => {
     setSelectedAssetForDetails(asset);
     setIsDetailsDialogOpen(true);
@@ -90,7 +102,7 @@ export default function AssetsPage() {
       setRowSelection({});
     }
   };
-  
+
   const columns = useMemo(
     () => getColumns(handleViewDetails, handleDeleteAssetRequest),
     [handleViewDetails, handleDeleteAssetRequest]
@@ -114,16 +126,17 @@ export default function AssetsPage() {
         const supplierMatch = filters.supplier ? asset.supplier === filters.supplier : true;
         const invoiceMatch = asset.invoiceNumber.toLowerCase().includes(filters.invoiceNumber.toLowerCase());
         const categoryMatch = filters.categoryId ? asset.categoryId === filters.categoryId : true;
+        const locationMatch = filters.locationId ? asset.locationId === filters.locationId : true; // Novo filtro
 
         const dateFromMatch = dateFrom && isValid(purchaseDate) ? purchaseDate >= dateFrom : true;
         const dateToMatch = dateTo && isValid(purchaseDate) ? purchaseDate <= dateTo : true;
 
-        return searchTermMatch && supplierMatch && invoiceMatch && categoryMatch && dateFromMatch && dateToMatch;
+        return searchTermMatch && supplierMatch && invoiceMatch && categoryMatch && locationMatch && dateFromMatch && dateToMatch;
       })
       .map(asset => {
         const category = getCategoryById(asset.categoryId);
         let finalDepreciatedValue = asset.previouslyDepreciatedValue || 0;
-        let calculatedCurrentValue = asset.purchaseValue - finalDepreciatedValue; // Start with current value after previous depreciation
+        let calculatedCurrentValue = asset.purchaseValue - finalDepreciatedValue;
 
         if (category) {
           const purchaseDateObj = parseISO(asset.purchaseDate);
@@ -133,9 +146,8 @@ export default function AssetsPage() {
             if (today >= depreciationStartDate) {
               const actualPurchaseValue = asset.purchaseValue;
               const residualAmount = actualPurchaseValue * (category.residualValuePercentage / 100);
-              // Total that can be depreciated over the asset's entire life with the company.
               const totalDepreciableOverAssetLife = Math.max(0, actualPurchaseValue - residualAmount);
-              
+
               let newlyCalculatedDepreciation = 0;
               const assetAgeInMonthsForSystemDepreciation = differenceInCalendarMonths(today, depreciationStartDate);
 
@@ -145,7 +157,6 @@ export default function AssetsPage() {
                   if (category.usefulLifeInYears && category.usefulLifeInYears > 0) {
                     const totalUsefulLifeInMonths = category.usefulLifeInYears * 12;
                     if (totalUsefulLifeInMonths > 0) {
-                       // The monthly amount is based on the *full* depreciable base of a *new* asset of this type.
                       monthlyDepreciationAmount = totalDepreciableOverAssetLife / totalUsefulLifeInMonths;
                     }
                   } else if (category.depreciationRateValue && category.depreciationRateType) {
@@ -157,16 +168,11 @@ export default function AssetsPage() {
                       monthlyDepreciationAmount = totalDepreciableOverAssetLife * rate;
                     }
                   }
-                  // Depreciate for the months since purchase by current company.
                   newlyCalculatedDepreciation = monthlyDepreciationAmount * assetAgeInMonthsForSystemDepreciation;
                 }
-                // Add other depreciation methods here if needed
               }
-              
-              // Combine previously depreciated value with newly calculated system depreciation
+
               const combinedDepreciation = (asset.previouslyDepreciatedValue || 0) + newlyCalculatedDepreciation;
-              
-              // Final depreciated value cannot exceed the total depreciable amount over asset's life
               finalDepreciatedValue = Math.max(0, Math.min(combinedDepreciation, totalDepreciableOverAssetLife));
               calculatedCurrentValue = actualPurchaseValue - finalDepreciatedValue;
             }
@@ -178,9 +184,10 @@ export default function AssetsPage() {
           calculatedCurrentValue,
           categoryName: categoryNameMap.get(asset.categoryId) || asset.categoryId,
           supplierName: supplierNameMap.get(asset.supplier) || asset.supplier,
+          locationName: asset.locationId ? locationNameMap.get(asset.locationId) || asset.locationId : 'N/A', // Novo
         };
       });
-  }, [assets, filters, getCategoryById, categoryNameMap, supplierNameMap]);
+  }, [assets, filters, getCategoryById, categoryNameMap, supplierNameMap, locationNameMap]);
 
 
   const handleResetFilters = useCallback(() => {
@@ -202,6 +209,7 @@ export default function AssetsPage() {
       'Nº Série': asset.serialNumber || 'N/A',
       'Categoria': asset.categoryName,
       'Fornecedor': asset.supplierName,
+      'Local Alocado': asset.locationName || 'N/A', // Novo
       'Valor Compra': asset.purchaseValue,
       'Valor Já Depreciado (Inicial)': asset.previouslyDepreciatedValue || 0,
       'Valor Depreciado Total': asset.depreciatedValue,
@@ -217,7 +225,7 @@ export default function AssetsPage() {
       return;
     }
     const assetsForExport = assetsWithCalculatedValues.map(asset => ({
-      ...asset, 
+      ...asset,
       id: asset.id,
       purchaseDate: asset.purchaseDate,
       name: asset.name,
@@ -226,20 +234,20 @@ export default function AssetsPage() {
       serialNumber: asset.serialNumber || 'N/A',
       category: asset.categoryName,
       supplier: asset.supplierName,
+      location: asset.locationName || 'N/A', // Novo
       purchaseValue: asset.purchaseValue,
       previouslyDepreciatedValue: asset.previouslyDepreciatedValue || 0,
-      depreciatedValue: asset.depreciatedValue, 
-      currentValue: asset.calculatedCurrentValue, 
+      depreciatedValue: asset.depreciatedValue,
+      currentValue: asset.calculatedCurrentValue,
     }));
     exportToPDF(assetsForExport, 'ativos_filtrados.pdf', [
       { header: 'ID', dataKey: 'id' },
       { header: 'Data Compra', dataKey: 'purchaseDate' },
       { header: 'Nome', dataKey: 'name' },
       { header: 'Patrimônio', dataKey: 'assetTag' },
-      // { header: 'Nota Fiscal', dataKey: 'invoiceNumber' },
-      // { header: 'Nº Série', dataKey: 'serialNumber' },
       { header: 'Categoria', dataKey: 'category' },
       { header: 'Fornecedor', dataKey: 'supplier' },
+      { header: 'Local', dataKey: 'location' }, // Novo
       { header: 'Valor Compra', dataKey: 'purchaseValue' },
       { header: 'Valor Já Deprec.', dataKey: 'previouslyDepreciatedValue' },
       { header: 'Depreciação Total', dataKey: 'depreciatedValue' },
@@ -274,10 +282,10 @@ export default function AssetsPage() {
         currentSum += asset.calculatedCurrentValue;
       }
     });
-    return { 
-        totalPurchaseValueSelected: purchaseSum, 
+    return {
+        totalPurchaseValueSelected: purchaseSum,
         totalCurrentValueSelected: currentSum,
-        totalDepreciatedValueSelected: depreciatedSum 
+        totalDepreciatedValueSelected: depreciatedSum
     };
   }, [assetsWithCalculatedValues, rowSelection]);
 
@@ -287,9 +295,9 @@ export default function AssetsPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold mb-6">Consultar Ativos</h1>
-      <AssetFilters 
-        filters={filters} 
-        setFilters={setFilters} 
+      <AssetFilters
+        filters={filters}
+        setFilters={setFilters}
         onResetFilters={handleResetFilters}
       />
 
@@ -314,9 +322,9 @@ export default function AssetsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <AssetDataTable 
-            columns={columns} 
-            data={assetsWithCalculatedValues} 
+          <AssetDataTable
+            columns={columns}
+            data={assetsWithCalculatedValues}
             rowSelection={rowSelection}
             onRowSelectionChange={setRowSelection}
           />
@@ -341,7 +349,7 @@ export default function AssetsPage() {
                 </>
               )}
             </div>
-            
+
             {assetsWithCalculatedValues.length > 0 && (
               <div className="space-y-1 text-right">
                  <div className="flex justify-between w-full max-w-xs">

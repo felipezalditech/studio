@@ -29,17 +29,17 @@ import {
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from "lucide-react"
-import type { AssetWithCalculatedValues } from "@/app/assets/page"; 
+import type { AssetWithCalculatedValues } from "@/app/assets/page";
 
 
-interface DataTableProps<TData extends AssetWithCalculatedValues, TValue> { 
+interface DataTableProps<TData extends AssetWithCalculatedValues, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   rowSelection: RowSelectionState
   onRowSelectionChange: React.Dispatch<React.SetStateAction<RowSelectionState>>
 }
 
-export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>({ 
+export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>({
   columns,
   data,
   rowSelection,
@@ -100,11 +100,12 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
                   column.id === "assetTag" ? "Patrimônio" :
                   column.id === "invoiceNumber" ? "Nota Fiscal" :
                   column.id === "serialNumber" ? "Nº de Série" :
-                  column.id === "categoryName" ? "Categoria" : 
-                  column.id === "supplierName" ? "Fornecedor" : 
+                  column.id === "categoryName" ? "Categoria" :
+                  column.id === "supplierName" ? "Fornecedor" :
+                  column.id === "locationName" ? "Local Alocado" : // Novo
                   column.id === "purchaseValue" ? "Valor de Compra" :
-                  column.id === "depreciatedValue" ? "Valor Depreciado" : 
-                  column.id === "calculatedCurrentValue" ? "Valor Atual" : 
+                  column.id === "depreciatedValue" ? "Valor Depreciado" :
+                  column.id === "calculatedCurrentValue" ? "Valor Atual" :
                   column.id === "actions" ? "Ações" :
                   column.id;
                 return (

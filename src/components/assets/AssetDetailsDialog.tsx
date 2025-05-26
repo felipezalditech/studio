@@ -42,16 +42,16 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
 
   const confirmRemoveImage = () => {
     if (!asset || !asset.imageDateUris || imageIndexToDelete === null) return;
-    
+
     const updatedImageUris = asset.imageDateUris.filter((_, index) => index !== imageIndexToDelete);
-    const { depreciatedValue, calculatedCurrentValue, categoryName, supplierName, ...baseAsset } = asset;
+    const { depreciatedValue, calculatedCurrentValue, categoryName, supplierName, locationName, ...baseAsset } = asset;
     updateAsset({ ...baseAsset, imageDateUris: updatedImageUris });
-    
+
     toast({
       title: "Foto Removida",
       description: "A foto selecionada foi removida com sucesso.",
     });
-    setImageIndexToDelete(null); 
+    setImageIndexToDelete(null);
   };
 
 
@@ -87,6 +87,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
               <p><strong>Patrimônio:</strong> {asset.assetTag}</p>
               <p><strong>Categoria:</strong> {asset.categoryName || asset.categoryId}</p>
               <p><strong>Fornecedor:</strong> {asset.supplierName || asset.supplier}</p>
+              <p><strong>Local Alocado:</strong> {asset.locationName || 'N/A'}</p> {/* Novo */}
               <p><strong>Data da Compra:</strong> {formatDate(asset.purchaseDate)}</p>
               <p><strong>Nº Nota Fiscal:</strong> {asset.invoiceNumber}</p>
               <p><strong>Nº Série:</strong> {asset.serialNumber || "N/A"}</p>
@@ -111,28 +112,28 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-2 border rounded-md bg-muted/10">
               {asset.imageDateUris.map((uri, index) => (
                 <div key={index} className="relative group aspect-square border rounded-md overflow-hidden">
-                  <Image 
-                    src={uri} 
-                    alt={`Foto ${index + 1} de ${asset.name}`} 
-                    layout="fill" 
+                  <Image
+                    src={uri}
+                    alt={`Foto ${index + 1} de ${asset.name}`}
+                    layout="fill"
                     objectFit="contain"
                     data-ai-hint="asset photo detail"
                   />
                   <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex justify-center space-x-1">
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
+                    <Button
+                      variant="outline"
+                      size="icon"
                       className="h-7 w-7 border-gray-300 text-gray-300 hover:bg-white/20 hover:text-white"
-                      onClick={() => handleDownloadImage(uri, index)} 
+                      onClick={() => handleDownloadImage(uri, index)}
                       title="Baixar Foto"
                     >
                       <Download className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="icon" 
+                    <Button
+                      variant="destructive"
+                      size="icon"
                       className="h-7 w-7"
-                      onClick={() => handleRemoveImageRequest(index)} 
+                      onClick={() => handleRemoveImageRequest(index)}
                       title="Excluir Foto"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -155,7 +156,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
         </DialogFooter>
       </DialogContent>
 
-      {asset.id && imageIndexToDelete !== null && ( 
+      {asset.id && imageIndexToDelete !== null && (
         <ConfirmationDialog
           open={isConfirmDeleteImageDialogOpen}
           onOpenChange={setIsConfirmDeleteImageDialogOpen}

@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useCategories } from '@/contexts/CategoryContext';
+import { useLocations } from '@/contexts/LocationContext'; // Importado
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { CalendarIcon, Save, UploadCloud, XCircle } from 'lucide-react';
@@ -35,8 +36,9 @@ const assetFormSchema = z.object({
   invoiceNumber: z.string().min(1, "Número da nota fiscal é obrigatório."),
   serialNumber: z.string().optional(),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
-  supplier: z.string().min(1, "Fornecedor é obrigatório."), // Supplier ID
-  categoryId: z.string().min(1, "Categoria é obrigatória."), // Category ID
+  supplier: z.string().min(1, "Fornecedor é obrigatório."),
+  categoryId: z.string().min(1, "Categoria é obrigatória."),
+  locationId: z.string().optional(), // Novo campo
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
   previouslyDepreciatedValue: z.coerce.number().min(0, "Valor já depreciado não pode ser negativo.").optional(),
   imageDateUris: z.array(z.string()).max(MAX_PHOTOS, `Máximo de ${MAX_PHOTOS} fotos permitidas.`).optional(),
@@ -48,6 +50,7 @@ export default function AddAssetPage() {
   const { addAsset } = useAssets();
   const { suppliers } = useSuppliers();
   const { categories } = useCategories();
+  const { locations } = useLocations(); // Usar locations
   const { toast } = useToast();
   const router = useRouter();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -63,6 +66,7 @@ export default function AddAssetPage() {
       assetTag: '',
       supplier: '',
       categoryId: '',
+      locationId: '', // Valor padrão
       purchaseValue: 0,
       previouslyDepreciatedValue: undefined,
       imageDateUris: [],
@@ -86,6 +90,7 @@ export default function AddAssetPage() {
       currentValue: initialCurrentValue,
       imageDateUris: data.imageDateUris || [],
       previouslyDepreciatedValue: data.previouslyDepreciatedValue,
+      locationId: data.locationId || undefined, // Garantir que seja undefined se vazio
     };
     addAsset(assetDataToSave);
     toast({
@@ -107,7 +112,7 @@ export default function AddAssetPage() {
           description: `Você já adicionou o máximo de ${MAX_PHOTOS} fotos.`,
           variant: "destructive",
         });
-        if (fileInputRef.current) fileInputRef.current.value = ''; 
+        if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
@@ -120,12 +125,12 @@ export default function AddAssetPage() {
           variant: "default",
         });
       }
-      
+
       const newPreviewsArray = [...imagePreviews];
       const newUrisArray = [...currentUris];
 
       let filesRead = 0;
-      if (filesToProcess.length === 0) { 
+      if (filesToProcess.length === 0) {
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
@@ -139,8 +144,8 @@ export default function AddAssetPage() {
           filesRead++;
           if (filesRead === filesToProcess.length) {
             setImagePreviews(newPreviewsArray);
-            fieldOnChange(newUrisArray); 
-            if (fileInputRef.current) fileInputRef.current.value = ''; 
+            fieldOnChange(newUrisArray);
+            if (fileInputRef.current) fileInputRef.current.value = '';
           }
         };
         reader.readAsDataURL(file);
@@ -167,7 +172,7 @@ export default function AddAssetPage() {
           <p className="text-muted-foreground">Preencha os campos abaixo para cadastrar um novo ativo.</p>
         </div>
       </div>
-      
+
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle>Detalhes do Ativo</CardTitle>
@@ -176,7 +181,7 @@ export default function AddAssetPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
                   name="name"
@@ -260,6 +265,38 @@ export default function AddAssetPage() {
                       </Select>
                       <FormDescription>
                         Cadastre fornecedores na tela de "Fornecedores".
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField /* Novo campo Local Alocado */
+                  control={form.control}
+                  name="locationId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Local Alocado</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um local" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                           <SelectItem value="">Nenhum local selecionado</SelectItem>
+                          {locations.length === 0 ? (
+                             <SelectItem value="no-locations" disabled>Nenhum local cadastrado</SelectItem>
+                          ) : (
+                            locations.map((location) => (
+                              <SelectItem key={location.id} value={location.id}>
+                                {location.name}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Cadastre locais na tela de "Configurações".
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -368,7 +405,7 @@ export default function AddAssetPage() {
                 <FormField
                   control={form.control}
                   name="imageDateUris"
-                  render={({ field }) => ( 
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center">
                         <UploadCloud className="mr-2 h-5 w-5" />
@@ -378,9 +415,9 @@ export default function AddAssetPage() {
                         <Input
                           type="file"
                           accept="image/*"
-                          multiple 
+                          multiple
                           ref={fileInputRef}
-                          onChange={(e) => handleImageChange(e, field.onChange as any)} 
+                          onChange={(e) => handleImageChange(e, field.onChange as any)}
                           className="cursor-pointer"
                           disabled={(form.getValues('imageDateUris')?.length || 0) >= MAX_PHOTOS}
                         />

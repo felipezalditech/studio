@@ -5,22 +5,25 @@ import React, { createContext, useContext, useMemo, useEffect } from 'react';
 import useLocalStorage from '@/lib/hooks/use-local-storage';
 import type { Asset } from '@/components/assets/types';
 import { mockAssets as initialMockAssets } from '@/components/assets/data';
-import { useCategories } from './CategoryContext'; 
+import { useCategories } from './CategoryContext';
+import { useLocations } from './LocationContext'; // Importado
 
 interface AssetContextType {
   assets: Asset[];
   addAsset: (asset: Omit<Asset, 'id'>) => void;
-  updateAsset: (updatedAsset: Asset) => void; 
+  updateAsset: (updatedAsset: Asset) => void;
   deleteAsset: (assetId: string) => void;
   setAssets: Dispatch<SetStateAction<Asset[]>>;
   getCategoryNameById: (categoryId: string) => string | undefined;
+  getLocationNameById: (locationId?: string) => string | undefined; // Novo
 }
 
 const AssetContext = createContext<AssetContextType | undefined>(undefined);
 
 export const AssetProvider = ({ children }: { children: ReactNode }) => {
   const [assets, setAssets] = useLocalStorage<Asset[]>('assets', []);
-  const { getCategoryById } = useCategories(); 
+  const { getCategoryById } = useCategories();
+  const { getLocationById } = useLocations(); // Novo
 
   useEffect(() => {
     const storedAssets = window.localStorage.getItem('assets');
@@ -34,9 +37,8 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
     const newAsset: Asset = {
       ...assetData,
       id: `asset-${Date.now().toString()}-${Math.random().toString(36).substring(2, 7)}`,
-      // currentValue is already calculated and passed in assetData from AddAssetPage
-      // previouslyDepreciatedValue is also passed in assetData
       imageDateUris: assetData.imageDateUris || [],
+      locationId: assetData.locationId || undefined, // Adicionado
     };
     setAssets(prevAssets => [...prevAssets, newAsset]);
   };
@@ -55,10 +57,16 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
     const category = getCategoryById(categoryId);
     return category?.name;
   };
-  
+
+  const getLocationNameById = (locationId?: string): string | undefined => {
+    if (!locationId) return undefined;
+    const location = getLocationById(locationId);
+    return location?.name;
+  };
+
 
   return (
-    <AssetContext.Provider value={{ assets, addAsset, updateAsset, deleteAsset, setAssets, getCategoryNameById }}>
+    <AssetContext.Provider value={{ assets, addAsset, updateAsset, deleteAsset, setAssets, getCategoryNameById, getLocationNameById }}>
       {children}
     </AssetContext.Provider>
   );

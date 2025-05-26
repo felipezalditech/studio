@@ -1,16 +1,16 @@
 
 export interface Asset {
   id: string;
-  purchaseDate: string; 
+  purchaseDate: string;
   name: string;
   invoiceNumber: string;
   serialNumber: string;
   assetTag: string;
   supplier: string; // Supplier ID
-  categoryId: string; // Changed from category: string to categoryId: string
+  categoryId: string;
+  locationId?: string; // Novo: ID do local alocado
   purchaseValue: number;
-  currentValue: number; // Initial current value, will be further depreciated
+  currentValue: number;
   imageDateUris?: string[];
-  previouslyDepreciatedValue?: number; // Valor que o ativo já tinha depreciado antes da aquisição atual
+  previouslyDepreciatedValue?: number;
 }
-

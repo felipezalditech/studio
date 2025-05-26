@@ -1,10 +1,10 @@
 
-import type { Asset } from '@/components/assets/types'; 
-import type { AssetWithCalculatedValues } from '@/app/assets/page'; 
+import type { Asset } from '@/components/assets/types';
+import type { AssetWithCalculatedValues } from '@/app/assets/page';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { parseISO, format as formatDateFn } from 'date-fns'; // Import directly
-import { ptBR } from 'date-fns/locale'; // Import directly
+import { parseISO, format as formatDateFn } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 declare module 'jspdf' {
   interface jsPDF {
@@ -22,7 +22,7 @@ export const exportToCSV = (data: CsvExportData[], filename: string = 'ativos.cs
 
   const headers = Object.keys(data[0]);
   const csvRows = [
-    headers.join(','), 
+    headers.join(','),
     ...data.map(row =>
       headers.map(fieldName =>
         JSON.stringify(row[fieldName], (_, value) => (value === undefined || value === null) ? '' : value)
@@ -46,19 +46,19 @@ export const exportToCSV = (data: CsvExportData[], filename: string = 'ativos.cs
 
 interface PdfColumn {
   header: string;
-  dataKey: keyof AssetWithCalculatedValues | string; 
+  dataKey: keyof AssetWithCalculatedValues | string;
 }
 
 export const exportToPDF = (
   assets: AssetWithCalculatedValues[],
   filename: string = 'ativos.pdf',
-  columns?: PdfColumn[] 
+  columns?: PdfColumn[]
 ) => {
   if (assets.length === 0) {
     return;
   }
 
-  const doc = new jsPDF({ orientation: 'landscape' }); // Landscape for more columns
+  const doc = new jsPDF({ orientation: 'landscape' });
 
   const defaultColumns: PdfColumn[] = [
     { header: 'ID', dataKey: 'id' },
@@ -69,6 +69,7 @@ export const exportToPDF = (
     { header: 'Nº Série', dataKey: 'serialNumber' },
     { header: 'Categoria', dataKey: 'categoryName' },
     { header: 'Fornecedor', dataKey: 'supplierName' },
+    { header: 'Local Alocado', dataKey: 'locationName' }, // Novo
     { header: 'Vlr. Compra', dataKey: 'purchaseValue' },
     { header: 'Vlr. Já Deprec.', dataKey: 'previouslyDepreciatedValue' },
     { header: 'Deprec. Total', dataKey: 'depreciatedValue' },
@@ -90,7 +91,7 @@ export const exportToPDF = (
             const date = parseISO(value);
             row[dataKey] = formatDateFn(date, 'dd/MM/yyyy', { locale: ptBR });
           } catch (e) {
-            row[dataKey] = value; 
+            row[dataKey] = value;
           }
       } else {
         row[dataKey] = value === undefined || value === null ? 'N/A' : value;
@@ -104,28 +105,29 @@ export const exportToPDF = (
     body: tableRows.map(row => tableColumnsToUse.map(col => row[col.dataKey])),
     startY: 20,
     theme: 'grid',
-    headStyles: { fillColor: [63, 81, 181] }, 
-    styles: { fontSize: 6, cellPadding: 1 }, 
-    columnStyles: { 
-      id: { cellWidth: 12 },
-      purchaseDate: { cellWidth: 18 },
-      name: { cellWidth: 35 }, 
-      assetTag: {cellWidth: 18},
-      invoiceNumber: {cellWidth: 18},
-      serialNumber: {cellWidth: 18},
-      categoryName: {cellWidth: 20},
-      supplierName: {cellWidth: 25},
-      purchaseValue: {cellWidth: 20, halign: 'right'},
-      previouslyDepreciatedValue: {cellWidth: 20, halign: 'right'},
-      depreciatedValue: {cellWidth: 20, halign: 'right'},
-      calculatedCurrentValue: {cellWidth: 20, halign: 'right'},
+    headStyles: { fillColor: [63, 81, 181] },
+    styles: { fontSize: 5, cellPadding: 1 }, // Reduzido fontSize para 5
+    columnStyles: {
+      id: { cellWidth: 10 },
+      purchaseDate: { cellWidth: 15 },
+      name: { cellWidth: 30 },
+      assetTag: {cellWidth: 15},
+      invoiceNumber: {cellWidth: 15},
+      serialNumber: {cellWidth: 15},
+      categoryName: {cellWidth: 18},
+      supplierName: {cellWidth: 20},
+      locationName: {cellWidth: 20}, // Novo
+      purchaseValue: {cellWidth: 18, halign: 'right'},
+      previouslyDepreciatedValue: {cellWidth: 18, halign: 'right'},
+      depreciatedValue: {cellWidth: 18, halign: 'right'},
+      calculatedCurrentValue: {cellWidth: 18, halign: 'right'},
     },
     didDrawPage: (data) => {
         doc.setFontSize(16);
         doc.setTextColor(40);
         doc.text('Relatório de Ativos Imobilizados', data.settings.margin.left, 15);
 
-        const pageCount = doc.getNumberOfPages(); 
+        const pageCount = doc.getNumberOfPages ? doc.getNumberOfPages() : (doc.internal as any).getNumberOfPages();
         doc.setFontSize(8);
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);

@@ -2,7 +2,7 @@
 "use client";
 
 import type { ColumnDef, HeaderContext } from "@tanstack/react-table";
-import type { AssetWithCalculatedValues } from "@/app/assets/page"; 
+import type { AssetWithCalculatedValues } from "@/app/assets/page";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,7 +29,7 @@ export const formatDate = (dateString: string) => {
     const date = parseISO(dateString);
     return formatDateFn(date, 'dd/MM/yyyy', { locale: ptBR });
   } catch (error) {
-    return dateString; 
+    return dateString;
   }
 };
 
@@ -82,7 +82,7 @@ export const getColumns = (
     header: ({ column }) => <SortableHeader column={column} title="Nome do Ativo" />,
   },
   {
-    accessorKey: "assetTag", 
+    accessorKey: "assetTag",
     header: ({ column }) => <SortableHeader column={column} title="Patrimônio" />,
   },
   {
@@ -95,17 +95,24 @@ export const getColumns = (
     cell: ({ row }) => row.getValue("serialNumber") || "N/A",
   },
   {
-    accessorKey: "categoryName", 
+    accessorKey: "categoryName",
     header: ({ column }) => <SortableHeader column={column} title="Categoria" />,
     cell: ({ row }) => {
       return row.original.categoryName || "Desconhecida";
     },
   },
   {
-    accessorKey: "supplierName", 
+    accessorKey: "supplierName",
     header: ({ column }) => <SortableHeader column={column} title="Fornecedor" />,
     cell: ({ row }) => {
       return row.original.supplierName || "Desconhecido";
+    },
+  },
+  { // Nova coluna
+    accessorKey: "locationName",
+    header: ({ column }) => <SortableHeader column={column} title="Local Alocado" />,
+    cell: ({ row }) => {
+      return row.original.locationName || "N/A";
     },
   },
   {
@@ -114,12 +121,12 @@ export const getColumns = (
     cell: ({ row }) => formatCurrency(row.getValue("purchaseValue")),
   },
   {
-    accessorKey: "depreciatedValue", // This will show the total accumulated depreciation
+    accessorKey: "depreciatedValue",
     header: ({ column }) => <SortableHeader column={column} title="Valor Depreciado" />,
     cell: ({ row }) => formatCurrency(row.original.depreciatedValue),
   },
   {
-    accessorKey: "calculatedCurrentValue", 
+    accessorKey: "calculatedCurrentValue",
     header: ({ column }) => <SortableHeader column={column} title="Valor Atual" />,
     cell: ({ row }) => formatCurrency(row.original.calculatedCurrentValue),
   },
@@ -128,7 +135,7 @@ export const getColumns = (
     header: () => <div className="text-right pr-0">Ações</div>,
     cell: function ActionsCell({ row }) {
       const asset = row.original;
-      
+
       const handleDeleteRequest = () => {
         onDeleteAssetRequest(asset);
       };
@@ -152,7 +159,7 @@ export const getColumns = (
                 <Edit2 className="mr-2 h-4 w-4" />
                 Editar
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log(`Baixar ativo: ${asset.name}`)} disabled> 
+              <DropdownMenuItem onClick={() => console.log(`Baixar ativo: ${asset.name}`)} disabled>
                 <Archive className="mr-2 h-4 w-4" />
                 Baixar Ativo
               </DropdownMenuItem>

@@ -1,8 +1,7 @@
 
 import type { Asset } from './types';
 
-// Certifique-se que os categoryId correspondem aos IDs em initialMockCategories em CategoryContext.tsx
-// E supplier IDs correspondem aos de SupplierContext
+// Certifique-se que os IDs correspondem aos mocks em outros contextos
 export const mockAssets: Asset[] = [
   {
     id: '1',
@@ -11,11 +10,12 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-001',
     serialNumber: 'SN-LP001',
     assetTag: 'AT-001',
-    supplier: 'sup-001', 
+    supplier: 'sup-001',
     categoryId: 'cat-001', // Eletrônicos
+    locationId: 'loc-001', // Escritório Principal
     purchaseValue: 1200.00,
-    previouslyDepreciatedValue: 0, // Novo
-    currentValue: 1200.00, // purchaseValue - previouslyDepreciatedValue
+    previouslyDepreciatedValue: 0,
+    currentValue: 1200.00,
     imageDateUris: [],
   },
   {
@@ -25,11 +25,12 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-002',
     serialNumber: 'N/A',
     assetTag: 'AT-002',
-    supplier: 'sup-002', 
+    supplier: 'sup-002',
     categoryId: 'cat-002', // Móveis
+    locationId: 'loc-002', // Cliente Escola Crescer
     purchaseValue: 350.00,
-    previouslyDepreciatedValue: 50.00, // Exemplo de valor já depreciado
-    currentValue: 300.00, // 350 - 50
+    previouslyDepreciatedValue: 50.00,
+    currentValue: 300.00,
     imageDateUris: [],
   },
   {
@@ -39,8 +40,9 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-003',
     serialNumber: 'SN-M001',
     assetTag: 'AT-003',
-    supplier: 'sup-003', 
+    supplier: 'sup-003',
     categoryId: 'cat-001', // Eletrônicos
+    locationId: 'loc-001',
     purchaseValue: 450.00,
     previouslyDepreciatedValue: 0,
     currentValue: 450.00,
@@ -53,8 +55,9 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-004',
     serialNumber: 'N/A',
     assetTag: 'AT-004',
-    supplier: 'sup-002', 
+    supplier: 'sup-002',
     categoryId: 'cat-002', // Móveis
+    locationId: 'loc-003', // Filial Leste
     purchaseValue: 220.00,
     previouslyDepreciatedValue: 0,
     currentValue: 220.00,
@@ -67,8 +70,9 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-005',
     serialNumber: 'SN-NS001',
     assetTag: 'AT-005',
-    supplier: 'sup-001', 
+    supplier: 'sup-001',
     categoryId: 'cat-004', // Redes
+    locationId: 'loc-004', // Depósito Central
     purchaseValue: 280.00,
     previouslyDepreciatedValue: 20.00,
     currentValue: 260.00,
@@ -81,8 +85,9 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-006',
     serialNumber: 'SN-PJ001',
     assetTag: 'AT-006',
-    supplier: 'sup-003', 
+    supplier: 'sup-003',
     categoryId: 'cat-001', // Eletrônicos
+    locationId: 'loc-001',
     purchaseValue: 600.00,
     previouslyDepreciatedValue: 100.00,
     currentValue: 500.00,
@@ -95,8 +100,9 @@ export const mockAssets: Asset[] = [
     invoiceNumber: 'INV-007',
     serialNumber: 'N/A',
     assetTag: 'AT-007',
-    supplier: 'sup-002', 
+    supplier: 'sup-002',
     categoryId: 'cat-002', // Móveis
+    // locationId: undefined, // Sem local definido
     purchaseValue: 150.00,
     previouslyDepreciatedValue: 0,
     currentValue: 150.00,
