@@ -188,13 +188,15 @@ export default function AddAssetPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Linha 1 - Nome, Patrimônio, Categoria */}
+                {/* Linha 1 */}
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome do Ativo</FormLabel>
+                      <div className="flex items-center">
+                        <FormLabel>Nome do Ativo</FormLabel>
+                      </div>
                       <FormControl>
                         <Input placeholder="Ex: Notebook Dell XPS 15" {...field} />
                       </FormControl>
@@ -207,7 +209,9 @@ export default function AddAssetPage() {
                   name="assetTag"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nº de Patrimônio</FormLabel>
+                      <div className="flex items-center">
+                        <FormLabel>Nº de Patrimônio</FormLabel>
+                      </div>
                       <FormControl>
                         <Input placeholder="Ex: ZDI-00123" {...field} />
                       </FormControl>
@@ -222,14 +226,16 @@ export default function AddAssetPage() {
                     <FormItem>
                       <div className="flex items-center">
                         <FormLabel>Categoria</FormLabel>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Cadastre categorias na tela de "Configurações".</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Cadastre categorias na tela de "Configurações".</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
@@ -254,7 +260,7 @@ export default function AddAssetPage() {
                   )}
                 />
                 
-                {/* Linha 2 - Fornecedor, Local Alocado, Data da Compra */}
+                {/* Linha 2 */}
                 <FormField
                   control={form.control}
                   name="supplier"
@@ -262,14 +268,16 @@ export default function AddAssetPage() {
                     <FormItem>
                       <div className="flex items-center">
                         <FormLabel>Fornecedor</FormLabel>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Cadastre fornecedores na tela de "Fornecedores".</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Cadastre fornecedores na tela de "Fornecedores".</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
@@ -300,14 +308,16 @@ export default function AddAssetPage() {
                     <FormItem>
                        <div className="flex items-center">
                         <FormLabel>Local Alocado</FormLabel>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Cadastre locais na tela de "Configurações".</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Cadastre locais na tela de "Configurações".</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                       <Select
                         onValueChange={(selectedValue) => {
@@ -342,7 +352,9 @@ export default function AddAssetPage() {
                   name="purchaseDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Data da Compra</FormLabel>
+                      <div className="flex items-center">
+                        <FormLabel>Data da Compra</FormLabel>
+                      </div>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -380,13 +392,15 @@ export default function AddAssetPage() {
                   )}
                 />
 
-                {/* Linha 3 - Nº NF, Nº Série, Valor Compra */}
+                {/* Linha 3 */}
                 <FormField
                   control={form.control}
                   name="invoiceNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nº da Nota Fiscal</FormLabel>
+                      <div className="flex items-center">
+                        <FormLabel>Nº da Nota Fiscal</FormLabel>
+                      </div>
                       <FormControl>
                         <Input placeholder="Ex: NF-000123456" {...field} />
                       </FormControl>
@@ -399,7 +413,9 @@ export default function AddAssetPage() {
                   name="serialNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nº de Série (Opcional)</FormLabel>
+                      <div className="flex items-center">
+                        <FormLabel>Nº de Série (Opcional)</FormLabel>
+                      </div>
                       <FormControl>
                         <Input placeholder="Ex: SN-ABC123XYZ" {...field} />
                       </FormControl>
@@ -412,7 +428,9 @@ export default function AddAssetPage() {
                   name="purchaseValue"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Valor de Compra (R$)</FormLabel>
+                      <div className="flex items-center">
+                        <FormLabel>Valor de Compra (R$)</FormLabel>
+                      </div>
                       <FormControl>
                         <Input type="number" step="0.01" placeholder="Ex: 2500.00" {...field} />
                       </FormControl>
@@ -421,7 +439,7 @@ export default function AddAssetPage() {
                   )}
                 />
 
-                {/* Linha 4 - Valor Depreciado, Info Adicionais */}
+                {/* Linha 4 */}
                 <FormField
                   control={form.control}
                   name="previouslyDepreciatedValue"
@@ -429,14 +447,16 @@ export default function AddAssetPage() {
                     <FormItem>
                       <div className="flex items-center">
                         <FormLabel>Valor Depreciado R$ (Opcional)</FormLabel>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Informe se o ativo foi adquirido usado e já possuía depreciação acumulada.</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Informe se o ativo foi adquirido usado e já possuía depreciação acumulada.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                       <FormControl>
                         <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} />
@@ -450,7 +470,9 @@ export default function AddAssetPage() {
                   name="additionalInfo"
                   render={({ field }) => (
                     <FormItem className="lg:col-span-2 md:col-span-2">
-                      <FormLabel>Informações Adicionais (Opcional)</FormLabel>
+                      <div className="flex items-center">
+                        <FormLabel>Informações Adicionais (Opcional)</FormLabel>
+                      </div>
                       <FormControl>
                         <Textarea
                           placeholder="Detalhes extras sobre o ativo, condições, observações, etc."
@@ -470,18 +492,22 @@ export default function AddAssetPage() {
                   name="imageDateUris"
                   render={({ field }) => (
                     <FormItem>
+                      <div className="flex items-center">
                       <FormLabel className="flex items-center">
                         <UploadCloud className="mr-2 h-5 w-5" />
                         Fotos do Ativo (Máx. {MAX_PHOTOS})
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até {MAX_PHOTOS} fotos.</p>
-                          </TooltipContent>
-                        </Tooltip>
                       </FormLabel>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até {MAX_PHOTOS} fotos.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                       <FormControl>
                         <Input
                           type="file"
