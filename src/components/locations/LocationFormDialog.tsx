@@ -120,7 +120,8 @@ export function LocationFormDialog({ open, onOpenChange, initialData, onLocation
                 Cancelar
               </Button>
               <Button
-                type="submit"
+                type="button" // Alterado de submit para button
+                onClick={form.handleSubmit(onSubmit)} // Adicionado onClick para submeter o formulário do diálogo
                 disabled={form.formState.isSubmitting}
               >
                 <Save className="mr-2 h-4 w-4" />

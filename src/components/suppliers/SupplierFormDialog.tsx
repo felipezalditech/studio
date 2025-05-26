@@ -41,7 +41,7 @@ export type SupplierFormValues = z.infer<typeof supplierFormSchema>;
 interface SupplierFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: Supplier | null;
+  initialData?: Supplier | Partial<Supplier> | null; // Permitir Partial para nomeFantasia
   onSupplierAdded?: (supplierId: string) => void; // Callback para quando um novo fornecedor é adicionado
 }
 
@@ -51,34 +51,30 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
 
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(supplierFormSchema),
-    defaultValues: initialData || {
-      razaoSocial: '',
-      nomeFantasia: '',
-      cnpj: '',
-      contato: '',
-      endereco: '',
+    defaultValues: {
+      razaoSocial: initialData?.razaoSocial || '',
+      nomeFantasia: initialData?.nomeFantasia || '',
+      cnpj: initialData?.cnpj || '',
+      contato: initialData?.contato || '',
+      endereco: initialData?.endereco || '',
     },
   });
 
   useEffect(() => {
-    if (open) { // Reset form when dialog opens and initialData might have changed
-      if (initialData) {
-        form.reset(initialData);
-      } else {
-        form.reset({
-          razaoSocial: '',
-          nomeFantasia: '',
-          cnpj: '',
-          contato: '',
-          endereco: '',
-        });
-      }
+    if (open) { 
+      form.reset({
+        razaoSocial: initialData?.razaoSocial || '',
+        nomeFantasia: initialData?.nomeFantasia || '',
+        cnpj: initialData?.cnpj || '',
+        contato: initialData?.contato || '',
+        endereco: initialData?.endereco || '',
+      });
     }
   }, [initialData, form, open]);
 
   function onSubmit(data: SupplierFormValues) {
-    if (initialData) { // Editando
-      updateSupplierInContext({ ...initialData, ...data });
+    if (initialData && 'id' in initialData && initialData.id) { // Editando - verifica se initialData tem 'id'
+      updateSupplierInContext({ ...initialData, ...data, id: initialData.id });
       toast({ title: "Sucesso!", description: "Fornecedor atualizado." });
     } else { // Adicionando
       const newSupplier = addSupplierToContext(data);
@@ -94,9 +90,9 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Editar Fornecedor' : 'Adicionar Novo Fornecedor'}</DialogTitle>
+          <DialogTitle>{initialData && 'id' in initialData && initialData.id ? 'Editar Fornecedor' : 'Adicionar Novo Fornecedor'}</DialogTitle>
           <DialogDescription>
-            {initialData ? 'Modifique os dados do fornecedor abaixo.' : 'Preencha os dados para cadastrar um novo fornecedor.'}
+            {initialData && 'id' in initialData && initialData.id ? 'Modifique os dados do fornecedor abaixo.' : 'Preencha os dados para cadastrar um novo fornecedor.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -170,9 +166,13 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
+              <Button 
+                type="button" // Alterado de submit para button
+                onClick={form.handleSubmit(onSubmit)} // Adicionado onClick para submeter o formulário do diálogo
+                disabled={form.formState.isSubmitting}
+              >
                 <Save className="mr-2 h-4 w-4" />
-                {form.formState.isSubmitting ? "Salvando..." : (initialData ? "Salvar Alterações" : "Adicionar Fornecedor")}
+                {form.formState.isSubmitting ? "Salvando..." : (initialData && 'id' in initialData && initialData.id ? "Salvar Alterações" : "Adicionar Fornecedor")}
               </Button>
             </DialogFooter>
           </form>
@@ -181,3 +181,4 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
     </Dialog>
   );
 }
+
