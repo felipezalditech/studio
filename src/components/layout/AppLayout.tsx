@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import Image from 'next/image';
+import Image from 'next/image'; // Still needed for AvatarImage if URL is used, but system logo image removed
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import {
@@ -18,7 +18,6 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { ThemeToggleButton } from '@/components/theme/ThemeToggleButton';
-// import { BrandingModal } from '@/components/branding/BrandingModal'; // Removed
 import { useBranding } from '@/contexts/BrandingContext';
 import {
   Home,
@@ -28,10 +27,10 @@ import {
   UsersRound,
   Settings,
   LogOut,
-  Briefcase,
   PanelLeft,
+  Building, // Added for Avatar fallback
 } from 'lucide-react';
-import { Button } from '@/components/ui/button'; 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Added
 import { cn } from '@/lib/utils';
 
 interface MenuItem {
@@ -49,6 +48,17 @@ const menuItems: MenuItem[] = [
   { href: '/settings', label: 'Configurações', icon: Settings },
 ];
 
+// Helper function to get initials
+const getInitials = (name: string) => {
+  if (!name) return "";
+  const words = name.split(" ");
+  if (words.length === 1) {
+    return name.substring(0, 2).toUpperCase();
+  }
+  return words.map((word) => word[0]).join("").substring(0, 2).toUpperCase();
+};
+
+
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { brandingConfig } = useBranding();
@@ -58,25 +68,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <Sidebar className="border-r border-sidebar-border" collapsible="none">
         <SidebarHeader className="p-4 bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 overflow-hidden">
-            {brandingConfig.logoUrl ? (
-              <Image
-                src={brandingConfig.logoUrl}
-                alt={`${brandingConfig.companyName || 'Zaldi Imo'} Logo`}
-                width={28}
-                height={28}
-                className="rounded-sm object-contain flex-shrink-0"
-                data-ai-hint="company logo"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.onerror = null; 
-                  target.src = 'https://placehold.co/28x28.png';
-                }}
-              />
-            ) : (
-              <Briefcase className="h-7 w-7 flex-shrink-0" />
-            )}
+            {/* System icon/name - only text "Zaldi Imo" as requested */}
             <span className="font-semibold text-lg truncate">
-              {brandingConfig.companyName || 'Zaldi Imo'}
+              Zaldi Imo
             </span>
           </Link>
         </SidebarHeader>
@@ -116,8 +110,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       <SidebarInset>
         <header className={cn(
-            "sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6",
-            "sm:justify-end" 
+            "sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6"
         )}>
           <div className="sm:hidden">
             <SidebarTrigger>
@@ -125,12 +118,24 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </SidebarTrigger>
           </div>
           
-          <div className="hidden sm:flex flex-1" />
+          <div className="flex-1" /> {/* Spacer to push items to the right */}
 
-          {/* BrandingModal trigger was here, now removed */}
-          {/* <div className="flex items-center gap-2">
-            <BrandingModal />
-          </div> */}
+          <div className="flex items-center gap-2">
+            <Avatar className="h-9 w-9">
+              <AvatarImage 
+                src={brandingConfig.logoUrl || undefined} // Pass undefined if empty to trigger fallback
+                alt={brandingConfig.companyName ? `${brandingConfig.companyName} Logo` : 'Logo da Empresa'} 
+                data-ai-hint="company logo avatar"
+              />
+              <AvatarFallback>
+                {brandingConfig.companyName ? (
+                  getInitials(brandingConfig.companyName)
+                ) : (
+                  <Building className="h-5 w-5" />
+                )}
+              </AvatarFallback>
+            </Avatar>
+          </div>
         </header>
         <main className="flex-grow p-4 sm:p-6 overflow-y-auto overflow-x-hidden">
           {children}
