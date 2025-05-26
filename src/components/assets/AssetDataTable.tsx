@@ -33,16 +33,20 @@ import { ChevronDown } from "lucide-react"
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  rowSelection: RowSelectionState
+  onRowSelectionChange: React.Dispatch<React.SetStateAction<RowSelectionState>>
 }
 
 export function AssetDataTable<TData, TValue>({
   columns,
   data,
+  rowSelection,
+  onRowSelectionChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({})
+  // const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({}) // Estado movido para AssetsPage
 
 
   const table = useReactTable({
@@ -55,12 +59,12 @@ export function AssetDataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: onRowSelectionChange, // Usando prop
     state: {
       sorting,
       columnFilters,
       columnVisibility,
-      rowSelection,
+      rowSelection, // Usando prop
     },
   })
 
@@ -96,7 +100,7 @@ export function AssetDataTable<TData, TValue>({
                   column.id === "purchaseValue" ? "Valor de Compra" :
                   column.id === "currentValue" ? "Valor Atual" :
                   column.id === "actions" ? "Ações" :
-                  column.id; // Fallback to column.id if no match
+                  column.id;
                 return (
                   <DropdownMenuCheckboxItem
                     key={column.id}
@@ -141,7 +145,7 @@ export function AssetDataTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="whitespace-nowrap">
+                    <TableCell key={cell.id} className="whitespace-nowrap px-1 py-1">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

@@ -3,6 +3,7 @@
 
 import React, { useMemo, useCallback, useState } from 'react';
 import Link from 'next/link';
+import type { RowSelectionState } from '@tanstack/react-table';
 import { AssetDataTable } from '@/components/assets/AssetDataTable';
 import { getColumns } from '@/components/assets/columns';
 import type { Asset } from '@/components/assets/types';
@@ -40,6 +41,7 @@ export default function AssetsPage() {
   const { toast } = useToast();
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<Asset | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null);
   const [isConfirmDeleteAssetDialogOpen, setIsConfirmDeleteAssetDialogOpen] = useState(false);
@@ -78,6 +80,7 @@ export default function AssetsPage() {
         description: `Ativo "${assetToDelete.name}" deletado.`,
       });
       setAssetToDelete(null);
+      setRowSelection({}); // Limpa a seleção após deletar
     }
   };
 
@@ -110,6 +113,7 @@ export default function AssetsPage() {
 
   const handleResetFilters = useCallback(() => {
     setFilters(initialFilters);
+    setRowSelection({}); // Limpa a seleção ao resetar filtros
   }, []);
 
   const handleExportCSV = () => {
@@ -140,13 +144,34 @@ export default function AssetsPage() {
     toast({ title: "Exportação Concluída", description: "Ativos exportados para PDF." });
   };
 
-  const totalPurchaseValueFiltered = useMemo(() => {
-    return filteredAssets.reduce((sum, asset) => sum + asset.purchaseValue, 0);
+  const { totalPurchaseValueFiltered, totalCurrentValueFiltered } = useMemo(() => {
+    return filteredAssets.reduce(
+      (acc, asset) => {
+        acc.totalPurchaseValueFiltered += asset.purchaseValue;
+        acc.totalCurrentValueFiltered += asset.currentValue;
+        return acc;
+      },
+      { totalPurchaseValueFiltered: 0, totalCurrentValueFiltered: 0 }
+    );
   }, [filteredAssets]);
 
-  const totalCurrentValueFiltered = useMemo(() => {
-    return filteredAssets.reduce((sum, asset) => sum + asset.currentValue, 0);
-  }, [filteredAssets]);
+  const { totalPurchaseValueSelected, totalCurrentValueSelected } = useMemo(() => {
+    let purchaseSum = 0;
+    let currentSum = 0;
+    const selectedIndices = Object.keys(rowSelection).map(Number);
+
+    selectedIndices.forEach(index => {
+      const asset = filteredAssets[index];
+      if (asset) {
+        purchaseSum += asset.purchaseValue;
+        currentSum += asset.currentValue;
+      }
+    });
+    return { totalPurchaseValueSelected: purchaseSum, totalCurrentValueSelected: currentSum };
+  }, [filteredAssets, rowSelection]);
+
+  const hasSelectedItems = Object.keys(rowSelection).length > 0;
+
 
   return (
     <div className="space-y-8">
@@ -178,18 +203,40 @@ export default function AssetsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <AssetDataTable columns={columns} data={filteredAssets} />
+          <AssetDataTable 
+            columns={columns} 
+            data={filteredAssets} 
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+          />
         </CardContent>
-        {filteredAssets.length > 0 && (
+        {(filteredAssets.length > 0 || hasSelectedItems) && (
           <CardFooter className="flex flex-col items-end space-y-2 pt-4 border-t">
-            <div className="flex justify-between w-full max-w-xs">
-              <span className="font-semibold text-muted-foreground">Total Geral Compra:</span>
-              <span className="font-bold">{formatCurrency(totalPurchaseValueFiltered)}</span>
-            </div>
-            <div className="flex justify-between w-full max-w-xs">
-              <span className="font-semibold text-muted-foreground">Total Geral Atual:</span>
-              <span className="font-bold text-green-600 dark:text-green-500">{formatCurrency(totalCurrentValueFiltered)}</span>
-            </div>
+            {hasSelectedItems && (
+              <>
+                <div className="flex justify-between w-full max-w-xs">
+                  <span className="font-semibold text-primary">Total Compra Selecionado:</span>
+                  <span className="font-bold text-primary">{formatCurrency(totalPurchaseValueSelected)}</span>
+                </div>
+                <div className="flex justify-between w-full max-w-xs">
+                  <span className="font-semibold text-primary">Total Atual Selecionado:</span>
+                  <span className="font-bold text-primary">{formatCurrency(totalCurrentValueSelected)}</span>
+                </div>
+                <hr className="w-full max-w-xs my-1 border-border" />
+              </>
+            )}
+            {filteredAssets.length > 0 && (
+              <>
+                <div className="flex justify-between w-full max-w-xs">
+                  <span className="font-semibold text-muted-foreground">Total Geral Compra (Filtrado):</span>
+                  <span className="font-bold">{formatCurrency(totalPurchaseValueFiltered)}</span>
+                </div>
+                <div className="flex justify-between w-full max-w-xs">
+                  <span className="font-semibold text-muted-foreground">Total Geral Atual (Filtrado):</span>
+                  <span className="font-bold text-green-600 dark:text-green-500">{formatCurrency(totalCurrentValueFiltered)}</span>
+                </div>
+              </>
+            )}
           </CardFooter>
         )}
       </Card>
@@ -212,5 +259,3 @@ export default function AssetsPage() {
     </div>
   );
 }
-
-    
