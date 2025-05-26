@@ -29,15 +29,17 @@ import {
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from "lucide-react"
+import type { AssetWithCalculatedValues } from "@/app/assets/page"; // Import the augmented type
 
-interface DataTableProps<TData, TValue> {
+
+interface DataTableProps<TData extends AssetWithCalculatedValues, TValue> { // Ensure TData extends the correct type
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   rowSelection: RowSelectionState
   onRowSelectionChange: React.Dispatch<React.SetStateAction<RowSelectionState>>
 }
 
-export function AssetDataTable<TData, TValue>({
+export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>({ // Ensure TData extends the correct type
   columns,
   data,
   rowSelection,
@@ -46,8 +48,6 @@ export function AssetDataTable<TData, TValue>({
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  // const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({}) // Estado movido para AssetsPage
-
 
   const table = useReactTable({
     data,
@@ -59,12 +59,12 @@ export function AssetDataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: onRowSelectionChange, // Usando prop
+    onRowSelectionChange: onRowSelectionChange,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
-      rowSelection, // Usando prop
+      rowSelection,
     },
   })
 
@@ -95,10 +95,11 @@ export function AssetDataTable<TData, TValue>({
                   column.id === "assetTag" ? "Patrimônio" :
                   column.id === "invoiceNumber" ? "Nota Fiscal" :
                   column.id === "serialNumber" ? "Nº de Série" :
-                  column.id === "categoryId" ? "Categoria" :
-                  column.id === "supplier" ? "Fornecedor" :
+                  column.id === "categoryName" ? "Categoria" : // Updated from categoryId
+                  column.id === "supplierName" ? "Fornecedor" : // Updated from supplier
                   column.id === "purchaseValue" ? "Valor de Compra" :
-                  column.id === "currentValue" ? "Valor Atual" :
+                  column.id === "depreciatedValue" ? "Valor Depreciado" : // New column
+                  column.id === "calculatedCurrentValue" ? "Valor Atual" : // Updated from currentValue
                   column.id === "actions" ? "Ações" :
                   column.id;
                 return (
@@ -182,3 +183,5 @@ export function AssetDataTable<TData, TValue>({
     </div>
   )
 }
+
+    

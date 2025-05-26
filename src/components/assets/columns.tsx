@@ -2,8 +2,8 @@
 "use client";
 
 import type { ColumnDef, HeaderContext } from "@tanstack/react-table";
-import type { Asset } from "./types";
-import type { Supplier } from "@/contexts/SupplierContext";
+// import type { Asset } from "./types"; // We will use AssetWithCalculatedValues from AssetsPage
+import type { AssetWithCalculatedValues } from "@/app/assets/page"; // Import the augmented type
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,8 +17,6 @@ import { ArrowUpDown, MoreHorizontal, Eye, Edit2, Archive, Trash2 } from "lucide
 import { Checkbox } from "@/components/ui/checkbox";
 import { parseISO, format as formatDateFn } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-// import { useAssets } from "@/contexts/AssetContext"; // Não mais necessário aqui
-// import { useToast } from "@/hooks/use-toast"; // Não mais necessário aqui
 
 export const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
@@ -29,7 +27,7 @@ export const formatDate = (dateString: string) => {
     const date = parseISO(dateString);
     return formatDateFn(date, 'dd/MM/yyyy', { locale: ptBR });
   } catch (error) {
-    console.error("Erro ao formatar data:", dateString, error);
+    // console.error("Erro ao formatar data:", dateString, error);
     return dateString; 
   }
 };
@@ -48,12 +46,9 @@ const SortableHeader = <TData, TValue>({ column, title }: { column: HeaderContex
 };
 
 export const getColumns = (
-  supplierNameMap: Map<string, string>,
-  getSupplierById: (id: string) => Supplier | undefined,
-  categoryNameMap: Map<string, string>,
-  onViewDetails: (asset: Asset) => void,
-  onDeleteAssetRequest: (asset: Asset) => void // Nova prop para solicitar exclusão
-): ColumnDef<Asset>[] => [
+  onViewDetails: (asset: AssetWithCalculatedValues) => void,
+  onDeleteAssetRequest: (asset: AssetWithCalculatedValues) => void
+): ColumnDef<AssetWithCalculatedValues>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -96,21 +91,20 @@ export const getColumns = (
   {
     accessorKey: "serialNumber",
     header: ({ column }) => <SortableHeader column={column} title="Nº de Série" />,
+    cell: ({ row }) => row.getValue("serialNumber") || "N/A",
   },
   {
-    accessorKey: "categoryId",
+    accessorKey: "categoryName", // Changed from categoryId
     header: ({ column }) => <SortableHeader column={column} title="Categoria" />,
     cell: ({ row }) => {
-      const categoryId = row.getValue("categoryId") as string;
-      return categoryNameMap.get(categoryId) || categoryId || "Desconhecida";
+      return row.original.categoryName || "Desconhecida";
     },
   },
   {
-    accessorKey: "supplier",
+    accessorKey: "supplierName", // Changed from supplier
     header: ({ column }) => <SortableHeader column={column} title="Fornecedor" />,
     cell: ({ row }) => {
-      const supplierId = row.getValue("supplier") as string;
-      return supplierNameMap.get(supplierId) || supplierId || "Desconhecido";
+      return row.original.supplierName || "Desconhecido";
     },
   },
   {
@@ -119,20 +113,23 @@ export const getColumns = (
     cell: ({ row }) => formatCurrency(row.getValue("purchaseValue")),
   },
   {
-    accessorKey: "currentValue",
+    accessorKey: "depreciatedValue", // New column
+    header: ({ column }) => <SortableHeader column={column} title="Valor Depreciado" />,
+    cell: ({ row }) => formatCurrency(row.original.depreciatedValue),
+  },
+  {
+    accessorKey: "calculatedCurrentValue", // Using calculated value
     header: ({ column }) => <SortableHeader column={column} title="Valor Atual" />,
-    cell: ({ row }) => formatCurrency(row.getValue("currentValue")),
+    cell: ({ row }) => formatCurrency(row.original.calculatedCurrentValue),
   },
   {
     id: "actions",
     header: () => <div className="text-right pr-0">Ações</div>,
     cell: function ActionsCell({ row }) {
       const asset = row.original;
-      // const { deleteAsset } = useAssets(); // Movido para AssetsPage
-      // const { toast } = useToast(); // Movido para AssetsPage
-
+      
       const handleDeleteRequest = () => {
-        onDeleteAssetRequest(asset); // Chama a função passada por props
+        onDeleteAssetRequest(asset);
       };
 
       return (
@@ -150,17 +147,17 @@ export const getColumns = (
                 <Eye className="mr-2 h-4 w-4" />
                 Visualizar Detalhes
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log(`Editar ativo: ${asset.name}`)} disabled> {/* Editar desabilitado por enquanto */}
+              <DropdownMenuItem onClick={() => console.log(`Editar ativo: ${asset.name}`)} disabled>
                 <Edit2 className="mr-2 h-4 w-4" />
                 Editar
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log(`Baixar ativo: ${asset.name}`)} disabled> {/* Baixar desabilitado por enquanto */}
+              <DropdownMenuItem onClick={() => console.log(`Baixar ativo: ${asset.name}`)} disabled> 
                 <Archive className="mr-2 h-4 w-4" />
                 Baixar Ativo
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={handleDeleteRequest} // Alterado
+                onClick={handleDeleteRequest}
                 className="text-red-600 hover:!text-red-600 focus:text-red-600 focus:!bg-red-100 dark:focus:!bg-red-700/50"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -175,3 +172,5 @@ export const getColumns = (
     enableHiding: true,
   },
 ];
+
+    

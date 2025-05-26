@@ -1,5 +1,6 @@
 
-import type { Asset } from '@/components/assets/types';
+import type { Asset } from '@/components/assets/types'; // Base Asset type
+import type { AssetWithCalculatedValues } from '@/app/assets/page'; // For PDF/CSV with calculated values
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -9,22 +10,27 @@ declare module 'jspdf' {
   }
 }
 
-export const exportToCSV = (assets: Asset[], filename: string = 'ativos.csv') => {
-  if (assets.length === 0) {
-    alert('Nenhum dado para exportar.');
+// Type for data passed to exportToCSV - can be simpler if specific fields are chosen
+type CsvExportData = Record<string, any>;
+
+
+export const exportToCSV = (data: CsvExportData[], filename: string = 'ativos.csv') => {
+  if (data.length === 0) {
+    // alert('Nenhum dado para exportar.'); // Handled by toast in AssetsPage
     return;
   }
 
-  const headers = Object.keys(assets[0]) as (keyof Asset)[];
+  const headers = Object.keys(data[0]);
   const csvRows = [
-    headers.join(','),
-    ...assets.map(row => 
-      headers.map(fieldName => 
-        JSON.stringify(row[fieldName], (_, value) => value === undefined ? '' : value)
+    headers.join(','), // Header row
+    ...data.map(row =>
+      headers.map(fieldName =>
+        // Escape commas and quotes in values
+        JSON.stringify(row[fieldName], (_, value) => (value === undefined || value === null) ? '' : value)
       ).join(',')
     )
   ];
-  
+
   const csvString = csvRows.join('\\r\\n');
   const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
@@ -39,54 +45,98 @@ export const exportToCSV = (assets: Asset[], filename: string = 'ativos.csv') =>
   }
 };
 
-export const exportToPDF = (assets: Asset[], filename: string = 'ativos.pdf') => {
+// Type for PDF column definition
+interface PdfColumn {
+  header: string;
+  dataKey: keyof AssetWithCalculatedValues | string; // Allow string for flexibility if needed
+}
+
+export const exportToPDF = (
+  assets: AssetWithCalculatedValues[],
+  filename: string = 'ativos.pdf',
+  columns?: PdfColumn[] // Optional custom columns
+) => {
   if (assets.length === 0) {
-    alert('Nenhum dado para exportar.');
+    // alert('Nenhum dado para exportar.'); // Handled by toast in AssetsPage
     return;
   }
 
   const doc = new jsPDF();
-  // Mapeia os nomes das colunas para português para o cabeçalho do PDF
-  const columnMapping: { [key in keyof Asset]?: string } = {
-    id: 'ID',
-    purchaseDate: 'Data da Compra',
-    name: 'Nome',
-    invoiceNumber: 'Nº Fatura',
-    serialNumber: 'Nº Série',
-    assetTag: 'Etiqueta do Ativo',
-    supplier: 'Fornecedor',
-    category: 'Categoria',
-    purchaseValue: 'Valor de Compra',
-    currentValue: 'Valor Atual',
-  };
 
-  const tableColumn = (Object.keys(assets[0]) as (keyof Asset)[]).map(key => ({
-    header: columnMapping[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
-    dataKey: key
-  }));
-  
+  // Default columns if not provided
+  const defaultColumns: PdfColumn[] = [
+    { header: 'ID', dataKey: 'id' },
+    { header: 'Data Compra', dataKey: 'purchaseDate' },
+    { header: 'Nome', dataKey: 'name' },
+    { header: 'Patrimônio', dataKey: 'assetTag' },
+    { header: 'Nota Fiscal', dataKey: 'invoiceNumber' },
+    { header: 'Nº Série', dataKey: 'serialNumber' },
+    { header: 'Categoria', dataKey: 'categoryName' },
+    { header: 'Fornecedor', dataKey: 'supplierName' },
+    { header: 'Valor Compra', dataKey: 'purchaseValue' },
+    { header: 'Valor Depreciado', dataKey: 'depreciatedValue' },
+    { header: 'Valor Atual', dataKey: 'calculatedCurrentValue' },
+  ];
+
+  const tableColumnsToUse = columns || defaultColumns;
+
   const tableRows = assets.map(asset => {
     const row: { [key: string]: any } = {};
-    tableColumn.forEach(col => {
-      // Formata valores monetários para o PDF
-      if (col.dataKey === 'purchaseValue' || col.dataKey === 'currentValue') {
-         row[col.dataKey] = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((asset as any)[col.dataKey]);
+    tableColumnsToUse.forEach(col => {
+      const dataKey = col.dataKey as keyof AssetWithCalculatedValues;
+      const value = asset[dataKey];
+
+      if (dataKey === 'purchaseValue' || dataKey === 'depreciatedValue' || dataKey === 'calculatedCurrentValue') {
+        row[dataKey] = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value as number);
+      } else if (dataKey === 'purchaseDate' && typeof value === 'string') {
+         try {
+            const date = parseISO(value);
+            row[dataKey] = formatDateFn(date, 'dd/MM/yyyy', { locale: ptBR });
+          } catch (e) {
+            row[dataKey] = value; // fallback to original string if parsing fails
+          }
       } else {
-        row[col.dataKey] = (asset as any)[col.dataKey];
+        row[dataKey] = value === undefined || value === null ? 'N/A' : value;
       }
     });
     return row;
   });
 
   doc.autoTable({
-    head: [tableColumn.map(col => col.header)],
-    body: tableRows.map(row => tableColumn.map(col => row[col.dataKey])),
+    head: [tableColumnsToUse.map(col => col.header)],
+    body: tableRows.map(row => tableColumnsToUse.map(col => row[col.dataKey])),
     startY: 20,
     theme: 'grid',
     headStyles: { fillColor: [63, 81, 181] }, // #3F51B5 (Cor Primária)
-    styles: { fontSize: 8 },
+    styles: { fontSize: 7, cellPadding: 1.5 }, // Reduced font size and padding
+    columnStyles: { // Example to set specific column widths
+      id: { cellWidth: 15 },
+      purchaseDate: { cellWidth: 20 },
+      name: { cellWidth: 'auto' }, // auto will try to fit content
+      assetTag: {cellWidth: 20},
+      // Add other columns as needed
+    },
+    didDrawPage: (data) => {
+        // Header
+        doc.setFontSize(16);
+        doc.setTextColor(40);
+        doc.text('Relatório de Ativos Imobilizados', data.settings.margin.left, 15);
+
+        // Footer
+        const pageCount = doc.getNumberOfPages(); // jsPDF extension
+        doc.setFontSize(10);
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.text(`Página ${i} de ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
+        }
+    }
   });
 
-  doc.text('Relatório de Ativos Imobilizados', 14, 15);
   doc.save(filename);
 };
+
+// Helper functions from date-fns that might be used in exportToPDF if not already available
+const { parseISO, format: formatDateFn } = require('date-fns');
+const { ptBR } = require('date-fns/locale');
+
+    
