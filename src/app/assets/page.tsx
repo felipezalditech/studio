@@ -228,11 +228,11 @@ export default function AssetsPage() {
             {filteredAssets.length > 0 && (
               <>
                 <div className="flex justify-between w-full max-w-xs">
-                  <span className="font-semibold text-muted-foreground">Total Geral Compra (Filtrado):</span>
+                  <span className="font-semibold text-muted-foreground">Total Geral Compra:</span>
                   <span className="font-bold">{formatCurrency(totalPurchaseValueFiltered)}</span>
                 </div>
                 <div className="flex justify-between w-full max-w-xs">
-                  <span className="font-semibold text-muted-foreground">Total Geral Atual (Filtrado):</span>
+                  <span className="font-semibold text-muted-foreground">Total Geral Atual:</span>
                   <span className="font-bold text-green-600 dark:text-green-500">{formatCurrency(totalCurrentValueFiltered)}</span>
                 </div>
               </>
