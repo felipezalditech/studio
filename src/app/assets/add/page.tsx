@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useCategories } from '@/contexts/CategoryContext';
-import { useLocations } from '@/contexts/LocationContext'; // Importado
+import { useLocations } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { CalendarIcon, Save, UploadCloud, XCircle } from 'lucide-react';
@@ -26,6 +26,7 @@ import type { Asset } from '@/components/assets/types';
 import Image from 'next/image';
 
 const MAX_PHOTOS = 10;
+const NO_LOCATION_SELECTED_VALUE = "__NO_LOCATION_SELECTED__";
 
 const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
@@ -38,7 +39,7 @@ const assetFormSchema = z.object({
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
   supplier: z.string().min(1, "Fornecedor é obrigatório."),
   categoryId: z.string().min(1, "Categoria é obrigatória."),
-  locationId: z.string().optional(), // Novo campo
+  locationId: z.string().optional(),
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
   previouslyDepreciatedValue: z.coerce.number().min(0, "Valor já depreciado não pode ser negativo.").optional(),
   imageDateUris: z.array(z.string()).max(MAX_PHOTOS, `Máximo de ${MAX_PHOTOS} fotos permitidas.`).optional(),
@@ -50,7 +51,7 @@ export default function AddAssetPage() {
   const { addAsset } = useAssets();
   const { suppliers } = useSuppliers();
   const { categories } = useCategories();
-  const { locations } = useLocations(); // Usar locations
+  const { locations } = useLocations();
   const { toast } = useToast();
   const router = useRouter();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -66,7 +67,7 @@ export default function AddAssetPage() {
       assetTag: '',
       supplier: '',
       categoryId: '',
-      locationId: '', // Valor padrão
+      locationId: '', // RHF state for no location is an empty string
       purchaseValue: 0,
       previouslyDepreciatedValue: undefined,
       imageDateUris: [],
@@ -90,7 +91,7 @@ export default function AddAssetPage() {
       currentValue: initialCurrentValue,
       imageDateUris: data.imageDateUris || [],
       previouslyDepreciatedValue: data.previouslyDepreciatedValue,
-      locationId: data.locationId || undefined, // Garantir que seja undefined se vazio
+      locationId: data.locationId || undefined, // Ensure undefined if empty string
     };
     addAsset(assetDataToSave);
     toast({
@@ -270,22 +271,27 @@ export default function AddAssetPage() {
                     </FormItem>
                   )}
                 />
-                <FormField /* Novo campo Local Alocado */
+                <FormField
                   control={form.control}
                   name="locationId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Local Alocado</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
+                      <Select
+                        onValueChange={(selectedValue) => {
+                          field.onChange(selectedValue === NO_LOCATION_SELECTED_VALUE ? '' : selectedValue);
+                        }}
+                        value={field.value === '' ? NO_LOCATION_SELECTED_VALUE : field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione um local" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                           <SelectItem value="">Nenhum local selecionado</SelectItem>
+                           <SelectItem value={NO_LOCATION_SELECTED_VALUE}>Nenhum local selecionado</SelectItem>
                           {locations.length === 0 ? (
-                             <SelectItem value="no-locations" disabled>Nenhum local cadastrado</SelectItem>
+                             <SelectItem value="no-locations-disabled" disabled>Nenhum local cadastrado</SelectItem>
                           ) : (
                             locations.map((location) => (
                               <SelectItem key={location.id} value={location.id}>
@@ -470,3 +476,4 @@ export default function AddAssetPage() {
     </div>
   );
 }
+
