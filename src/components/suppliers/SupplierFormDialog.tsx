@@ -28,6 +28,7 @@ import {
 import { useSuppliers, type Supplier } from '@/contexts/SupplierContext';
 import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
+import { maskCPF, maskCNPJ } from '@/lib/utils';
 
 const supplierFormSchema = z.discriminatedUnion("type", [
   z.object({
@@ -39,7 +40,7 @@ const supplierFormSchema = z.discriminatedUnion("type", [
     }),
     contato: z.string().min(5, "Contato é obrigatório."),
     endereco: z.string().min(5, "Endereço é obrigatório."),
-    cpf: z.string().optional(), // Para manter a estrutura do formulário consistente
+    cpf: z.string().optional(), 
   }),
   z.object({
     type: z.literal("fisica"),
@@ -50,7 +51,7 @@ const supplierFormSchema = z.discriminatedUnion("type", [
     }),
     contato: z.string().min(5, "Contato é obrigatório."),
     endereco: z.string().min(5, "Endereço é obrigatório."),
-    cnpj: z.string().optional(), // Para manter a estrutura do formulário consistente
+    cnpj: z.string().optional(), 
   }),
 ]);
 
@@ -97,14 +98,13 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
   }, [initialData, form, open]);
 
   useEffect(() => {
-    // Limpa campos irrelevantes ao mudar o tipo
     if (selectedType === 'fisica') {
       form.setValue('cnpj', undefined);
-      form.trigger('cpf'); // Revalidar CPF se necessário
+      form.trigger('cpf'); 
     } else if (selectedType === 'juridica') {
       form.setValue('cpf', undefined);
-      form.trigger('cnpj'); // Revalidar CNPJ se necessário
-      if (!form.getValues('nomeFantasia')) { // Se PJ e nome fantasia estiver vazio, pode ser preenchido
+      form.trigger('cnpj'); 
+      if (!form.getValues('nomeFantasia')) { 
         form.trigger('nomeFantasia');
       }
     }
@@ -115,7 +115,7 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
     const dataToSave: Omit<Supplier, 'id'> = {
         type: data.type,
         razaoSocial: data.razaoSocial,
-        nomeFantasia: data.nomeFantasia || '', // Garante que nomeFantasia seja string
+        nomeFantasia: data.nomeFantasia || '', 
         cnpj: data.type === 'juridica' ? data.cnpj : undefined,
         cpf: data.type === 'fisica' ? data.cpf : undefined,
         contato: data.contato,
@@ -212,7 +212,13 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
                   <FormItem>
                     <FormLabel>CNPJ</FormLabel>
                     <FormControl>
-                      <Input placeholder="XX.XXX.XXX/XXXX-XX" {...field} />
+                      <Input 
+                        placeholder="XX.XXX.XXX/XXXX-XX" 
+                        {...field} 
+                        onChange={(e) => {
+                          field.onChange(maskCNPJ(e.target.value));
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -228,7 +234,13 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
                   <FormItem>
                     <FormLabel>CPF</FormLabel>
                     <FormControl>
-                      <Input placeholder="XXX.XXX.XXX-XX" {...field} />
+                      <Input 
+                        placeholder="XXX.XXX.XXX-XX" 
+                        {...field} 
+                        onChange={(e) => {
+                          field.onChange(maskCPF(e.target.value));
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
