@@ -45,7 +45,7 @@ const supplierFormSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("fisica"),
     razaoSocial: z.string().min(3, "Nome Completo deve ter no mínimo 3 caracteres."),
-    nomeFantasia: z.string().optional(),
+    nomeFantasia: z.string().optional(), // Nome fantasia é opcional para pessoa física
     cpf: z.string().refine(value => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(value) || /^\d{11}$/.test(value), {
         message: "CPF inválido. Use XXX.XXX.XXX-XX ou XXXXXXXXXXX.",
     }),
@@ -98,15 +98,17 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
   }, [initialData, form, open]);
 
   useEffect(() => {
+    // Quando o tipo muda, limpa os campos de documento do tipo anterior e dispara a validação.
     if (selectedType === 'fisica') {
       form.setValue('cnpj', undefined);
-      form.trigger('cpf'); 
+      form.clearErrors('cnpj'); // Limpa explicitamente erros de CNPJ
+      form.trigger('cpf');
+      form.trigger('nomeFantasia'); // Revalida nomeFantasia (deve ser válido se vazio para PF)
     } else if (selectedType === 'juridica') {
       form.setValue('cpf', undefined);
-      form.trigger('cnpj'); 
-      if (!form.getValues('nomeFantasia')) { 
-        form.trigger('nomeFantasia');
-      }
+      form.clearErrors('cpf'); // Limpa explicitamente erros de CPF
+      form.trigger('cnpj');
+      form.trigger('nomeFantasia'); // Revalida nomeFantasia (obrigatório para PJ)
     }
   }, [selectedType, form]);
 
@@ -115,7 +117,7 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
     const dataToSave: Omit<Supplier, 'id'> = {
         type: data.type,
         razaoSocial: data.razaoSocial,
-        nomeFantasia: data.nomeFantasia || '', 
+        nomeFantasia: data.type === 'juridica' ? data.nomeFantasia : (data.nomeFantasia || ''), // Garante que nomeFantasia para PF seja string vazia se undefined
         cnpj: data.type === 'juridica' ? data.cnpj : undefined,
         cpf: data.type === 'fisica' ? data.cpf : undefined,
         contato: data.contato,
@@ -154,7 +156,12 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
                   <FormLabel>Tipo de Cadastro</FormLabel>
                   <FormControl>
                     <RadioGroup
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // Disparar a revalidação de todo o formulário ao mudar o tipo
+                        // para que a lógica de campos obrigatórios do Zod discriminatedUnion seja aplicada
+                        form.trigger(); 
+                      }}
                       defaultValue={field.value}
                       className="flex space-x-4"
                     >
