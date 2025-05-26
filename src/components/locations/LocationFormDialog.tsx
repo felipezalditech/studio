@@ -25,6 +25,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import type { Location } from '@/types/location';
+import { useLocations } from '@/contexts/LocationContext';
+import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
 
 const locationFormSchema = z.object({
@@ -37,32 +39,42 @@ export type LocationFormValues = z.infer<typeof locationFormSchema>;
 interface LocationFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmitAction: (data: LocationFormValues) => void;
-  initialData?: Location | null;
+  initialData?: Partial<Location> | null; // Permitir Partial para pré-preenchimento
+  onLocationAdded?: (locationId: string) => void;
 }
 
-export function LocationFormDialog({ open, onOpenChange, onSubmitAction, initialData }: LocationFormDialogProps) {
+export function LocationFormDialog({ open, onOpenChange, initialData, onLocationAdded }: LocationFormDialogProps) {
+  const { addLocation: addLocationToContext, updateLocation: updateLocationInContext } = useLocations();
+  const { toast } = useToast();
+
   const form = useForm<LocationFormValues>({
     resolver: zodResolver(locationFormSchema),
-    defaultValues: initialData || {
-      name: '',
-      address: '',
+    defaultValues: {
+      name: initialData?.name || '',
+      address: initialData?.address || '',
     },
   });
 
   useEffect(() => {
-    if (initialData) {
-      form.reset(initialData);
-    } else {
+    if (open) {
       form.reset({
-        name: '',
-        address: '',
+        name: initialData?.name || '',
+        address: initialData?.address || '',
       });
     }
   }, [initialData, form, open]);
 
   function onSubmit(data: LocationFormValues) {
-    onSubmitAction(data);
+    if (initialData && initialData.id) { // Editando
+      updateLocationInContext({ ...initialData, ...data, id: initialData.id });
+      toast({ title: "Sucesso!", description: "Local atualizado." });
+    } else { // Adicionando
+      const newLocation = addLocationToContext(data);
+      toast({ title: "Sucesso!", description: "Local adicionado." });
+      if (onLocationAdded && newLocation) {
+        onLocationAdded(newLocation.id);
+      }
+    }
     onOpenChange(false);
   }
 
@@ -70,9 +82,9 @@ export function LocationFormDialog({ open, onOpenChange, onSubmitAction, initial
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Editar Local' : 'Adicionar Novo Local'}</DialogTitle>
+          <DialogTitle>{initialData && initialData.id ? 'Editar Local' : 'Adicionar Novo Local'}</DialogTitle>
           <DialogDescription>
-            {initialData ? 'Modifique os dados do local abaixo.' : 'Preencha os dados para cadastrar um novo local.'}
+            {initialData && initialData.id ? 'Modifique os dados do local abaixo.' : 'Preencha os dados para cadastrar um novo local.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -112,7 +124,7 @@ export function LocationFormDialog({ open, onOpenChange, onSubmitAction, initial
                 disabled={form.formState.isSubmitting}
               >
                 <Save className="mr-2 h-4 w-4" />
-                {form.formState.isSubmitting ? "Salvando..." : (initialData ? "Salvar Alterações" : "Adicionar Local")}
+                {form.formState.isSubmitting ? "Salvando..." : (initialData && initialData.id ? "Salvar Alterações" : "Adicionar Local")}
               </Button>
             </DialogFooter>
           </form>

@@ -1,13 +1,13 @@
 
 "use client";
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import React, { createContext, useContext } from 'react'; // Removed useEffect
+import React, { createContext, useContext } from 'react'; 
 import useLocalStorage from '@/lib/hooks/use-local-storage';
 import type { Location } from '@/types/location';
 
 interface LocationContextType {
   locations: Location[];
-  addLocation: (locationData: Omit<Location, 'id'>) => void;
+  addLocation: (locationData: Omit<Location, 'id'>) => Location; // Alterado para retornar Location
   updateLocation: (locationData: Location) => void;
   deleteLocation: (locationId: string) => void;
   getLocationById: (locationId: string) => Location | undefined;
@@ -26,15 +26,13 @@ const initialMockLocations: Location[] = [
 export const LocationProvider = ({ children }: { children: ReactNode }) => {
   const [locations, setLocations] = useLocalStorage<Location[]>('assetLocations', initialMockLocations);
 
-  // The useEffect to set initialMockLocations if localStorage is empty is no longer needed.
-  // useLocalStorage handles this with initialMockLocations as the default.
-
-  const addLocation = (locationData: Omit<Location, 'id'>) => {
+  const addLocation = (locationData: Omit<Location, 'id'>): Location => {
     const newLocation: Location = {
       ...locationData,
       id: `loc-${Date.now().toString()}-${Math.random().toString(36).substring(2, 7)}`,
     };
     setLocations(prevLocations => [...prevLocations, newLocation]);
+    return newLocation; // Retorna o local recém-criado
   };
 
   const updateLocation = (locationData: Location) => {
@@ -65,3 +63,4 @@ export const useLocations = (): LocationContextType => {
   }
   return context;
 };
+

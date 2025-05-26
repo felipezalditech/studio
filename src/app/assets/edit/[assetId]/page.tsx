@@ -15,9 +15,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useAssets } from '@/contexts/AssetContext';
-// import { useSuppliers } from '@/contexts/SupplierContext'; // Removido
 import { useCategories } from '@/contexts/CategoryContext';
-import { useLocations } from '@/contexts/LocationContext';
+// import { useLocations } from '@/contexts/LocationContext'; // Removido
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
 import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle } from 'lucide-react';
@@ -26,11 +25,11 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Asset } from '@/components/assets/types';
 import Image from 'next/image';
-// import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog'; // Removido
 import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox';
+import { LocationCombobox } from '@/components/locations/LocationCombobox';
 
 const MAX_PHOTOS = 10;
-const NO_LOCATION_SELECTED_VALUE = "__NO_LOCATION_SELECTED__";
+// const NO_LOCATION_SELECTED_VALUE = "__NO_LOCATION_SELECTED__"; // Não mais necessário
 
 const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
@@ -54,9 +53,8 @@ type AssetFormValues = z.infer<typeof assetFormSchema>;
 
 export default function EditAssetPage() {
   const { assets, updateAsset, getAssetById } = useAssets();
-  // const { suppliers } = useSuppliers(); // Removido
   const { categories } = useCategories();
-  const { locations } = useLocations();
+  // const { locations } = useLocations(); // Removido
   const { toast } = useToast();
   const router = useRouter();
   const params = useParams();
@@ -66,7 +64,6 @@ export default function EditAssetPage() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [assetNotFound, setAssetNotFound] = useState(false);
-  // const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false); // Removido
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
@@ -75,7 +72,7 @@ export default function EditAssetPage() {
       assetTag: '',
       categoryId: '',
       supplier: '',
-      locationId: '',
+      locationId: undefined, // Default para undefined
       purchaseDate: undefined,
       invoiceNumber: '',
       serialNumber: '',
@@ -87,14 +84,14 @@ export default function EditAssetPage() {
   });
 
   useEffect(() => {
-    if (assetId) {
+    if (assetId && assets.length > 0) { // Adicionado assets.length > 0 para garantir que os ativos foram carregados
       const assetToEdit = getAssetById(assetId);
       if (assetToEdit) {
         form.reset({
           ...assetToEdit,
           purchaseDate: assetToEdit.purchaseDate ? parseISO(assetToEdit.purchaseDate) : undefined,
           previouslyDepreciatedValue: assetToEdit.previouslyDepreciatedValue || undefined,
-          locationId: assetToEdit.locationId || '',
+          locationId: assetToEdit.locationId || undefined, // Usa undefined se vazio
           additionalInfo: assetToEdit.additionalInfo || '',
           imageDateUris: assetToEdit.imageDateUris || [],
         });
@@ -105,6 +102,12 @@ export default function EditAssetPage() {
         setAssetNotFound(true);
         setIsLoading(false);
       }
+    } else if (assetId && assets.length === 0) {
+      // Ainda esperando os ativos carregarem, mantenha isLoading true
+      setIsLoading(true);
+    } else if (!assetId) {
+      setIsLoading(false);
+      setAssetNotFound(true); // ou redirecionar
     }
   }, [assetId, form, getAssetById, assets]);
 
@@ -347,35 +350,15 @@ export default function EditAssetPage() {
                                 <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Cadastre locais na tela de "Configurações".</p>
+                                 <p>Digite para buscar ou clique para ver opções. Se não encontrar, pode cadastrar um novo local. Cadastre locais na tela de "Configurações".</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                         </div>
-                        <Select
-                          onValueChange={(selectedValue) => {
-                            field.onChange(selectedValue === NO_LOCATION_SELECTED_VALUE ? '' : selectedValue);
-                          }}
-                          value={field.value === '' || field.value === undefined ? NO_LOCATION_SELECTED_VALUE : field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione um local" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value={NO_LOCATION_SELECTED_VALUE}>Nenhum local selecionado</SelectItem>
-                            {locations.length === 0 ? (
-                              <SelectItem value="no-locations-disabled" disabled>Nenhum local cadastrado</SelectItem>
-                            ) : (
-                              locations.map((location) => (
-                                <SelectItem key={location.id} value={location.id}>
-                                  {location.name}
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
+                        <LocationCombobox
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -593,12 +576,6 @@ export default function EditAssetPage() {
           </CardContent>
         </Card>
       </div>
-      {/* 
-      O SupplierFormDialog não é mais aberto diretamente desta página,
-      mas sim pelo SupplierCombobox. 
-      */}
     </>
   );
 }
-
-    

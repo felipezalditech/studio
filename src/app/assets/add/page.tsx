@@ -15,9 +15,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAssets } from '@/contexts/AssetContext';
-// import { useSuppliers } from '@/contexts/SupplierContext'; // Removido, pois o SupplierCombobox lida com isso
 import { useCategories } from '@/contexts/CategoryContext';
-import { useLocations } from '@/contexts/LocationContext';
+// import { useLocations } from '@/contexts/LocationContext'; // Removido, pois LocationCombobox lida com isso
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle } from 'lucide-react';
@@ -26,19 +25,19 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Asset } from '@/components/assets/types';
 import Image from 'next/image';
-// import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog'; // Removido
 import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox';
+import { LocationCombobox } from '@/components/locations/LocationCombobox';
 
 
 const MAX_PHOTOS = 10;
-const NO_LOCATION_SELECTED_VALUE = "__NO_LOCATION_SELECTED__";
+// const NO_LOCATION_SELECTED_VALUE = "__NO_LOCATION_SELECTED__"; // Não mais necessário com Combobox
 
 const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
   categoryId: z.string().min(1, "Categoria é obrigatória."),
   supplier: z.string().min(1, "Fornecedor é obrigatório."),
-  locationId: z.string().optional(),
+  locationId: z.string().optional(), // O valor será string ou undefined
   purchaseDate: z.date({
     required_error: "Data da compra é obrigatória.",
     invalid_type_error: "Formato de data inválido.",
@@ -55,14 +54,12 @@ type AssetFormValues = z.infer<typeof assetFormSchema>;
 
 export default function AddAssetPage() {
   const { addAsset } = useAssets();
-  // const { suppliers } = useSuppliers(); // Removido
   const { categories } = useCategories();
-  const { locations } = useLocations();
+  // const { locations } = useLocations(); // Removido
   const { toast } = useToast();
   const router = useRouter();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  // const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false); // Removido
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
@@ -71,7 +68,7 @@ export default function AddAssetPage() {
       assetTag: '',
       categoryId: '',
       supplier: '',
-      locationId: '',
+      locationId: undefined, // Default para undefined
       purchaseDate: undefined,
       invoiceNumber: '',
       serialNumber: '',
@@ -304,35 +301,15 @@ export default function AddAssetPage() {
                                 <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Cadastre locais na tela de "Configurações".</p>
+                                <p>Digite para buscar ou clique para ver opções. Se não encontrar, pode cadastrar um novo local. Cadastre locais na tela de "Configurações".</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                         </div>
-                        <Select
-                          onValueChange={(selectedValue) => {
-                            field.onChange(selectedValue === NO_LOCATION_SELECTED_VALUE ? '' : selectedValue);
-                          }}
-                          value={field.value === '' || field.value === undefined ? NO_LOCATION_SELECTED_VALUE : field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione um local" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value={NO_LOCATION_SELECTED_VALUE}>Nenhum local selecionado</SelectItem>
-                            {locations.length === 0 ? (
-                              <SelectItem value="no-locations-disabled" disabled>Nenhum local cadastrado</SelectItem>
-                            ) : (
-                              locations.map((location) => (
-                                <SelectItem key={location.id} value={location.id}>
-                                  {location.name}
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
+                        <LocationCombobox
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -550,13 +527,6 @@ export default function AddAssetPage() {
           </CardContent>
         </Card>
       </div>
-      {/* 
-      O SupplierFormDialog não é mais aberto diretamente desta página,
-      mas sim pelo SupplierCombobox. 
-      Se necessário, o SupplierCombobox pode ter sua própria instância interna do diálogo.
-      */}
     </>
   );
 }
-
-    

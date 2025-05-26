@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react'; // Adicionado useRef
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import Image from 'next/image'; // Adicionado Image
+import Image from 'next/image'; 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,20 +16,20 @@ import { Layers, SettingsIcon, PlusCircle, Edit2, Trash2, MoreHorizontal, MapPin
 import { useCategories, type AssetCategory } from '@/contexts/CategoryContext';
 import { CategoryFormDialog, type CategoryFormValues } from '@/components/categories/CategoryFormDialog';
 import { useLocations, type Location } from '@/contexts/LocationContext';
-import { LocationFormDialog, type LocationFormValues } from '@/components/locations/LocationFormDialog';
+import { LocationFormDialog } from '@/components/locations/LocationFormDialog'; // Removido LocationFormValues
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
 import { useBranding } from '@/contexts/BrandingContext';
 
 const brandingFormSchema = z.object({
   companyName: z.string().min(1, "Nome da empresa é obrigatório").max(50, "Nome da empresa muito longo"),
-  logoUrl: z.string().optional(), // Alterado para aceitar Data URI ou string vazia
+  logoUrl: z.string().optional(), 
 });
 type BrandingFormValues = z.infer<typeof brandingFormSchema>;
 
 export default function SettingsPage() {
   const { categories, addCategory, updateCategory, deleteCategory } = useCategories();
-  const { locations, addLocation, updateLocation, deleteLocation } = useLocations();
+  const { locations, deleteLocation: deleteLocationFromContext } = useLocations(); // Removido addLocation, updateLocation
   const { brandingConfig, setBrandingConfig } = useBranding();
   const { toast } = useToast();
 
@@ -96,16 +96,7 @@ export default function SettingsPage() {
     setIsLocationDialogOpen(true);
   };
 
-  const handleSubmitLocation = (data: LocationFormValues) => {
-    if (editingLocation) {
-      updateLocation({ ...editingLocation, ...data });
-      toast({ title: "Sucesso!", description: "Local atualizado." });
-    } else {
-      addLocation(data);
-      toast({ title: "Sucesso!", description: "Local adicionado." });
-    }
-    setIsLocationDialogOpen(false);
-  };
+  // handleSubmitLocation não é mais necessário aqui, o LocationFormDialog lida com isso.
 
   const handleDeleteRequest = (id: string, type: 'category' | 'location') => {
     setItemToDelete({ id, type });
@@ -119,7 +110,7 @@ export default function SettingsPage() {
       deleteCategory(itemToDelete.id);
       toast({ title: "Sucesso!", description: "Categoria excluída." });
     } else if (itemToDelete.type === 'location') {
-      deleteLocation(itemToDelete.id);
+      deleteLocationFromContext(itemToDelete.id); // Usando deleteLocationFromContext
       toast({ title: "Sucesso!", description: "Local excluído." });
     }
     setItemToDelete(null);
@@ -211,7 +202,7 @@ export default function SettingsPage() {
                               onClick={() => {
                                 field.onChange('');
                                 if (logoInputRef.current) {
-                                  logoInputRef.current.value = ''; // Limpa o input de arquivo
+                                  logoInputRef.current.value = ''; 
                                 }
                               }}
                               className="absolute top-1 right-1 h-7 w-7 opacity-70 group-hover:opacity-100"
@@ -401,8 +392,8 @@ export default function SettingsPage() {
         <LocationFormDialog
           open={isLocationDialogOpen}
           onOpenChange={setIsLocationDialogOpen}
-          onSubmitAction={handleSubmitLocation}
           initialData={editingLocation}
+          // onLocationAdded é tratado pelo LocationCombobox se vier de lá
         />
       )}
 
