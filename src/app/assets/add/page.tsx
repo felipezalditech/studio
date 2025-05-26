@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,18 +31,19 @@ const NO_LOCATION_SELECTED_VALUE = "__NO_LOCATION_SELECTED__";
 
 const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
+  assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
+  categoryId: z.string().min(1, "Categoria é obrigatória."),
+  supplier: z.string().min(1, "Fornecedor é obrigatório."),
+  locationId: z.string().optional(),
   purchaseDate: z.date({
     required_error: "Data da compra é obrigatória.",
     invalid_type_error: "Formato de data inválido.",
   }),
   invoiceNumber: z.string().min(1, "Número da nota fiscal é obrigatório."),
   serialNumber: z.string().optional(),
-  assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
-  supplier: z.string().min(1, "Fornecedor é obrigatório."),
-  categoryId: z.string().min(1, "Categoria é obrigatória."),
-  locationId: z.string().optional(),
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
   previouslyDepreciatedValue: z.coerce.number().min(0, "Valor já depreciado não pode ser negativo.").optional(),
+  additionalInfo: z.string().optional(),
   imageDateUris: z.array(z.string()).max(MAX_PHOTOS, `Máximo de ${MAX_PHOTOS} fotos permitidas.`).optional(),
 });
 
@@ -67,9 +69,10 @@ export default function AddAssetPage() {
       assetTag: '',
       supplier: '',
       categoryId: '',
-      locationId: '', // RHF state for no location is an empty string
+      locationId: '',
       purchaseValue: 0,
       previouslyDepreciatedValue: undefined,
+      additionalInfo: '',
       imageDateUris: [],
     },
   });
@@ -91,7 +94,8 @@ export default function AddAssetPage() {
       currentValue: initialCurrentValue,
       imageDateUris: data.imageDateUris || [],
       previouslyDepreciatedValue: data.previouslyDepreciatedValue,
-      locationId: data.locationId || undefined, // Ensure undefined if empty string
+      locationId: data.locationId || undefined,
+      additionalInfo: data.additionalInfo || undefined,
     };
     addAsset(assetDataToSave);
     toast({
@@ -271,7 +275,7 @@ export default function AddAssetPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
+                 <FormField
                   control={form.control}
                   name="locationId"
                   render={({ field }) => (
@@ -407,6 +411,25 @@ export default function AddAssetPage() {
                 />
               </div>
 
+              <FormField
+                control={form.control}
+                name="additionalInfo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Informações Adicionais (Opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Detalhes extras sobre o ativo, condições, observações, etc."
+                        className="resize-y min-h-[80px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+
               <div className="space-y-2 pt-4">
                 <FormField
                   control={form.control}
@@ -476,4 +499,3 @@ export default function AddAssetPage() {
     </div>
   );
 }
-

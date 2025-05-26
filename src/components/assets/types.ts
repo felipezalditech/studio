@@ -13,4 +13,5 @@ export interface Asset {
   currentValue: number;
   imageDateUris?: string[];
   previouslyDepreciatedValue?: number;
+  additionalInfo?: string; // Novo campo para informações adicionais
 }

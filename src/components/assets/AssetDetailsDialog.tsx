@@ -13,6 +13,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea"; // Importar Textarea
 import type { AssetWithCalculatedValues } from "@/app/assets/page";
 import { useAssets } from "@/contexts/AssetContext";
 import { formatDate, formatCurrency } from "@/components/assets/columns";
@@ -87,7 +88,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
               <p><strong>Patrimônio:</strong> {asset.assetTag}</p>
               <p><strong>Categoria:</strong> {asset.categoryName || asset.categoryId}</p>
               <p><strong>Fornecedor:</strong> {asset.supplierName || asset.supplier}</p>
-              <p><strong>Local Alocado:</strong> {asset.locationName || 'N/A'}</p> {/* Novo */}
+              <p><strong>Local Alocado:</strong> {asset.locationName || 'N/A'}</p>
               <p><strong>Data da Compra:</strong> {formatDate(asset.purchaseDate)}</p>
               <p><strong>Nº Nota Fiscal:</strong> {asset.invoiceNumber}</p>
               <p><strong>Nº Série:</strong> {asset.serialNumber || "N/A"}</p>
@@ -105,6 +106,19 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
             </div>
           </div>
         </div>
+
+        {asset.additionalInfo && (
+          <div className="mt-2">
+            <h3 className="font-semibold mb-2 text-lg">Informações Adicionais</h3>
+            <Textarea
+                value={asset.additionalInfo}
+                readOnly
+                className="text-sm resize-none bg-muted/30"
+                rows={3}
+            />
+          </div>
+        )}
+
 
         <div className="mt-2">
           <h3 className="font-semibold mb-3 text-lg">Fotos do Ativo</h3>

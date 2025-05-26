@@ -69,11 +69,12 @@ export const exportToPDF = (
     { header: 'Nº Série', dataKey: 'serialNumber' },
     { header: 'Categoria', dataKey: 'categoryName' },
     { header: 'Fornecedor', dataKey: 'supplierName' },
-    { header: 'Local Alocado', dataKey: 'locationName' }, // Novo
+    { header: 'Local Alocado', dataKey: 'locationName' },
     { header: 'Vlr. Compra', dataKey: 'purchaseValue' },
     { header: 'Vlr. Já Deprec.', dataKey: 'previouslyDepreciatedValue' },
     { header: 'Deprec. Total', dataKey: 'depreciatedValue' },
     { header: 'Vlr. Atual', dataKey: 'calculatedCurrentValue' },
+    { header: 'Info Adicional', dataKey: 'additionalInfo'},
   ];
 
   const tableColumnsToUse = columns || defaultColumns;
@@ -82,7 +83,7 @@ export const exportToPDF = (
     const row: { [key: string]: any } = {};
     tableColumnsToUse.forEach(col => {
       const dataKey = col.dataKey as keyof AssetWithCalculatedValues;
-      const value = asset[dataKey];
+      let value = asset[dataKey as keyof AssetWithCalculatedValues];
 
       if (dataKey === 'purchaseValue' || dataKey === 'depreciatedValue' || dataKey === 'calculatedCurrentValue' || dataKey === 'previouslyDepreciatedValue') {
         row[dataKey] = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value as number);
@@ -94,7 +95,7 @@ export const exportToPDF = (
             row[dataKey] = value;
           }
       } else {
-        row[dataKey] = value === undefined || value === null ? 'N/A' : value;
+        row[dataKey] = value === undefined || value === null ? 'N/A' : String(value);
       }
     });
     return row;
@@ -105,22 +106,23 @@ export const exportToPDF = (
     body: tableRows.map(row => tableColumnsToUse.map(col => row[col.dataKey])),
     startY: 20,
     theme: 'grid',
-    headStyles: { fillColor: [63, 81, 181] },
-    styles: { fontSize: 5, cellPadding: 1 }, // Reduzido fontSize para 5
+    headStyles: { fillColor: [63, 81, 181] }, // Azul Indigo
+    styles: { fontSize: 5, cellPadding: 1, overflow: 'linebreak' },
     columnStyles: {
-      id: { cellWidth: 10 },
-      purchaseDate: { cellWidth: 15 },
-      name: { cellWidth: 30 },
-      assetTag: {cellWidth: 15},
-      invoiceNumber: {cellWidth: 15},
-      serialNumber: {cellWidth: 15},
-      categoryName: {cellWidth: 18},
-      supplierName: {cellWidth: 20},
-      locationName: {cellWidth: 20}, // Novo
-      purchaseValue: {cellWidth: 18, halign: 'right'},
-      previouslyDepreciatedValue: {cellWidth: 18, halign: 'right'},
-      depreciatedValue: {cellWidth: 18, halign: 'right'},
-      calculatedCurrentValue: {cellWidth: 18, halign: 'right'},
+      id: { cellWidth: 8 },
+      purchaseDate: { cellWidth: 12 },
+      name: { cellWidth: 25 },
+      assetTag: {cellWidth: 12},
+      invoiceNumber: {cellWidth: 12},
+      serialNumber: {cellWidth: 12},
+      categoryName: {cellWidth: 15},
+      supplierName: {cellWidth: 18},
+      locationName: {cellWidth: 18},
+      purchaseValue: {cellWidth: 15, halign: 'right'},
+      previouslyDepreciatedValue: {cellWidth: 15, halign: 'right'},
+      depreciatedValue: {cellWidth: 15, halign: 'right'},
+      calculatedCurrentValue: {cellWidth: 15, halign: 'right'},
+      additionalInfo: { cellWidth: 25}
     },
     didDrawPage: (data) => {
         doc.setFontSize(16);

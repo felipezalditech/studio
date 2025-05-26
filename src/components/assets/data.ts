@@ -17,6 +17,7 @@ export const mockAssets: Asset[] = [
     previouslyDepreciatedValue: 0,
     currentValue: 1200.00,
     imageDateUris: [],
+    additionalInfo: 'Garantia estendida até Jan/2025',
   },
   {
     id: '2',
@@ -32,6 +33,7 @@ export const mockAssets: Asset[] = [
     previouslyDepreciatedValue: 50.00,
     currentValue: 300.00,
     imageDateUris: [],
+    additionalInfo: 'Montagem inclusa, verificar arranhão na lateral.',
   },
   {
     id: '3',
@@ -47,6 +49,7 @@ export const mockAssets: Asset[] = [
     previouslyDepreciatedValue: 0,
     currentValue: 450.00,
     imageDateUris: [],
+    additionalInfo: 'Cabo HDMI extra incluído.'
   },
   {
     id: '4',
@@ -77,6 +80,7 @@ export const mockAssets: Asset[] = [
     previouslyDepreciatedValue: 20.00,
     currentValue: 260.00,
     imageDateUris: [],
+    additionalInfo: 'Firmware atualizado para v2.3.1.'
   },
   {
     id: '6',
@@ -107,5 +111,6 @@ export const mockAssets: Asset[] = [
     previouslyDepreciatedValue: 0,
     currentValue: 150.00,
     imageDateUris: [],
+    additionalInfo: 'Possui 2 chaves.'
   }
 ];

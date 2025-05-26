@@ -6,7 +6,7 @@ import useLocalStorage from '@/lib/hooks/use-local-storage';
 import type { Asset } from '@/components/assets/types';
 import { mockAssets as initialMockAssets } from '@/components/assets/data';
 import { useCategories } from './CategoryContext';
-import { useLocations } from './LocationContext'; // Importado
+import { useLocations } from './LocationContext';
 
 interface AssetContextType {
   assets: Asset[];
@@ -15,7 +15,7 @@ interface AssetContextType {
   deleteAsset: (assetId: string) => void;
   setAssets: Dispatch<SetStateAction<Asset[]>>;
   getCategoryNameById: (categoryId: string) => string | undefined;
-  getLocationNameById: (locationId?: string) => string | undefined; // Novo
+  getLocationNameById: (locationId?: string) => string | undefined;
 }
 
 const AssetContext = createContext<AssetContextType | undefined>(undefined);
@@ -23,7 +23,7 @@ const AssetContext = createContext<AssetContextType | undefined>(undefined);
 export const AssetProvider = ({ children }: { children: ReactNode }) => {
   const [assets, setAssets] = useLocalStorage<Asset[]>('assets', []);
   const { getCategoryById } = useCategories();
-  const { getLocationById } = useLocations(); // Novo
+  const { getLocationById } = useLocations();
 
   useEffect(() => {
     const storedAssets = window.localStorage.getItem('assets');
@@ -38,7 +38,8 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
       ...assetData,
       id: `asset-${Date.now().toString()}-${Math.random().toString(36).substring(2, 7)}`,
       imageDateUris: assetData.imageDateUris || [],
-      locationId: assetData.locationId || undefined, // Adicionado
+      locationId: assetData.locationId || undefined,
+      additionalInfo: assetData.additionalInfo || undefined,
     };
     setAssets(prevAssets => [...prevAssets, newAsset]);
   };
