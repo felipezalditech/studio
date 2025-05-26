@@ -13,11 +13,8 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-// import type { Asset } from "./types"; // Will use AssetWithCalculatedValues
 import type { AssetWithCalculatedValues } from "@/app/assets/page";
 import { useAssets } from "@/contexts/AssetContext";
-// import { useSuppliers } from "@/contexts/SupplierContext"; // Supplier name is now part of AssetWithCalculatedValues
-// import { useCategories } from "@/contexts/CategoryContext"; // Category name is now part of AssetWithCalculatedValues
 import { formatDate, formatCurrency } from "@/components/assets/columns";
 import { Trash2, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -38,10 +35,6 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
 
   if (!asset) return null;
 
-  // Supplier and category names are now directly available in the asset object
-  // const supplier = getSupplierById(asset.supplier);
-  // const category = getCategoryById(asset.categoryId);
-
   const handleRemoveImageRequest = (indexToRemove: number) => {
     setImageIndexToDelete(indexToRemove);
     setIsConfirmDeleteImageDialogOpen(true);
@@ -51,7 +44,6 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
     if (!asset || !asset.imageDateUris || imageIndexToDelete === null) return;
     
     const updatedImageUris = asset.imageDateUris.filter((_, index) => index !== imageIndexToDelete);
-    // Ensure all fields of Asset are passed, even if some are undefined in AssetWithCalculatedValues
     const { depreciatedValue, calculatedCurrentValue, categoryName, supplierName, ...baseAsset } = asset;
     updateAsset({ ...baseAsset, imageDateUris: updatedImageUris });
     
@@ -60,10 +52,6 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
       description: "A foto selecionada foi removida com sucesso.",
     });
     setImageIndexToDelete(null); 
-    // Note: The dialog will re-render with the updated asset from context if open.
-    // If the asset prop itself needs to be updated for immediate visual feedback without context propagation,
-    // onOpenChange(false) could be called, or a local state update mechanism for the dialog's asset would be needed.
-    // For now, relying on context update.
   };
 
 
@@ -108,7 +96,10 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
             <h3 className="font-semibold mb-2 text-lg">Valores</h3>
             <div className="space-y-1.5 text-sm">
               <p><strong>Valor de Compra:</strong> {formatCurrency(asset.purchaseValue)}</p>
-              <p><strong>Valor Depreciado:</strong> <span className="text-orange-600 dark:text-orange-500">{formatCurrency(asset.depreciatedValue)}</span></p>
+              {asset.previouslyDepreciatedValue !== undefined && asset.previouslyDepreciatedValue > 0 && (
+                <p><strong>Valor Já Depreciado (Inicial):</strong> {formatCurrency(asset.previouslyDepreciatedValue)}</p>
+              )}
+              <p><strong>Valor Depreciado Total:</strong> <span className="text-orange-600 dark:text-orange-500">{formatCurrency(asset.depreciatedValue)}</span></p>
               <p><strong>Valor Atual:</strong> <span className="text-green-600 dark:text-green-500">{formatCurrency(asset.calculatedCurrentValue)}</span></p>
             </div>
           </div>
@@ -164,7 +155,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
         </DialogFooter>
       </DialogContent>
 
-      {asset.id && imageIndexToDelete !== null && ( // Ensure asset.id is available for the confirmation dialog
+      {asset.id && imageIndexToDelete !== null && ( 
         <ConfirmationDialog
           open={isConfirmDeleteImageDialogOpen}
           onOpenChange={setIsConfirmDeleteImageDialogOpen}
@@ -176,5 +167,3 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
     </Dialog>
   );
 }
-
-    

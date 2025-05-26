@@ -34,7 +34,7 @@ const formatCurrency = (amount: number) => {
 };
 
 export interface AssetWithCalculatedValues extends Asset {
-  depreciatedValue: number;
+  depreciatedValue: number; // Total accumulated depreciation
   calculatedCurrentValue: number;
   categoryName?: string;
   supplierName?: string;
@@ -122,8 +122,8 @@ export default function AssetsPage() {
       })
       .map(asset => {
         const category = getCategoryById(asset.categoryId);
-        let depreciatedValue = 0;
-        let calculatedCurrentValue = asset.purchaseValue;
+        let finalDepreciatedValue = asset.previouslyDepreciatedValue || 0;
+        let calculatedCurrentValue = asset.purchaseValue - finalDepreciatedValue; // Start with current value after previous depreciation
 
         if (category) {
           const purchaseDateObj = parseISO(asset.purchaseDate);
@@ -133,45 +133,48 @@ export default function AssetsPage() {
             if (today >= depreciationStartDate) {
               const actualPurchaseValue = asset.purchaseValue;
               const residualAmount = actualPurchaseValue * (category.residualValuePercentage / 100);
-              const depreciableBaseTotal = Math.max(0, actualPurchaseValue - residualAmount);
+              // Total that can be depreciated over the asset's entire life with the company.
+              const totalDepreciableOverAssetLife = Math.max(0, actualPurchaseValue - residualAmount);
               
-              let accumulatedDepreciation = 0;
-              const assetAgeInMonthsForDepreciation = differenceInCalendarMonths(today, depreciationStartDate);
+              let newlyCalculatedDepreciation = 0;
+              const assetAgeInMonthsForSystemDepreciation = differenceInCalendarMonths(today, depreciationStartDate);
 
-
-              if (assetAgeInMonthsForDepreciation > 0) {
+              if (assetAgeInMonthsForSystemDepreciation > 0) {
                 if (category.depreciationMethod === 'linear') {
+                  let monthlyDepreciationAmount = 0;
                   if (category.usefulLifeInYears && category.usefulLifeInYears > 0) {
                     const totalUsefulLifeInMonths = category.usefulLifeInYears * 12;
                     if (totalUsefulLifeInMonths > 0) {
-                      const monthlyDepreciationAmount = depreciableBaseTotal / totalUsefulLifeInMonths;
-                      const effectiveMonthsToDepreciate = Math.min(assetAgeInMonthsForDepreciation, totalUsefulLifeInMonths);
-                      accumulatedDepreciation = monthlyDepreciationAmount * effectiveMonthsToDepreciate;
+                       // The monthly amount is based on the *full* depreciable base of a *new* asset of this type.
+                      monthlyDepreciationAmount = totalDepreciableOverAssetLife / totalUsefulLifeInMonths;
                     }
                   } else if (category.depreciationRateValue && category.depreciationRateType) {
                     const rate = category.depreciationRateValue / 100;
                     if (category.depreciationRateType === 'annual') {
-                      const annualDepreciationAmount = depreciableBaseTotal * rate;
-                      const monthlyDepreciationAmount = annualDepreciationAmount / 12;
-                      accumulatedDepreciation = monthlyDepreciationAmount * assetAgeInMonthsForDepreciation;
+                      const annualDepreciationAmount = totalDepreciableOverAssetLife * rate;
+                      monthlyDepreciationAmount = annualDepreciationAmount / 12;
                     } else if (category.depreciationRateType === 'monthly') {
-                      const monthlyDepreciationAmount = depreciableBaseTotal * rate;
-                      accumulatedDepreciation = monthlyDepreciationAmount * assetAgeInMonthsForDepreciation;
+                      monthlyDepreciationAmount = totalDepreciableOverAssetLife * rate;
                     }
                   }
+                  // Depreciate for the months since purchase by current company.
+                  newlyCalculatedDepreciation = monthlyDepreciationAmount * assetAgeInMonthsForSystemDepreciation;
                 }
-                // Add other depreciation methods here (e.g., reducing_balance) if needed
+                // Add other depreciation methods here if needed
               }
               
-              accumulatedDepreciation = Math.max(0, Math.min(accumulatedDepreciation, depreciableBaseTotal));
-              depreciatedValue = accumulatedDepreciation;
-              calculatedCurrentValue = actualPurchaseValue - depreciatedValue;
+              // Combine previously depreciated value with newly calculated system depreciation
+              const combinedDepreciation = (asset.previouslyDepreciatedValue || 0) + newlyCalculatedDepreciation;
+              
+              // Final depreciated value cannot exceed the total depreciable amount over asset's life
+              finalDepreciatedValue = Math.max(0, Math.min(combinedDepreciation, totalDepreciableOverAssetLife));
+              calculatedCurrentValue = actualPurchaseValue - finalDepreciatedValue;
             }
           }
         }
         return {
           ...asset,
-          depreciatedValue,
+          depreciatedValue: finalDepreciatedValue,
           calculatedCurrentValue,
           categoryName: categoryNameMap.get(asset.categoryId) || asset.categoryId,
           supplierName: supplierNameMap.get(asset.supplier) || asset.supplier,
@@ -200,7 +203,8 @@ export default function AssetsPage() {
       'Categoria': asset.categoryName,
       'Fornecedor': asset.supplierName,
       'Valor Compra': asset.purchaseValue,
-      'Valor Depreciado': asset.depreciatedValue,
+      'Valor Já Depreciado (Inicial)': asset.previouslyDepreciatedValue || 0,
+      'Valor Depreciado Total': asset.depreciatedValue,
       'Valor Atual': asset.calculatedCurrentValue,
     }));
     exportToCSV(assetsForExport, 'ativos_filtrados.csv');
@@ -213,8 +217,8 @@ export default function AssetsPage() {
       return;
     }
     const assetsForExport = assetsWithCalculatedValues.map(asset => ({
-      ...asset, // Keep original fields if needed by exportToPDF structure
-      id: asset.id, // Explicitly map for clarity in PDF
+      ...asset, 
+      id: asset.id,
       purchaseDate: asset.purchaseDate,
       name: asset.name,
       assetTag: asset.assetTag,
@@ -223,20 +227,22 @@ export default function AssetsPage() {
       category: asset.categoryName,
       supplier: asset.supplierName,
       purchaseValue: asset.purchaseValue,
-      depreciatedValue: asset.depreciatedValue, // Add depreciated value
-      currentValue: asset.calculatedCurrentValue, // Use calculated current value
+      previouslyDepreciatedValue: asset.previouslyDepreciatedValue || 0,
+      depreciatedValue: asset.depreciatedValue, 
+      currentValue: asset.calculatedCurrentValue, 
     }));
     exportToPDF(assetsForExport, 'ativos_filtrados.pdf', [
       { header: 'ID', dataKey: 'id' },
       { header: 'Data Compra', dataKey: 'purchaseDate' },
       { header: 'Nome', dataKey: 'name' },
       { header: 'Patrimônio', dataKey: 'assetTag' },
-      { header: 'Nota Fiscal', dataKey: 'invoiceNumber' },
-      { header: 'Nº Série', dataKey: 'serialNumber' },
+      // { header: 'Nota Fiscal', dataKey: 'invoiceNumber' },
+      // { header: 'Nº Série', dataKey: 'serialNumber' },
       { header: 'Categoria', dataKey: 'category' },
       { header: 'Fornecedor', dataKey: 'supplier' },
       { header: 'Valor Compra', dataKey: 'purchaseValue' },
-      { header: 'Valor Depreciado', dataKey: 'depreciatedValue' },
+      { header: 'Valor Já Deprec.', dataKey: 'previouslyDepreciatedValue' },
+      { header: 'Depreciação Total', dataKey: 'depreciatedValue' },
       { header: 'Valor Atual', dataKey: 'currentValue' },
     ]);
     toast({ title: "Exportação Concluída", description: "Ativos exportados para PDF." });

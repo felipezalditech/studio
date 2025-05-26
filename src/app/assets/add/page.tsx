@@ -14,7 +14,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
-import { useCategories } from '@/contexts/CategoryContext'; // Importado
+import { useCategories } from '@/contexts/CategoryContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { CalendarIcon, Save, UploadCloud, XCircle } from 'lucide-react';
@@ -38,6 +38,7 @@ const assetFormSchema = z.object({
   supplier: z.string().min(1, "Fornecedor é obrigatório."), // Supplier ID
   categoryId: z.string().min(1, "Categoria é obrigatória."), // Category ID
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
+  previouslyDepreciatedValue: z.coerce.number().min(0, "Valor já depreciado não pode ser negativo.").optional(),
   imageDateUris: z.array(z.string()).max(MAX_PHOTOS, `Máximo de ${MAX_PHOTOS} fotos permitidas.`).optional(),
 });
 
@@ -46,7 +47,7 @@ type AssetFormValues = z.infer<typeof assetFormSchema>;
 export default function AddAssetPage() {
   const { addAsset } = useAssets();
   const { suppliers } = useSuppliers();
-  const { categories } = useCategories(); // Categorias do contexto
+  const { categories } = useCategories();
   const { toast } = useToast();
   const router = useRouter();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -63,16 +64,28 @@ export default function AddAssetPage() {
       supplier: '',
       categoryId: '',
       purchaseValue: 0,
+      previouslyDepreciatedValue: undefined,
       imageDateUris: [],
     },
   });
 
   function onSubmit(data: AssetFormValues) {
+    const initialCurrentValue = data.purchaseValue - (data.previouslyDepreciatedValue || 0);
+    if (initialCurrentValue < 0) {
+        toast({
+            title: "Erro de Validação",
+            description: "O valor já depreciado não pode ser maior que o valor de compra.",
+            variant: "destructive",
+        });
+        return;
+    }
+
     const assetDataToSave: Omit<Asset, 'id'> = {
       ...data,
       purchaseDate: format(data.purchaseDate, 'yyyy-MM-dd'),
-      currentValue: data.purchaseValue,
+      currentValue: initialCurrentValue,
       imageDateUris: data.imageDateUris || [],
+      previouslyDepreciatedValue: data.previouslyDepreciatedValue,
     };
     addAsset(assetDataToSave);
     toast({
@@ -329,6 +342,22 @@ export default function AddAssetPage() {
                       <FormControl>
                         <Input type="number" step="0.01" placeholder="Ex: 2500.00" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="previouslyDepreciatedValue"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor Já Depreciado (R$, Opcional)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Informe se o ativo foi adquirido usado e já possuía depreciação acumulada.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

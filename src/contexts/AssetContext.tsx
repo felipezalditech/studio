@@ -5,7 +5,7 @@ import React, { createContext, useContext, useMemo, useEffect } from 'react';
 import useLocalStorage from '@/lib/hooks/use-local-storage';
 import type { Asset } from '@/components/assets/types';
 import { mockAssets as initialMockAssets } from '@/components/assets/data';
-import { useCategories } from './CategoryContext'; // Import useCategories
+import { useCategories } from './CategoryContext'; 
 
 interface AssetContextType {
   assets: Asset[];
@@ -13,7 +13,6 @@ interface AssetContextType {
   updateAsset: (updatedAsset: Asset) => void; 
   deleteAsset: (assetId: string) => void;
   setAssets: Dispatch<SetStateAction<Asset[]>>;
-  // categories: string[]; // This will be replaced by category data from CategoryContext
   getCategoryNameById: (categoryId: string) => string | undefined;
 }
 
@@ -21,7 +20,7 @@ const AssetContext = createContext<AssetContextType | undefined>(undefined);
 
 export const AssetProvider = ({ children }: { children: ReactNode }) => {
   const [assets, setAssets] = useLocalStorage<Asset[]>('assets', []);
-  const { getCategoryById } = useCategories(); // Get category functions
+  const { getCategoryById } = useCategories(); 
 
   useEffect(() => {
     const storedAssets = window.localStorage.getItem('assets');
@@ -35,8 +34,9 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
     const newAsset: Asset = {
       ...assetData,
       id: `asset-${Date.now().toString()}-${Math.random().toString(36).substring(2, 7)}`,
+      // currentValue is already calculated and passed in assetData from AddAssetPage
+      // previouslyDepreciatedValue is also passed in assetData
       imageDateUris: assetData.imageDateUris || [],
-      currentValue: assetData.purchaseValue, // Initialize currentValue with purchaseValue
     };
     setAssets(prevAssets => [...prevAssets, newAsset]);
   };
@@ -56,7 +56,6 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
     return category?.name;
   };
   
-  // const categories = useMemo(() => Array.from(new Set(assets.map(asset => asset.category))).sort(), [assets]);
 
   return (
     <AssetContext.Provider value={{ assets, addAsset, updateAsset, deleteAsset, setAssets, getCategoryNameById }}>

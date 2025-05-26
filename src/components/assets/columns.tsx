@@ -2,8 +2,7 @@
 "use client";
 
 import type { ColumnDef, HeaderContext } from "@tanstack/react-table";
-// import type { Asset } from "./types"; // We will use AssetWithCalculatedValues from AssetsPage
-import type { AssetWithCalculatedValues } from "@/app/assets/page"; // Import the augmented type
+import type { AssetWithCalculatedValues } from "@/app/assets/page"; 
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,6 +18,9 @@ import { parseISO, format as formatDateFn } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export const formatCurrency = (amount: number) => {
+  if (typeof amount !== 'number' || isNaN(amount)) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(0);
+  }
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
 };
 
@@ -27,7 +29,6 @@ export const formatDate = (dateString: string) => {
     const date = parseISO(dateString);
     return formatDateFn(date, 'dd/MM/yyyy', { locale: ptBR });
   } catch (error) {
-    // console.error("Erro ao formatar data:", dateString, error);
     return dateString; 
   }
 };
@@ -94,14 +95,14 @@ export const getColumns = (
     cell: ({ row }) => row.getValue("serialNumber") || "N/A",
   },
   {
-    accessorKey: "categoryName", // Changed from categoryId
+    accessorKey: "categoryName", 
     header: ({ column }) => <SortableHeader column={column} title="Categoria" />,
     cell: ({ row }) => {
       return row.original.categoryName || "Desconhecida";
     },
   },
   {
-    accessorKey: "supplierName", // Changed from supplier
+    accessorKey: "supplierName", 
     header: ({ column }) => <SortableHeader column={column} title="Fornecedor" />,
     cell: ({ row }) => {
       return row.original.supplierName || "Desconhecido";
@@ -113,12 +114,12 @@ export const getColumns = (
     cell: ({ row }) => formatCurrency(row.getValue("purchaseValue")),
   },
   {
-    accessorKey: "depreciatedValue", // New column
+    accessorKey: "depreciatedValue", // This will show the total accumulated depreciation
     header: ({ column }) => <SortableHeader column={column} title="Valor Depreciado" />,
     cell: ({ row }) => formatCurrency(row.original.depreciatedValue),
   },
   {
-    accessorKey: "calculatedCurrentValue", // Using calculated value
+    accessorKey: "calculatedCurrentValue", 
     header: ({ column }) => <SortableHeader column={column} title="Valor Atual" />,
     cell: ({ row }) => formatCurrency(row.original.calculatedCurrentValue),
   },
@@ -172,5 +173,3 @@ export const getColumns = (
     enableHiding: true,
   },
 ];
-
-    

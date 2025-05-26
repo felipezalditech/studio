@@ -2,6 +2,7 @@
 import type { Asset } from './types';
 
 // Certifique-se que os categoryId correspondem aos IDs em initialMockCategories em CategoryContext.tsx
+// E supplier IDs correspondem aos de SupplierContext
 export const mockAssets: Asset[] = [
   {
     id: '1',
@@ -13,7 +14,8 @@ export const mockAssets: Asset[] = [
     supplier: 'sup-001', 
     categoryId: 'cat-001', // Eletrônicos
     purchaseValue: 1200.00,
-    currentValue: 1200.00,
+    previouslyDepreciatedValue: 0, // Novo
+    currentValue: 1200.00, // purchaseValue - previouslyDepreciatedValue
     imageDateUris: [],
   },
   {
@@ -26,7 +28,8 @@ export const mockAssets: Asset[] = [
     supplier: 'sup-002', 
     categoryId: 'cat-002', // Móveis
     purchaseValue: 350.00,
-    currentValue: 350.00,
+    previouslyDepreciatedValue: 50.00, // Exemplo de valor já depreciado
+    currentValue: 300.00, // 350 - 50
     imageDateUris: [],
   },
   {
@@ -39,6 +42,7 @@ export const mockAssets: Asset[] = [
     supplier: 'sup-003', 
     categoryId: 'cat-001', // Eletrônicos
     purchaseValue: 450.00,
+    previouslyDepreciatedValue: 0,
     currentValue: 450.00,
     imageDateUris: [],
   },
@@ -52,6 +56,7 @@ export const mockAssets: Asset[] = [
     supplier: 'sup-002', 
     categoryId: 'cat-002', // Móveis
     purchaseValue: 220.00,
+    previouslyDepreciatedValue: 0,
     currentValue: 220.00,
     imageDateUris: [],
   },
@@ -65,7 +70,8 @@ export const mockAssets: Asset[] = [
     supplier: 'sup-001', 
     categoryId: 'cat-004', // Redes
     purchaseValue: 280.00,
-    currentValue: 280.00,
+    previouslyDepreciatedValue: 20.00,
+    currentValue: 260.00,
     imageDateUris: [],
   },
   {
@@ -78,7 +84,8 @@ export const mockAssets: Asset[] = [
     supplier: 'sup-003', 
     categoryId: 'cat-001', // Eletrônicos
     purchaseValue: 600.00,
-    currentValue: 600.00,
+    previouslyDepreciatedValue: 100.00,
+    currentValue: 500.00,
     imageDateUris: [],
   },
   {
@@ -91,6 +98,7 @@ export const mockAssets: Asset[] = [
     supplier: 'sup-002', 
     categoryId: 'cat-002', // Móveis
     purchaseValue: 150.00,
+    previouslyDepreciatedValue: 0,
     currentValue: 150.00,
     imageDateUris: [],
   }

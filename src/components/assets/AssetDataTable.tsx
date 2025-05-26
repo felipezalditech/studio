@@ -29,17 +29,17 @@ import {
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from "lucide-react"
-import type { AssetWithCalculatedValues } from "@/app/assets/page"; // Import the augmented type
+import type { AssetWithCalculatedValues } from "@/app/assets/page"; 
 
 
-interface DataTableProps<TData extends AssetWithCalculatedValues, TValue> { // Ensure TData extends the correct type
+interface DataTableProps<TData extends AssetWithCalculatedValues, TValue> { 
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   rowSelection: RowSelectionState
   onRowSelectionChange: React.Dispatch<React.SetStateAction<RowSelectionState>>
 }
 
-export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>({ // Ensure TData extends the correct type
+export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>({ 
   columns,
   data,
   rowSelection,
@@ -66,6 +66,11 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
       columnVisibility,
       rowSelection,
     },
+    initialState: {
+        pagination: {
+            pageSize: 10, // Default page size
+        }
+    }
   })
 
   return (
@@ -95,11 +100,11 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
                   column.id === "assetTag" ? "Patrimônio" :
                   column.id === "invoiceNumber" ? "Nota Fiscal" :
                   column.id === "serialNumber" ? "Nº de Série" :
-                  column.id === "categoryName" ? "Categoria" : // Updated from categoryId
-                  column.id === "supplierName" ? "Fornecedor" : // Updated from supplier
+                  column.id === "categoryName" ? "Categoria" : 
+                  column.id === "supplierName" ? "Fornecedor" : 
                   column.id === "purchaseValue" ? "Valor de Compra" :
-                  column.id === "depreciatedValue" ? "Valor Depreciado" : // New column
-                  column.id === "calculatedCurrentValue" ? "Valor Atual" : // Updated from currentValue
+                  column.id === "depreciatedValue" ? "Valor Depreciado" : 
+                  column.id === "calculatedCurrentValue" ? "Valor Atual" : 
                   column.id === "actions" ? "Ações" :
                   column.id;
                 return (
@@ -183,5 +188,3 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
     </div>
   )
 }
-
-    

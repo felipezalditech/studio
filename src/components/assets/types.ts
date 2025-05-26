@@ -9,6 +9,8 @@ export interface Asset {
   supplier: string; // Supplier ID
   categoryId: string; // Changed from category: string to categoryId: string
   purchaseValue: number;
-  currentValue: number;
+  currentValue: number; // Initial current value, will be further depreciated
   imageDateUris?: string[];
+  previouslyDepreciatedValue?: number; // Valor que o ativo já tinha depreciado antes da aquisição atual
 }
+
