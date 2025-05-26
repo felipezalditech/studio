@@ -18,15 +18,27 @@ export function ThemeToggleButton() {
   if (!mounted) {
     // Retorna um botão desabilitado com um ícone padrão para evitar hydration mismatch
     // e fornecer um placeholder visual enquanto o tema real não é conhecido no cliente.
-    return <Button variant="outline" size="icon" className="w-9 h-9" disabled><Sun className="h-[1.2rem] w-[1.2rem]" /></Button>;
+    return (
+      <Button 
+        variant="ghost" 
+        className="w-full flex justify-center items-center gap-2 text-sm rounded-md p-2" 
+        disabled
+      >
+        <Sun className="h-5 w-5" />
+        <span>Tema</span>
+      </Button>
+    );
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="w-9 h-9">
-          {resolvedTheme === 'dark' ? <Moon className="h-[1.2rem] w-[1.2rem]" /> : <Sun className="h-[1.2rem] w-[1.2rem]" />}
-          <span className="sr-only">Alternar tema</span>
+        <Button 
+          variant="ghost" 
+          className="w-full flex justify-center items-center gap-2 text-sm rounded-md p-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:ring-sidebar-ring"
+        >
+          {resolvedTheme === 'dark' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          <span>Tema</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
