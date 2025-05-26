@@ -24,7 +24,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import type { Supplier } from '@/contexts/SupplierContext';
+import { useSuppliers, type Supplier } from '@/contexts/SupplierContext'; // Import useSuppliers
+import { useToast } from '@/hooks/use-toast'; // Import useToast
 import { Save } from 'lucide-react';
 
 const supplierFormSchema = z.object({
@@ -40,11 +41,14 @@ export type SupplierFormValues = z.infer<typeof supplierFormSchema>;
 interface SupplierFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmitAction: (data: SupplierFormValues) => void;
-  initialData?: Supplier | null; // Pode ser Supplier ou null para novo
+  initialData?: Supplier | null;
+  onSupplierAdded?: (supplierId: string) => void; // Callback para quando um novo fornecedor é adicionado
 }
 
-export function SupplierFormDialog({ open, onOpenChange, onSubmitAction, initialData }: SupplierFormDialogProps) {
+export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplierAdded }: SupplierFormDialogProps) {
+  const { addSupplier: addSupplierToContext, updateSupplier: updateSupplierInContext } = useSuppliers();
+  const { toast } = useToast();
+
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(supplierFormSchema),
     defaultValues: initialData || {
@@ -57,22 +61,33 @@ export function SupplierFormDialog({ open, onOpenChange, onSubmitAction, initial
   });
 
   useEffect(() => {
-    if (initialData) {
-      form.reset(initialData);
-    } else {
-      form.reset({
-        razaoSocial: '',
-        nomeFantasia: '',
-        cnpj: '',
-        contato: '',
-        endereco: '',
-      });
+    if (open) { // Reset form when dialog opens and initialData might have changed
+      if (initialData) {
+        form.reset(initialData);
+      } else {
+        form.reset({
+          razaoSocial: '',
+          nomeFantasia: '',
+          cnpj: '',
+          contato: '',
+          endereco: '',
+        });
+      }
     }
-  }, [initialData, form, open]); // Reset form when initialData changes or dialog opens
+  }, [initialData, form, open]);
 
   function onSubmit(data: SupplierFormValues) {
-    onSubmitAction(data);
-    onOpenChange(false); // Fecha o diálogo após submeter
+    if (initialData) { // Editando
+      updateSupplierInContext({ ...initialData, ...data });
+      toast({ title: "Sucesso!", description: "Fornecedor atualizado." });
+    } else { // Adicionando
+      const newSupplier = addSupplierToContext(data);
+      toast({ title: "Sucesso!", description: "Fornecedor adicionado." });
+      if (onSupplierAdded && newSupplier) {
+        onSupplierAdded(newSupplier.id);
+      }
+    }
+    onOpenChange(false);
   }
 
   return (
@@ -85,7 +100,7 @@ export function SupplierFormDialog({ open, onOpenChange, onSubmitAction, initial
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-3">
             <FormField
               control={form.control}
               name="razaoSocial"

@@ -1,7 +1,7 @@
 
 "use client";
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import React, { createContext, useContext } from 'react'; // Removed useEffect
+import React, { createContext, useContext } from 'react'; 
 import useLocalStorage from '@/lib/hooks/use-local-storage';
 
 export interface Supplier {
@@ -15,7 +15,7 @@ export interface Supplier {
 
 interface SupplierContextType {
   suppliers: Supplier[];
-  addSupplier: (supplierData: Omit<Supplier, 'id'>) => void;
+  addSupplier: (supplierData: Omit<Supplier, 'id'>) => Supplier; // Alterado para retornar Supplier
   updateSupplier: (supplierData: Supplier) => void;
   deleteSupplier: (supplierId: string) => void;
   getSupplierById: (supplierId: string) => Supplier | undefined;
@@ -34,15 +34,13 @@ const initialMockSuppliers: Supplier[] = [
 export const SupplierProvider = ({ children }: { children: ReactNode }) => {
   const [suppliers, setSuppliers] = useLocalStorage<Supplier[]>('suppliers', initialMockSuppliers);
 
-  // The useEffect to set initialMockSuppliers if localStorage is empty is no longer needed.
-  // useLocalStorage handles this with initialMockSuppliers as the default.
-
-  const addSupplier = (supplierData: Omit<Supplier, 'id'>) => {
+  const addSupplier = (supplierData: Omit<Supplier, 'id'>): Supplier => {
     const newSupplier: Supplier = {
       ...supplierData,
       id: `sup-${Date.now().toString()}-${Math.random().toString(36).substring(2, 7)}`,
     };
     setSuppliers(prevSuppliers => [...prevSuppliers, newSupplier]);
+    return newSupplier; // Retorna o fornecedor recém-criado
   };
 
   const updateSupplier = (supplierData: Supplier) => {

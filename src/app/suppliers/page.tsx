@@ -8,16 +8,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, PlusCircle, Edit2, Trash2 } from 'lucide-react';
 import { useSuppliers, type Supplier } from '@/contexts/SupplierContext';
-import { SupplierFormDialog, type SupplierFormValues } from '@/components/suppliers/SupplierFormDialog';
-import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'; // Importado
+import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog'; // Removido SupplierFormValues
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
 
 export default function SuppliersPage() {
-  const { suppliers, addSupplier, updateSupplier, deleteSupplier } = useSuppliers();
+  const { suppliers, deleteSupplier } = useSuppliers(); // Removido addSupplier, updateSupplier
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
-  const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false); // Estado para o diálogo de confirmação
-  const [supplierToDeleteId, setSupplierToDeleteId] = useState<string | null>(null); // Estado para o ID do fornecedor a ser excluído
+  const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
+  const [supplierToDeleteId, setSupplierToDeleteId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleOpenDialog = (supplier: Supplier | null = null) => {
@@ -25,16 +25,7 @@ export default function SuppliersPage() {
     setIsDialogOpen(true);
   };
 
-  const handleSubmitSupplier = (data: SupplierFormValues) => {
-    if (editingSupplier) {
-      updateSupplier({ ...editingSupplier, ...data });
-      toast({ title: "Sucesso!", description: "Fornecedor atualizado." });
-    } else {
-      addSupplier(data);
-      toast({ title: "Sucesso!", description: "Fornecedor adicionado." });
-    }
-    setIsDialogOpen(false);
-  };
+  // handleSubmitSupplier não é mais necessário aqui, o diálogo lida com isso.
 
   const handleDeleteSupplierRequest = (supplierId: string) => {
     setSupplierToDeleteId(supplierId);
@@ -101,7 +92,7 @@ export default function SuppliersPage() {
                             Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleDeleteSupplierRequest(supplier.id)} // Alterado
+                            onClick={() => handleDeleteSupplierRequest(supplier.id)}
                             className="text-red-600 hover:!text-red-600 focus:text-red-600 focus:!bg-red-100 dark:focus:!bg-red-700/50"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -122,8 +113,8 @@ export default function SuppliersPage() {
         <SupplierFormDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          onSubmitAction={handleSubmitSupplier}
           initialData={editingSupplier}
+          // onSupplierAdded não é necessário aqui, a lista já se atualiza via contexto.
         />
       )}
 
