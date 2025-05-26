@@ -32,17 +32,17 @@ const NO_LOCATION_SELECTED_VALUE = "__NO_LOCATION_SELECTED__";
 const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
-  categoryId: z.string().min(1, "Categoria é obrigatória."),
-  supplier: z.string().min(1, "Fornecedor é obrigatório."),
-  locationId: z.string().optional(),
   purchaseDate: z.date({
     required_error: "Data da compra é obrigatória.",
     invalid_type_error: "Formato de data inválido.",
   }),
-  invoiceNumber: z.string().min(1, "Número da nota fiscal é obrigatório."),
   serialNumber: z.string().optional(),
+  invoiceNumber: z.string().min(1, "Número da nota fiscal é obrigatório."),
+  supplier: z.string().min(1, "Fornecedor é obrigatório."),
+  categoryId: z.string().min(1, "Categoria é obrigatória."),
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
   previouslyDepreciatedValue: z.coerce.number().min(0, "Valor já depreciado não pode ser negativo.").optional(),
+  locationId: z.string().optional(),
   additionalInfo: z.string().optional(),
   imageDateUris: z.array(z.string()).max(MAX_PHOTOS, `Máximo de ${MAX_PHOTOS} fotos permitidas.`).optional(),
 });
@@ -63,15 +63,15 @@ export default function AddAssetPage() {
     resolver: zodResolver(assetFormSchema),
     defaultValues: {
       name: '',
-      purchaseDate: undefined,
-      invoiceNumber: '',
-      serialNumber: '',
       assetTag: '',
+      purchaseDate: undefined,
+      serialNumber: '',
+      invoiceNumber: '',
       supplier: '',
       categoryId: '',
-      locationId: '',
       purchaseValue: 0,
       previouslyDepreciatedValue: undefined,
+      locationId: '',
       additionalInfo: '',
       imageDateUris: [],
     },
@@ -285,7 +285,7 @@ export default function AddAssetPage() {
                         onValueChange={(selectedValue) => {
                           field.onChange(selectedValue === NO_LOCATION_SELECTED_VALUE ? '' : selectedValue);
                         }}
-                        value={field.value === '' ? NO_LOCATION_SELECTED_VALUE : field.value}
+                        value={field.value === '' || field.value === undefined ? NO_LOCATION_SELECTED_VALUE : field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -316,7 +316,7 @@ export default function AddAssetPage() {
                   control={form.control}
                   name="purchaseDate"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
+                    <FormItem> {/* Removido className="flex flex-col" */}
                       <FormLabel>Data da Compra</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
@@ -409,26 +409,24 @@ export default function AddAssetPage() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="additionalInfo"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2 lg:col-span-2">
+                      <FormLabel>Informações Adicionais (Opcional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Detalhes extras sobre o ativo, condições, observações, etc."
+                          className="resize-y min-h-[80px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-
-              <FormField
-                control={form.control}
-                name="additionalInfo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Informações Adicionais (Opcional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Detalhes extras sobre o ativo, condições, observações, etc."
-                        className="resize-y min-h-[80px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
 
               <div className="space-y-2 pt-4">
                 <FormField
@@ -499,3 +497,5 @@ export default function AddAssetPage() {
     </div>
   );
 }
+
+    
