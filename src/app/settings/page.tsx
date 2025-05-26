@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Layers, SettingsIcon, PlusCircle, Edit2, Trash2, MoreHorizontal, MapPin, Palette } from "lucide-react";
+import { Layers, SettingsIcon, PlusCircle, Edit2, Trash2, MoreHorizontal, MapPin, Building2 } from "lucide-react"; // Changed Palette to Building2
 import { useCategories, type AssetCategory } from '@/contexts/CategoryContext';
 import { CategoryFormDialog, type CategoryFormValues } from '@/components/categories/CategoryFormDialog';
 import { useLocations, type Location } from '@/contexts/LocationContext';
@@ -135,7 +135,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center text-xl">
-            <Palette className="mr-2 h-5 w-5" />
+            <Building2 className="mr-2 h-5 w-5" /> {/* Changed icon here */}
             Dados da empresa
           </CardTitle>
           <CardDescription>
@@ -368,3 +368,5 @@ export default function SettingsPage() {
 
 
   
+
+    
