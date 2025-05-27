@@ -47,7 +47,6 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
         ...updatedAsset,
         serialNumber: updatedAsset.serialNumber || undefined, 
         previouslyDepreciatedValue: updatedAsset.previouslyDepreciatedValue || 0,
-        // Recalcular currentValue ao atualizar, se purchaseValue ou previouslyDepreciatedValue mudarem
         currentValue: updatedAsset.purchaseValue - (updatedAsset.previouslyDepreciatedValue || 0),
        } : asset))
     );
