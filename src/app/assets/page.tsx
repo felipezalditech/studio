@@ -347,16 +347,16 @@ export default function AssetsPage() {
               {hasSelectedItems && (
                 <>
                   <div className="flex justify-between w-full max-w-xs">
-                    <span className="font-semibold text-primary">Total Compra Selecionado:</span>
-                    <span className="font-bold text-primary ml-2">{formatCurrency(totalPurchaseValueSelected)}</span>
+                    <span className="font-semibold text-primary">Valor de compra selecionado:</span>
+                    <span className="font-bold text-green-600 dark:text-green-500 ml-2">{formatCurrency(totalPurchaseValueSelected)}</span>
                   </div>
                   <div className="flex justify-between w-full max-w-xs">
-                    <span className="font-semibold text-primary">Total Depreciado Selecionado:</span>
-                    <span className="font-bold text-primary ml-2">{formatCurrency(totalDepreciatedValueSelected)}</span>
+                    <span className="font-semibold text-primary">Valor depreciado selecionado:</span>
+                    <span className="font-bold text-red-600 dark:text-red-500 ml-2">{formatCurrency(totalDepreciatedValueSelected)}</span>
                   </div>
                   <div className="flex justify-between w-full max-w-xs">
-                    <span className="font-semibold text-primary">Total Atual Selecionado:</span>
-                    <span className="font-bold text-primary ml-2">{formatCurrency(totalCurrentValueSelected)}</span>
+                    <span className="font-semibold text-primary">Valor atual selecionado:</span>
+                    <span className="font-bold text-orange-600 dark:text-orange-500 ml-2">{formatCurrency(totalCurrentValueSelected)}</span>
                   </div>
                 </>
               )}
@@ -400,7 +400,3 @@ export default function AssetsPage() {
     </div>
   );
 }
-
-    
-
-    
