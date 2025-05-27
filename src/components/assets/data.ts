@@ -1,116 +1,64 @@
 
 import type { Asset } from './types';
 
-// Certifique-se que os IDs correspondem aos mocks em outros contextos
-export const mockAssets: Asset[] = [
-  {
-    id: '1',
-    purchaseDate: '2023-01-15',
-    name: 'Laptop Pro 15"',
-    invoiceNumber: 'INV-001',
-    serialNumber: 'SN-LP001',
-    assetTag: 'AT-001',
-    supplier: 'sup-001',
-    categoryId: 'cat-001', // Eletrônicos
-    locationId: 'loc-001', // Escritório Principal
-    purchaseValue: 1200.00,
-    previouslyDepreciatedValue: 0,
-    currentValue: 1200.00,
-    imageDateUris: [],
-    additionalInfo: 'Garantia estendida até Jan/2025',
-  },
-  {
-    id: '2',
-    purchaseDate: '2023-02-20',
-    name: 'Mesa de Escritório Grande',
-    invoiceNumber: 'INV-002',
-    serialNumber: 'N/A',
-    assetTag: 'AT-002',
-    supplier: 'sup-002',
-    categoryId: 'cat-002', // Móveis
-    locationId: 'loc-002', // Cliente Escola Crescer
-    purchaseValue: 350.00,
-    previouslyDepreciatedValue: 50.00,
-    currentValue: 300.00,
-    imageDateUris: [],
-    additionalInfo: 'Montagem inclusa, verificar arranhão na lateral.',
-  },
-  {
-    id: '3',
-    purchaseDate: '2022-11-05',
-    name: 'Monitor Alta Resolução 27"',
-    invoiceNumber: 'INV-003',
-    serialNumber: 'SN-M001',
-    assetTag: 'AT-003',
-    supplier: 'sup-003',
-    categoryId: 'cat-001', // Eletrônicos
-    locationId: 'loc-001',
-    purchaseValue: 450.00,
-    previouslyDepreciatedValue: 0,
-    currentValue: 450.00,
-    imageDateUris: [],
-    additionalInfo: 'Cabo HDMI extra incluído.'
-  },
-  {
-    id: '4',
-    purchaseDate: '2023-03-10',
-    name: 'Cadeira Ergonômica',
-    invoiceNumber: 'INV-004',
-    serialNumber: 'N/A',
-    assetTag: 'AT-004',
-    supplier: 'sup-002',
-    categoryId: 'cat-002', // Móveis
-    locationId: 'loc-003', // Filial Leste
-    purchaseValue: 220.00,
-    previouslyDepreciatedValue: 0,
-    currentValue: 220.00,
-    imageDateUris: [],
-  },
-  {
-    id: '5',
-    purchaseDate: '2023-01-25',
-    name: 'Switch de Rede 24 Portas',
-    invoiceNumber: 'INV-005',
-    serialNumber: 'SN-NS001',
-    assetTag: 'AT-005',
-    supplier: 'sup-001',
-    categoryId: 'cat-004', // Redes
-    locationId: 'loc-004', // Depósito Central
-    purchaseValue: 280.00,
-    previouslyDepreciatedValue: 20.00,
-    currentValue: 260.00,
-    imageDateUris: [],
-    additionalInfo: 'Firmware atualizado para v2.3.1.'
-  },
-  {
-    id: '6',
-    purchaseDate: '2022-09-01',
-    name: 'Projetor HD',
-    invoiceNumber: 'INV-006',
-    serialNumber: 'SN-PJ001',
-    assetTag: 'AT-006',
-    supplier: 'sup-003',
-    categoryId: 'cat-001', // Eletrônicos
-    locationId: 'loc-001',
-    purchaseValue: 600.00,
-    previouslyDepreciatedValue: 100.00,
-    currentValue: 500.00,
-    imageDateUris: [],
-  },
-  {
-    id: '7',
-    purchaseDate: '2023-04-02',
-    name: 'Armário de Aço',
-    invoiceNumber: 'INV-007',
-    serialNumber: 'N/A',
-    assetTag: 'AT-007',
-    supplier: 'sup-002',
-    categoryId: 'cat-002', // Móveis
-    // locationId: undefined, // Sem local definido
-    purchaseValue: 150.00,
-    previouslyDepreciatedValue: 0,
-    currentValue: 150.00,
-    imageDateUris: [],
-    additionalInfo: 'Possui 2 chaves.'
-  }
+const categoryIds = ['cat-001', 'cat-002', 'cat-003', 'cat-004'];
+const supplierIds = ['sup-001', 'sup-002', 'sup-003'];
+const locationIds = ['loc-001', 'loc-002', 'loc-003', 'loc-004', undefined];
+
+const assetBaseNames = [
+  "Laptop Corporativo Avançado", "Mesa de Escritório Ergonômica", "Monitor LED Curvo 32\"", "Cadeira de Escritório Presidente",
+  "Switch Gerenciável 48 Portas", "Projetor Multimídia Full HD", "Armário de Documentos com Chave", "Servidor de Rack Dell PowerEdge",
+  "Impressora Laser Colorida", "Tablet Industrial Robusto", "Sistema de Videoconferência Polycom", "Teclado Mecânico Silencioso",
+  "Mouse Óptico Vertical", "Nobreak Senoidal 3kVA", "Roteador Wi-Fi 6 Mesh", "Scanner Duplex de Alta Velocidade",
+  "Ar Condicionado Central VRF", "Purificador de Água Refrigerado", "Forno de Micro-ondas Industrial", "Smart TV Corporativa 65\"",
+  "Desktop Workstation Gráfica", "Apple iMac 27\" 5K", "Microsoft Surface Pro 9", "Câmera de Segurança IP PoE", "Drone de Mapeamento Topográfico",
+  "Mesa de Reunião Executiva", "Longarina para Recepção 4 Lugares", "Arquivo Deslizante Compacto", "Estante Industrial Pesada",
+  "PABX Híbrido Digital/IP", "Antena Externa Direcional Wi-Fi", "Firewall UTM de Próxima Geração", "Storage NAS 8 Baias",
+  "Plotter de Recorte Profissional", "Impressora 3D Resina", "Bancada Eletrônica Antiestática", "Osciloscópio Digital Tektronix",
+  "Gerador de Energia a Diesel", "Empilhadeira Elétrica Retrátil", "Paleteira Manual Hidráulica", "Carrinho de Ferramentas Completo"
 ];
+
+const getRandomElement = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+const getRandomDate = (start: Date, end: Date): string => {
+  const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const startDate = new Date(2020, 0, 1); // Jan 1, 2020
+const endDate = new Date(); // Today
+
+export const mockAssets: Asset[] = [];
+
+for (let i = 1; i <= 150; i++) {
+  const purchaseValue = Math.floor(Math.random() * (7500 - 80 + 1)) + 80;
+  let previouslyDepreciatedValue = 0;
+  if (Math.random() < 0.25) {
+    previouslyDepreciatedValue = Math.floor(Math.random() * (purchaseValue * 0.4));
+  }
+  const initialCurrentValue = purchaseValue - previouslyDepreciatedValue;
+  const serialNumber = Math.random() < 0.2 ? 'N/A' : `SN-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+  const assetName = `${getRandomElement(assetBaseNames)} Modelo ${String.fromCharCode(65 + (i % 26))}${Math.floor(i / 26) || ''}-${i}`;
+  const randomYear = 2020 + Math.floor(Math.random() * 5);
+
+
+  mockAssets.push({
+    id: `asset-mock-${i.toString().padStart(4, '0')}`,
+    purchaseDate: getRandomDate(startDate, endDate),
+    name: assetName,
+    invoiceNumber: `NF-${randomYear}-${Math.floor(Math.random() * 90000 + 10000)}`,
+    serialNumber: serialNumber,
+    assetTag: `PAT-${randomYear}-${i.toString().padStart(4, '0')}`,
+    supplier: getRandomElement(supplierIds),
+    categoryId: getRandomElement(categoryIds),
+    locationId: getRandomElement(locationIds),
+    purchaseValue: parseFloat(purchaseValue.toFixed(2)),
+    previouslyDepreciatedValue: parseFloat(previouslyDepreciatedValue.toFixed(2)),
+    currentValue: parseFloat(initialCurrentValue.toFixed(2)), // This initial value will be further processed by depreciation logic
+    imageDateUris: [],
+    additionalInfo: Math.random() < 0.35 ? `Observações pertinentes ao ativo ${i}. Necessita verificação periódica.` : undefined,
+  });
+}
