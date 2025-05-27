@@ -1,10 +1,10 @@
 
 "use client";
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import React, { createContext, useContext, useMemo } from 'react'; // Removed useEffect
+import React, { createContext, useContext } from 'react';
 import useLocalStorage from '@/lib/hooks/use-local-storage';
 import type { Asset } from '@/components/assets/types';
-import { mockAssets as initialMockAssets } from '@/components/assets/data';
+import { mockAssets as initialMockAssets } from '@/components/assets/data'; // Certifique-se de que esta importação está correta
 import { useCategories } from './CategoryContext';
 import { useLocations } from './LocationContext';
 
@@ -22,16 +22,9 @@ interface AssetContextType {
 const AssetContext = createContext<AssetContextType | undefined>(undefined);
 
 export const AssetProvider = ({ children }: { children: ReactNode }) => {
-  // Pass initialMockAssets as the initialValue to useLocalStorage.
-  // This ensures server and client initial render are consistent.
-  // useLocalStorage will then attempt to load from 'assets' from localStorage,
-  // and if it's not there, initialMockAssets will be used and persisted.
-  const [assets, setAssets] = useLocalStorage<Asset[]>('assets', initialMockAssets);
+  const [assets, setAssets] = useLocalStorage<Asset[]>('assets', initialMockAssets); // Uso de initialMockAssets
   const { getCategoryById } = useCategories();
   const { getLocationById } = useLocations();
-
-  // The useEffect to set initialMockAssets if localStorage is empty is no longer needed here,
-  // as useLocalStorage now handles the initial value and persistence if the key is not found.
 
   const addAsset = (assetData: Omit<Asset, 'id'>) => {
     const newAsset: Asset = {
@@ -41,7 +34,6 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
       locationId: assetData.locationId || undefined,
       additionalInfo: assetData.additionalInfo || undefined,
       previouslyDepreciatedValue: assetData.previouslyDepreciatedValue,
-      // currentValue is initialized based on purchaseValue and previouslyDepreciatedValue
       currentValue: assetData.purchaseValue - (assetData.previouslyDepreciatedValue || 0),
     };
     setAssets(prevAssets => [...prevAssets, newAsset]);
@@ -87,3 +79,4 @@ export const useAssets = (): AssetContextType => {
   }
   return context;
 };
+
