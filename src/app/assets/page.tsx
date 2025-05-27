@@ -365,15 +365,15 @@ export default function AssetsPage() {
             {assetsWithCalculatedValues.length > 0 && (
               <div className="space-y-1 text-right">
                  <div className="flex justify-between w-full max-w-xs">
-                    <span className="font-semibold text-muted-foreground">Total Geral Compra:</span>
+                    <span className="font-semibold text-muted-foreground">Valor total de compra:</span>
                     <span className="font-bold ml-2">{formatCurrency(totalPurchaseValueFiltered)}</span>
                   </div>
                   <div className="flex justify-between w-full max-w-xs">
-                    <span className="font-semibold text-muted-foreground">Total Geral Depreciado:</span>
+                    <span className="font-semibold text-muted-foreground">Valor total depreciado:</span>
                     <span className="font-bold text-orange-600 dark:text-orange-500 ml-2">{formatCurrency(totalDepreciatedValueFiltered)}</span>
                   </div>
                   <div className="flex justify-between w-full max-w-xs">
-                    <span className="font-semibold text-muted-foreground">Total Geral Atual:</span>
+                    <span className="font-semibold text-muted-foreground">Valor total atual:</span>
                     <span className="font-bold text-green-600 dark:text-green-500 ml-2">{formatCurrency(totalCurrentValueFiltered)}</span>
                   </div>
               </div>
@@ -400,3 +400,5 @@ export default function AssetsPage() {
     </div>
   );
 }
+
+    
