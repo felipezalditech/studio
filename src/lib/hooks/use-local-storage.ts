@@ -7,8 +7,6 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, SetValue<T>] {
   const [storedValue, setStoredValue] = useState<T>(initialValue);
   const [isLocalStorageChecked, setIsLocalStorageChecked] = useState(false);
 
-  // Effect to read from localStorage on mount (client-side only)
-  // or initialize localStorage with initialValue if key is not found.
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -36,15 +34,10 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, SetValue<T>] {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, initialValue]); // initialValue added to ensure re-initialization if it could change, though unlikely for mocks.
+  }, [key]); // initialValue intencionalmente omitido para evitar re-seed desnecessário se initialValue for um objeto/array.
 
-  // Effect to update localStorage when storedValue changes,
-  // but only after we've checked/initialized localStorage.
   useEffect(() => {
     if (typeof window !== 'undefined' && isLocalStorageChecked) {
-      // Avoid writing if storedValue is still the initialValue and localStorage was just seeded
-      // This prevents an unnecessary write if the first effect just wrote initialValue.
-      // However, if storedValue changes for any other reason, it should be persisted.
       const currentLocalItem = window.localStorage.getItem(key);
       if (JSON.stringify(storedValue) !== currentLocalItem) {
         try {

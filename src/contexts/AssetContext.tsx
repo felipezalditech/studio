@@ -4,7 +4,7 @@ import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import React, { createContext, useContext } from 'react';
 import useLocalStorage from '@/lib/hooks/use-local-storage';
 import type { Asset } from '@/components/assets/types';
-import { mockAssets as initialMockAssets } from '@/components/assets/data'; // Ensure this points to the 150 assets
+import { mockAssets as initialMockAssets } from '@/components/assets/data'; 
 import { useCategories } from './CategoryContext';
 import { useLocations } from './LocationContext';
 
@@ -22,7 +22,6 @@ interface AssetContextType {
 const AssetContext = createContext<AssetContextType | undefined>(undefined);
 
 export const AssetProvider = ({ children }: { children: ReactNode }) => {
-  // The key is that 'initialMockAssets' here should be the array of 150 assets.
   const [assets, setAssets] = useLocalStorage<Asset[]>('assets', initialMockAssets);
   const { getCategoryById } = useCategories();
   const { getLocationById } = useLocations();
@@ -35,7 +34,7 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
       imageDateUris: assetData.imageDateUris || [],
       locationId: assetData.locationId || undefined,
       additionalInfo: assetData.additionalInfo || undefined,
-      previouslyDepreciatedValue: assetData.previouslyDepreciatedValue || 0, // Ensure it's 0 if undefined
+      previouslyDepreciatedValue: assetData.previouslyDepreciatedValue || 0, 
       currentValue: assetData.purchaseValue - (assetData.previouslyDepreciatedValue || 0),
     };
     setAssets(prevAssets => [...prevAssets, newAsset]);
@@ -46,8 +45,10 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
       prevAssets.map(asset => (asset.id === updatedAsset.id ? { 
         ...asset, 
         ...updatedAsset,
-        serialNumber: updatedAsset.serialNumber || undefined, // Ensure serialNumber can be empty string or undefined
+        serialNumber: updatedAsset.serialNumber || undefined, 
         previouslyDepreciatedValue: updatedAsset.previouslyDepreciatedValue || 0,
+        // Recalcular currentValue ao atualizar, se purchaseValue ou previouslyDepreciatedValue mudarem
+        currentValue: updatedAsset.purchaseValue - (updatedAsset.previouslyDepreciatedValue || 0),
        } : asset))
     );
   };
