@@ -5,12 +5,20 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle, Search, BarChart3, ShoppingCart, TrendingUp, TrendingDown, DollarSign, CalendarDays, Award, Clock } from "lucide-react";
+import { PlusCircle, Search, BarChart3, ShoppingCart, TrendingUp, TrendingDown, DollarSign, CalendarDays, Award, Clock, PieChart as PieChartIcon, BarChartBig } from "lucide-react";
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { parseISO, format as formatDateFn, isValid, addDays, differenceInCalendarMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-// Removido: import type { Asset } from '@/components/assets/types'; - Não é necessário aqui
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig
+} from "@/components/ui/chart";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell } from "recharts";
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
@@ -19,29 +27,24 @@ const formatCurrency = (amount: number) => {
 const formatDate = (dateString: string) => {
   try {
     const date = parseISO(dateString);
-    if (!isValid(date)) { // Adiciona verificação de validade da data
-        return dateString; // Retorna original se inválida
+    if (!isValid(date)) { 
+        return dateString; 
     }
     return formatDateFn(date, 'dd/MM/yyyy', { locale: ptBR });
   } catch (error) {
     console.error("Erro ao formatar data:", dateString, error);
-    return dateString; // Retorna a string original se houver erro
+    return dateString; 
   }
 };
 
 
 export default function DashboardPage() {
   const { assets } = useAssets();
-  const { getCategoryById } = useCategories();
+  const { getCategoryById, categories: allCategories } = useCategories();
 
-  const dashboardData = useMemo(() => {
+  const processedAssets = useMemo(() => {
     const today = new Date();
-    let totalPurchaseValue = 0;
-    let totalCurrentValue = 0;
-    let totalDepreciation = 0;
-
-    const processedAssets = assets.map(asset => {
-      totalPurchaseValue += asset.purchaseValue;
+    return assets.map(asset => {
       const category = getCategoryById(asset.categoryId);
       let finalDepreciatedValue = asset.previouslyDepreciatedValue || 0;
       let calculatedCurrentValue = asset.purchaseValue - finalDepreciatedValue;
@@ -83,17 +86,27 @@ export default function DashboardPage() {
           }
         }
       }
-      totalDepreciation += finalDepreciatedValue;
-      totalCurrentValue += calculatedCurrentValue;
       return { ...asset, calculatedCurrentValue, finalDepreciatedValue, categoryName: category?.name || 'Desconhecida' };
     });
+  }, [assets, getCategoryById]);
 
+  const dashboardData = useMemo(() => {
+    let totalPurchaseValue = 0;
+    let totalCurrentValue = 0;
+    let totalDepreciation = 0;
+
+    processedAssets.forEach(asset => {
+      totalPurchaseValue += asset.purchaseValue;
+      totalDepreciation += asset.finalDepreciatedValue;
+      totalCurrentValue += asset.calculatedCurrentValue;
+    });
+    
     const recentAssets = [...processedAssets]
         .sort((a, b) => {
             const dateA = parseISO(a.purchaseDate);
             const dateB = parseISO(b.purchaseDate);
             if (!isValid(dateA) && !isValid(dateB)) return 0;
-            if (!isValid(dateA)) return 1; // Coloca datas inválidas no final
+            if (!isValid(dateA)) return 1; 
             if (!isValid(dateB)) return -1;
             return dateB.getTime() - dateA.getTime();
         })
@@ -105,11 +118,10 @@ export default function DashboardPage() {
             purchaseDate: formatDate(asset.purchaseDate),
         }));
 
-
     let mostValuable = { name: "N/A", value: 0 };
     if (processedAssets.length > 0) {
       const sortedByValue = [...processedAssets].sort((a, b) => b.calculatedCurrentValue - a.calculatedCurrentValue);
-      if (sortedByValue.length > 0 && sortedByValue[0]) { // Checagem adicional
+      if (sortedByValue.length > 0 && sortedByValue[0]) { 
           mostValuable = { name: sortedByValue[0].name, value: sortedByValue[0].calculatedCurrentValue };
       }
     }
@@ -122,9 +134,9 @@ export default function DashboardPage() {
         if (!isValid(dateA) && !isValid(dateB)) return 0;
         if (!isValid(dateA)) return 1;
         if (!isValid(dateB)) return -1;
-        return dateA.getTime() - dateB.getTime();
+        return dateA.getTime() - b.getTime();
       });
-      if (sortedByDate.length > 0 && sortedByDate[0]) { // Checagem adicional
+      if (sortedByDate.length > 0 && sortedByDate[0]) { 
           oldestAsset = { name: sortedByDate[0].name, acquiredDate: formatDate(sortedByDate[0].purchaseDate) };
       }
     }
@@ -140,8 +152,70 @@ export default function DashboardPage() {
         oldestAsset,
       },
     };
-  }, [assets, getCategoryById]);
+  }, [assets, processedAssets]);
 
+  const chartData = useMemo(() => {
+    const categoryCounts: { [categoryId: string]: { name: string; count: number } } = {};
+    const categoryValues: { [categoryId: string]: { name: string; purchaseValue: number; currentValue: number } } = {};
+
+    processedAssets.forEach(asset => {
+      const categoryName = asset.categoryName || 'Desconhecida';
+
+      // For Pie Chart (count by category)
+      if (categoryCounts[asset.categoryId]) {
+        categoryCounts[asset.categoryId].count++;
+      } else {
+        categoryCounts[asset.categoryId] = { name: categoryName, count: 1 };
+      }
+
+      // For Bar Chart (values by category)
+      if (categoryValues[asset.categoryId]) {
+        categoryValues[asset.categoryId].purchaseValue += asset.purchaseValue;
+        categoryValues[asset.categoryId].currentValue += asset.calculatedCurrentValue;
+      } else {
+        categoryValues[asset.categoryId] = {
+          name: categoryName,
+          purchaseValue: asset.purchaseValue,
+          currentValue: asset.calculatedCurrentValue,
+        };
+      }
+    });
+
+    const chartColors = [
+      "hsl(var(--chart-1))",
+      "hsl(var(--chart-2))",
+      "hsl(var(--chart-3))",
+      "hsl(var(--chart-4))",
+      "hsl(var(--chart-5))",
+    ];
+
+    const pieChartData = Object.values(categoryCounts).map((cat, index) => ({
+      name: cat.name,
+      value: cat.count,
+      fill: chartColors[index % chartColors.length],
+    }));
+
+    const barChartData = Object.values(categoryValues).map(cat => ({
+      category: cat.name,
+      "Valor de Compra": cat.purchaseValue,
+      "Valor Atual": cat.currentValue,
+    }));
+
+    const pieChartConfig = pieChartData.reduce((acc, item) => {
+      acc[item.name] = { label: item.name, color: item.fill };
+      return acc;
+    }, {} as ChartConfig);
+    pieChartConfig["value"] = { label: "Contagem" };
+
+
+    const barChartConfig = {
+      "Valor de Compra": { label: "Valor de Compra", color: "hsl(var(--chart-2))" },
+      "Valor Atual": { label: "Valor Atual", color: "hsl(var(--chart-1))" },
+      category: { label: "Categoria" },
+    } as ChartConfig;
+
+    return { pieChartData, barChartData, pieChartConfig, barChartConfig };
+  }, [processedAssets]);
 
   return (
     <div className="space-y-8">
@@ -192,6 +266,69 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+      
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <PieChartIcon className="mr-2 h-5 w-5" />
+              Contagem de Ativos por Categoria
+            </CardTitle>
+            <CardDescription>Distribuição quantitativa dos seus ativos por categoria.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {chartData.pieChartData.length > 0 ? (
+              <ChartContainer config={chartData.pieChartConfig} className="mx-auto aspect-square max-h-[300px]">
+                <PieChart>
+                  <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="name" />} />
+                  <Pie data={chartData.pieChartData} dataKey="value" nameKey="name" labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`} >
+                     {chartData.pieChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+                </PieChart>
+              </ChartContainer>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">Nenhum dado disponível para este gráfico.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <BarChartBig className="mr-2 h-5 w-5" />
+              Valores por Categoria
+            </CardTitle>
+            <CardDescription>Comparativo do valor de compra e valor atual por categoria.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {chartData.barChartData.length > 0 ? (
+              <ChartContainer config={chartData.barChartConfig} className="mx-auto aspect-video max-h-[300px]">
+                <BarChart data={chartData.barChartData} accessibilityLayer>
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="category"
+                    tickLine={false}
+                    tickMargin={10}
+                    axisLine={false}
+                    // tickFormatter={(value) => value.slice(0, 3)} // Uncomment to shorten labels if needed
+                  />
+                  <YAxis tickFormatter={(value) => formatCurrency(value)} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Bar dataKey="Valor de Compra" fill="var(--chart-2)" radius={4} />
+                  <Bar dataKey="Valor Atual" fill="var(--chart-1)" radius={4} />
+                </BarChart>
+              </ChartContainer>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">Nenhum dado disponível para este gráfico.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -275,3 +412,5 @@ export default function DashboardPage() {
   );
 }
 
+
+    
