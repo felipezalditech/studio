@@ -5,10 +5,10 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle, Search, BarChart3, ShoppingCart, TrendingUp, TrendingDown, DollarSign, CalendarDays, Award, Clock, PieChart as PieChartIcon, BarChartBig, Loader2 } from "lucide-react";
+import { PlusCircle, Search, BarChart3, ShoppingCart, TrendingUp, TrendingDown, DollarSign, CalendarDays, Award, Clock, PieChart as PieChartIcon, BarChartBig, Loader2, Filter } from "lucide-react";
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
-import { parseISO, format as formatDateFn, isValid, addDays, differenceInCalendarMonths } from 'date-fns';
+import { parseISO, format as formatDateFn, isValid, addDays, differenceInCalendarMonths, subDays, subMonths, subYears, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   ChartContainer,
@@ -19,6 +19,7 @@ import {
   type ChartConfig
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell } from "recharts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
@@ -56,6 +57,15 @@ interface ChartDataType {
   barChartConfig: ChartConfig;
 }
 
+const dateFilterOptions = [
+  { value: 'allTime', label: 'Todo o período' },
+  { value: 'last7days', label: 'Últimos 7 dias' },
+  { value: 'last30days', label: 'Últimos 30 dias' },
+  { value: 'last3months', label: 'Últimos 3 meses' },
+  { value: 'last6months', label: 'Últimos 6 meses' },
+  { value: 'last12months', label: 'Últimos 12 meses' },
+];
+
 
 export default function DashboardPage() {
   const { assets } = useAssets();
@@ -63,15 +73,47 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<DashboardDataType | null>(null);
   const [chartData, setChartData] = useState<ChartDataType | null>(null);
+  const [selectedDateFilter, setSelectedDateFilter] = useState<string>('allTime');
 
   useEffect(() => {
     if (assets.length === 0 && typeof window !== 'undefined' && !localStorage.getItem('assets')) {
         // Still might be loading from localStorage or there are truly no assets
     }
 
-    const today = new Date(); 
+    const today = new Date();
+    let filterStartDate: Date | null = null;
 
-    const processedAssets = assets.map(asset => {
+    switch (selectedDateFilter) {
+      case 'last7days':
+        filterStartDate = startOfDay(subDays(today, 7));
+        break;
+      case 'last30days':
+        filterStartDate = startOfDay(subMonths(today, 1));
+        break;
+      case 'last3months':
+        filterStartDate = startOfDay(subMonths(today, 3));
+        break;
+      case 'last6months':
+        filterStartDate = startOfDay(subMonths(today, 6));
+        break;
+      case 'last12months':
+        filterStartDate = startOfDay(subYears(today, 1));
+        break;
+      case 'allTime':
+      default:
+        filterStartDate = null; // No date filtering
+        break;
+    }
+
+    const assetsToDisplay = filterStartDate
+      ? assets.filter(asset => {
+          const purchaseDate = parseISO(asset.purchaseDate);
+          return isValid(purchaseDate) && purchaseDate >= filterStartDate!;
+        })
+      : assets;
+
+
+    const processedAssets = assetsToDisplay.map(asset => {
       const category = getCategoryById(asset.categoryId);
       let finalDepreciatedValue = asset.previouslyDepreciatedValue || 0;
       let calculatedCurrentValue = asset.purchaseValue - finalDepreciatedValue;
@@ -159,7 +201,7 @@ export default function DashboardPage() {
         if (!isValid(dateA) && !isValid(dateB)) return 0;
         if (!isValid(dateA)) return 1;
         if (!isValid(dateB)) return -1;
-        return dateA.getTime() - dateB.getTime(); // Corrigido aqui
+        return dateA.getTime() - dateB.getTime();
       });
       if (sortedByDate.length > 0 && sortedByDate[0]) {
           oldestAsset = { name: sortedByDate[0].name, acquiredDate: formatDate(sortedByDate[0].purchaseDate) };
@@ -167,7 +209,7 @@ export default function DashboardPage() {
     }
 
     setDashboardData({
-      totalAssets: assets.length,
+      totalAssets: assetsToDisplay.length, // Use assetsToDisplay.length
       totalPurchaseValue,
       totalCurrentValue,
       totalDepreciation,
@@ -234,7 +276,7 @@ export default function DashboardPage() {
     setChartData({ pieChartData, barChartData, pieChartConfig, barChartConfig });
     setIsLoading(false);
 
-  }, [assets, getCategoryById]);
+  }, [assets, getCategoryById, selectedDateFilter]);
 
   if (isLoading || !dashboardData || !chartData) {
     return (
@@ -247,10 +289,28 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Bem-vindo(a) de volta!</h1>
-        <p className="text-muted-foreground">Aqui está um resumo rápido do status dos seus ativos imobilizados.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Bem-vindo(a) de volta!</h1>
+          <p className="text-muted-foreground">Aqui está um resumo rápido do status dos seus ativos imobilizados.</p>
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+           <Filter className="h-5 w-5 text-muted-foreground" />
+           <Select value={selectedDateFilter} onValueChange={setSelectedDateFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filtrar por período" />
+            </SelectTrigger>
+            <SelectContent>
+              {dateFilterOptions.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -260,7 +320,9 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dashboardData.totalAssets}</div>
-            <p className="text-xs text-muted-foreground">ativos cadastrados</p>
+            <p className="text-xs text-muted-foreground">
+              {selectedDateFilter === 'allTime' ? 'ativos cadastrados' : `ativos no período selecionado`}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -270,7 +332,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600 dark:text-green-500">{formatCurrency(dashboardData.totalPurchaseValue)}</div>
-             <p className="text-xs text-muted-foreground">custo de aquisição total</p>
+             <p className="text-xs text-muted-foreground">custo de aquisição total {selectedDateFilter !== 'allTime' && '(no período)'}</p>
           </CardContent>
         </Card>
         <Card>
@@ -280,7 +342,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600 dark:text-orange-500">{formatCurrency(dashboardData.totalCurrentValue)}</div>
-             <p className="text-xs text-muted-foreground">valor líquido contábil</p>
+             <p className="text-xs text-muted-foreground">valor líquido contábil {selectedDateFilter !== 'allTime' && '(no período)'}</p>
           </CardContent>
         </Card>
         <Card>
@@ -290,7 +352,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-500 dark:text-red-600">{formatCurrency(dashboardData.totalDepreciation)}</div>
-            <p className="text-xs text-muted-foreground">depreciação acumulada</p>
+            <p className="text-xs text-muted-foreground">depreciação acumulada {selectedDateFilter !== 'allTime' && '(no período)'}</p>
           </CardContent>
         </Card>
       </div>
@@ -302,7 +364,7 @@ export default function DashboardPage() {
               <PieChartIcon className="mr-2 h-5 w-5" />
               Contagem de Ativos por Categoria
             </CardTitle>
-            <CardDescription>Distribuição quantitativa dos seus ativos por categoria.</CardDescription>
+            <CardDescription>Distribuição quantitativa dos seus ativos por categoria {selectedDateFilter !== 'allTime' && '(no período selecionado)'}.</CardDescription>
           </CardHeader>
           <CardContent>
             {chartData.pieChartData.length > 0 ? (
@@ -318,7 +380,7 @@ export default function DashboardPage() {
                 </PieChart>
               </ChartContainer>
             ) : (
-              <p className="text-muted-foreground text-center py-4">Nenhum dado disponível para este gráfico.</p>
+              <p className="text-muted-foreground text-center py-4">Nenhum dado disponível para este gráfico {selectedDateFilter !== 'allTime' && 'no período selecionado'}.</p>
             )}
           </CardContent>
         </Card>
@@ -329,7 +391,7 @@ export default function DashboardPage() {
               <BarChartBig className="mr-2 h-5 w-5" />
               Valores por Categoria
             </CardTitle>
-            <CardDescription>Comparativo do valor de compra, atual e depreciado por categoria.</CardDescription>
+            <CardDescription>Comparativo do valor de compra, atual e depreciado por categoria {selectedDateFilter !== 'allTime' && '(no período selecionado)'}.</CardDescription>
           </CardHeader>
           <CardContent>
             {chartData.barChartData.length > 0 ? (
@@ -341,6 +403,7 @@ export default function DashboardPage() {
                     tickLine={false}
                     tickMargin={10}
                     axisLine={false}
+                    interval={0} // Garante que todos os nomes de categoria sejam exibidos se possível
                   />
                   <YAxis width={80} tickFormatter={(value) => formatCurrency(value)} />
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -351,7 +414,7 @@ export default function DashboardPage() {
                 </BarChart>
               </ChartContainer>
             ) : (
-              <p className="text-muted-foreground text-center py-4">Nenhum dado disponível para este gráfico.</p>
+              <p className="text-muted-foreground text-center py-4">Nenhum dado disponível para este gráfico {selectedDateFilter !== 'allTime' && 'no período selecionado'}.</p>
             )}
           </CardContent>
         </Card>
@@ -385,7 +448,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Destaques</CardTitle>
-            <CardDescription>Informações importantes sobre seus ativos.</CardDescription>
+            <CardDescription>Informações importantes sobre seus ativos {selectedDateFilter !== 'allTime' && '(no período selecionado)'}.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -405,7 +468,12 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Visão Geral dos Ativos Recentes</CardTitle>
-          <CardDescription>Os últimos {dashboardData.recentAssets.length} ativos adicionados ou com movimentações.</CardDescription>
+          <CardDescription>
+            {dashboardData.recentAssets.length > 0 
+              ? `Os últimos ${dashboardData.recentAssets.length} ativos ${selectedDateFilter === 'allTime' ? 'adicionados ou com movimentações' : 'do período selecionado'}.`
+              : `Nenhum ativo recente ${selectedDateFilter === 'allTime' ? '' : 'no período selecionado'}.`
+            }
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {dashboardData.recentAssets.length > 0 ? (
@@ -432,10 +500,12 @@ export default function DashboardPage() {
               </table>
             </div>
           ) : (
-            <p className="text-muted-foreground text-center py-4">Nenhum ativo cadastrado ainda.</p>
+            <p className="text-muted-foreground text-center py-4">Nenhum ativo cadastrado {selectedDateFilter === 'allTime' ? 'ainda' : 'para o período selecionado'}.</p>
           )}
         </CardContent>
       </Card>
     </div>
   );
 }
+
+      
