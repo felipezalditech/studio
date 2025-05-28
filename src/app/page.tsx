@@ -6,11 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusCircle, Search, BarChart3, ShoppingCart, TrendingUp, TrendingDown, DollarSign, CalendarDays, Award, Clock } from "lucide-react";
-import { useAssets, type AssetWithCalculatedValues } from '@/contexts/AssetContext'; // AssetWithCalculatedValues pode não ser necessário aqui se recalcularmos
+import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { parseISO, format as formatDateFn, isValid, addDays, differenceInCalendarMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { Asset } from '@/components/assets/types';
+// Removido: import type { Asset } from '@/components/assets/types'; - Não é necessário aqui
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
@@ -19,8 +19,12 @@ const formatCurrency = (amount: number) => {
 const formatDate = (dateString: string) => {
   try {
     const date = parseISO(dateString);
+    if (!isValid(date)) { // Adiciona verificação de validade da data
+        return dateString; // Retorna original se inválida
+    }
     return formatDateFn(date, 'dd/MM/yyyy', { locale: ptBR });
   } catch (error) {
+    console.error("Erro ao formatar data:", dateString, error);
     return dateString; // Retorna a string original se houver erro
   }
 };
@@ -85,8 +89,15 @@ export default function DashboardPage() {
     });
 
     const recentAssets = [...processedAssets]
-        .sort((a, b) => parseISO(b.purchaseDate).getTime() - parseISO(a.purchaseDate).getTime()) // Ordena por data de compra, mais recente primeiro
-        .slice(0, 5) // Pega os 5 mais recentes
+        .sort((a, b) => {
+            const dateA = parseISO(a.purchaseDate);
+            const dateB = parseISO(b.purchaseDate);
+            if (!isValid(dateA) && !isValid(dateB)) return 0;
+            if (!isValid(dateA)) return 1; // Coloca datas inválidas no final
+            if (!isValid(dateB)) return -1;
+            return dateB.getTime() - dateA.getTime();
+        })
+        .slice(0, 5) 
         .map(asset => ({
             name: asset.name,
             category: asset.categoryName,
@@ -98,13 +109,24 @@ export default function DashboardPage() {
     let mostValuable = { name: "N/A", value: 0 };
     if (processedAssets.length > 0) {
       const sortedByValue = [...processedAssets].sort((a, b) => b.calculatedCurrentValue - a.calculatedCurrentValue);
-      mostValuable = { name: sortedByValue[0].name, value: sortedByValue[0].calculatedCurrentValue };
+      if (sortedByValue.length > 0 && sortedByValue[0]) { // Checagem adicional
+          mostValuable = { name: sortedByValue[0].name, value: sortedByValue[0].calculatedCurrentValue };
+      }
     }
 
     let oldestAsset = { name: "N/A", acquiredDate: "N/A" };
     if (processedAssets.length > 0) {
-      const sortedByDate = [...processedAssets].sort((a, b) => parseISO(a.purchaseDate).getTime() - parseISO(b.purchaseDate).getTime());
-      oldestAsset = { name: sortedByDate[0].name, acquiredDate: formatDate(sortedByDate[0].purchaseDate) };
+      const sortedByDate = [...processedAssets].sort((a, b) => {
+        const dateA = parseISO(a.purchaseDate);
+        const dateB = parseISO(b.purchaseDate);
+        if (!isValid(dateA) && !isValid(dateB)) return 0;
+        if (!isValid(dateA)) return 1;
+        if (!isValid(dateB)) return -1;
+        return dateA.getTime() - dateB.getTime();
+      });
+      if (sortedByDate.length > 0 && sortedByDate[0]) { // Checagem adicional
+          oldestAsset = { name: sortedByDate[0].name, acquiredDate: formatDate(sortedByDate[0].purchaseDate) };
+      }
     }
     
     return {
@@ -252,3 +274,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
