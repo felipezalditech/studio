@@ -51,7 +51,7 @@ interface DashboardDataType {
 
 interface ChartDataType {
   pieChartData: Array<{ name: string; value: number; fill: string }>;
-  barChartData: Array<{ category: string; valorCompra: number; valorAtual: number }>;
+  barChartData: Array<{ category: string; valorCompra: number; valorAtual: number; valorDepreciado: number }>;
   pieChartConfig: ChartConfig;
   barChartConfig: ChartConfig;
 }
@@ -66,12 +66,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (assets.length === 0 && typeof window !== 'undefined' && !localStorage.getItem('assets')) {
-        // Ainda pode estar carregando do localStorage ou realmente não há ativos
-        // Se você tiver uma lógica específica para "sem ativos ainda", pode tratar aqui
-        // Por ora, vamos assumir que pode levar um ciclo para os ativos serem populados pelo useLocalStorage
+        // Still might be loading from localStorage or there are truly no assets
     }
 
-    const today = new Date(); // Usar new Date() dentro do useEffect garante que é do cliente
+    const today = new Date(); 
 
     const processedAssets = assets.map(asset => {
       const category = getCategoryById(asset.categoryId);
@@ -161,8 +159,7 @@ export default function DashboardPage() {
         if (!isValid(dateA) && !isValid(dateB)) return 0;
         if (!isValid(dateA)) return 1;
         if (!isValid(dateB)) return -1;
-        // getTime() é de Date, precisamos garantir que b seja Date também
-        return dateA.getTime() - dateB.getTime(); // Correção: dateB.getTime() em vez de b.getTime()
+        return dateA.getTime() - dateB.getTime();
       });
       if (sortedByDate.length > 0 && sortedByDate[0]) {
           oldestAsset = { name: sortedByDate[0].name, acquiredDate: formatDate(sortedByDate[0].purchaseDate) };
@@ -183,7 +180,7 @@ export default function DashboardPage() {
 
     // Chart Data Calculation
     const categoryCounts: { [categoryId: string]: { name: string; count: number } } = {};
-    const categoryValues: { [categoryId: string]: { name: string; purchaseValue: number; currentValue: number } } = {};
+    const categoryValues: { [categoryId: string]: { name: string; purchaseValue: number; currentValue: number; depreciatedValue: number } } = {};
 
     processedAssets.forEach(asset => {
       const categoryName = asset.categoryName || 'Desconhecida';
@@ -195,11 +192,13 @@ export default function DashboardPage() {
       if (categoryValues[asset.categoryId]) {
         categoryValues[asset.categoryId].purchaseValue += asset.purchaseValue;
         categoryValues[asset.categoryId].currentValue += asset.calculatedCurrentValue;
+        categoryValues[asset.categoryId].depreciatedValue += asset.finalDepreciatedValue;
       } else {
         categoryValues[asset.categoryId] = {
           name: categoryName,
           purchaseValue: asset.purchaseValue,
           currentValue: asset.calculatedCurrentValue,
+          depreciatedValue: asset.finalDepreciatedValue,
         };
       }
     });
@@ -216,6 +215,7 @@ export default function DashboardPage() {
       category: cat.name, 
       valorCompra: cat.purchaseValue, 
       valorAtual: cat.currentValue,
+      valorDepreciado: cat.depreciatedValue,
     }));
 
     const pieChartConfig = pieChartData.reduce((acc, item) => {
@@ -227,13 +227,14 @@ export default function DashboardPage() {
     const barChartConfig = {
       valorCompra: { label: "Valor de Compra", color: "hsl(var(--chart-2))" },
       valorAtual: { label: "Valor Atual", color: "hsl(var(--chart-1))" },
+      valorDepreciado: { label: "Valor Depreciado", color: "hsl(var(--chart-3))" },
       category: { label: "Categoria" },
     } as ChartConfig;
 
     setChartData({ pieChartData, barChartData, pieChartConfig, barChartConfig });
     setIsLoading(false);
 
-  }, [assets, getCategoryById]); // Dependência `assets` e `getCategoryById`
+  }, [assets, getCategoryById]);
 
   if (isLoading || !dashboardData || !chartData) {
     return (
@@ -328,7 +329,7 @@ export default function DashboardPage() {
               <BarChartBig className="mr-2 h-5 w-5" />
               Valores por Categoria
             </CardTitle>
-            <CardDescription>Comparativo do valor de compra e valor atual por categoria.</CardDescription>
+            <CardDescription>Comparativo do valor de compra, atual e depreciado por categoria.</CardDescription>
           </CardHeader>
           <CardContent>
             {chartData.barChartData.length > 0 ? (
@@ -346,6 +347,7 @@ export default function DashboardPage() {
                   <ChartLegend content={<ChartLegendContent />} />
                   <Bar dataKey="valorCompra" fill="var(--color-valorCompra)" radius={4} />
                   <Bar dataKey="valorAtual" fill="var(--color-valorAtual)" radius={4} />
+                  <Bar dataKey="valorDepreciado" fill="var(--color-valorDepreciado)" radius={4} />
                 </BarChart>
               </ChartContainer>
             ) : (
@@ -437,4 +439,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
