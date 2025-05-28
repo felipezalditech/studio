@@ -159,7 +159,7 @@ export default function DashboardPage() {
         if (!isValid(dateA) && !isValid(dateB)) return 0;
         if (!isValid(dateA)) return 1;
         if (!isValid(dateB)) return -1;
-        return dateA.getTime() - b.getTime();
+        return dateA.getTime() - dateB.getTime(); // Corrigido aqui
       });
       if (sortedByDate.length > 0 && sortedByDate[0]) {
           oldestAsset = { name: sortedByDate[0].name, acquiredDate: formatDate(sortedByDate[0].purchaseDate) };
@@ -214,8 +214,8 @@ export default function DashboardPage() {
     const barChartData = Object.values(categoryValues).map(cat => ({
       category: cat.name, 
       valorCompra: cat.purchaseValue, 
-      valorAtual: cat.currentValue,
       valorDepreciado: cat.depreciatedValue,
+      valorAtual: cat.currentValue,
     }));
 
     const pieChartConfig = pieChartData.reduce((acc, item) => {
