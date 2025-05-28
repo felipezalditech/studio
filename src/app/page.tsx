@@ -5,9 +5,10 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle, Search, BarChart3, ShoppingCart, TrendingUp, TrendingDown, DollarSign, CalendarDays, Award, Clock, PieChart as PieChartIcon, BarChartBig, Loader2, Filter } from "lucide-react";
+import { PlusCircle, Search, BarChart3, ShoppingCart, TrendingUp, TrendingDown, DollarSign, CalendarDays, Award, Clock, PieChart as PieChartIcon, BarChartBig, Loader2, Filter, MapPin } from "lucide-react";
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
+import { useLocations } from '@/contexts/LocationContext'; // Importado
 import { parseISO, format as formatDateFn, isValid, addDays, differenceInCalendarMonths, subDays, subMonths, subYears, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -38,21 +39,27 @@ const formatDate = (dateString: string) => {
   }
 };
 
+interface ValueByLocation {
+  locationName: string;
+  totalCurrentValue: number;
+}
+
 interface DashboardDataType {
   totalAssets: number;
   totalPurchaseValue: number;
   totalCurrentValue: number;
   totalDepreciation: number;
-  recentAssets: Array<{ name: string; category: string; currentValue: number; purchaseDate: string }>;
+  recentAssets: Array<{ id: string; name: string; category: string; currentValue: number; purchaseDate: string }>;
   highlights: {
     mostValuable: { name: string; value: number };
     oldestAsset: { name: string; acquiredDate: string };
   };
+  valueByLocation: ValueByLocation[];
 }
 
 interface ChartDataType {
   pieChartData: Array<{ name: string; value: number; fill: string }>;
-  barChartData: Array<{ category: string; valorCompra: number; valorAtual: number; valorDepreciado: number }>;
+  barChartData: Array<{ category: string; valorCompra: number; valorDepreciado: number; valorAtual: number }>;
   pieChartConfig: ChartConfig;
   barChartConfig: ChartConfig;
 }
@@ -70,6 +77,7 @@ const dateFilterOptions = [
 export default function DashboardPage() {
   const { assets } = useAssets();
   const { getCategoryById } = useCategories();
+  const { locations, getLocationById } = useLocations(); // Importado
   const [isLoading, setIsLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<DashboardDataType | null>(null);
   const [chartData, setChartData] = useState<ChartDataType | null>(null);
@@ -179,6 +187,7 @@ export default function DashboardPage() {
         })
         .slice(0, 5)
         .map(asset => ({
+            id: asset.id, // Adicionado id para key na renderização
             name: asset.name,
             category: asset.categoryName,
             currentValue: asset.calculatedCurrentValue,
@@ -207,9 +216,28 @@ export default function DashboardPage() {
           oldestAsset = { name: sortedByDate[0].name, acquiredDate: formatDate(sortedByDate[0].purchaseDate) };
       }
     }
+    
+    // Calculate value by location
+    const valueByLocationMap = new Map<string, number>();
+    processedAssets.forEach(asset => {
+      if (asset.locationId) {
+        const currentTotal = valueByLocationMap.get(asset.locationId) || 0;
+        valueByLocationMap.set(asset.locationId, currentTotal + asset.calculatedCurrentValue);
+      }
+    });
+
+    const valueByLocationData: ValueByLocation[] = [];
+    valueByLocationMap.forEach((totalValue, locationId) => {
+      const location = getLocationById(locationId);
+      if (location) {
+        valueByLocationData.push({ locationName: location.name, totalCurrentValue: totalValue });
+      }
+    });
+     valueByLocationData.sort((a, b) => b.totalCurrentValue - a.totalCurrentValue);
+
 
     setDashboardData({
-      totalAssets: assetsToDisplay.length, // Use assetsToDisplay.length
+      totalAssets: assetsToDisplay.length, 
       totalPurchaseValue,
       totalCurrentValue,
       totalDepreciation,
@@ -218,6 +246,7 @@ export default function DashboardPage() {
         mostValuable,
         oldestAsset,
       },
+      valueByLocation: valueByLocationData,
     });
 
     // Chart Data Calculation
@@ -276,7 +305,7 @@ export default function DashboardPage() {
     setChartData({ pieChartData, barChartData, pieChartConfig, barChartConfig });
     setIsLoading(false);
 
-  }, [assets, getCategoryById, selectedDateFilter]);
+  }, [assets, getCategoryById, selectedDateFilter, getLocationById, locations]); // Adicionado locations
 
   if (isLoading || !dashboardData || !chartData) {
     return (
@@ -403,7 +432,7 @@ export default function DashboardPage() {
                     tickLine={false}
                     tickMargin={10}
                     axisLine={false}
-                    interval={0} // Garante que todos os nomes de categoria sejam exibidos se possível
+                    interval={0} 
                   />
                   <YAxis width={80} tickFormatter={(value) => formatCurrency(value)} />
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -422,29 +451,44 @@ export default function DashboardPage() {
 
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Atalhos Rápidos</CardTitle>
-            <CardDescription>Acesse as principais funcionalidades do sistema.</CardDescription>
+            <CardTitle className="flex items-center">
+                <MapPin className="mr-2 h-5 w-5 text-blue-500" />
+                Valor Atual por Local
+            </CardTitle>
+            <CardDescription>
+                Soma do valor atual dos ativos agrupados por local {selectedDateFilter !== 'allTime' && '(no período selecionado)'}.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Button variant="outline" asChild className="py-6 text-base">
-              <Link href="/assets/add">
-                <PlusCircle className="mr-2 h-5 w-5" /> Adicionar Ativo
-              </Link>
-            </Button>
-            <Button variant="outline" asChild className="py-6 text-base">
-              <Link href="/assets">
-                <Search className="mr-2 h-5 w-5" /> Consultar Ativos
-              </Link>
-            </Button>
-            <Button variant="outline" asChild className="py-6 text-base">
-              <Link href="/reports">
-                <BarChart3 className="mr-2 h-5 w-5" /> Ver Relatórios
-              </Link>
-            </Button>
+          <CardContent>
+            {dashboardData.valueByLocation.length > 0 ? (
+                 <div className="overflow-x-auto max-h-60"> {/* Adicionado max-h-60 e overflow-x-auto */}
+                    <table className="w-full text-sm">
+                        <thead>
+                        <tr className="border-b">
+                            <th className="text-left p-2 font-semibold">Local</th>
+                            <th className="text-right p-2 font-semibold">Valor Atual Total</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {dashboardData.valueByLocation.map((item, index) => (
+                            <tr key={index} className="border-b last:border-b-0 hover:bg-muted/50">
+                            <td className="p-2">{item.locationName}</td>
+                            <td className="text-right p-2">{formatCurrency(item.totalCurrentValue)}</td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                <p className="text-muted-foreground text-center py-4">
+                    Nenhum dado de valor por local para exibir {selectedDateFilter !== 'allTime' && 'no período selecionado'}.
+                </p>
+            )}
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Destaques</CardTitle>
@@ -488,8 +532,8 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {dashboardData.recentAssets.map((asset, index) => (
-                    <tr key={index} className="border-b last:border-b-0 hover:bg-muted/50">
+                  {dashboardData.recentAssets.map((asset) => (
+                    <tr key={asset.id} className="border-b last:border-b-0 hover:bg-muted/50">
                       <td className="p-2">{asset.name}</td>
                       <td className="p-2">{asset.category}</td>
                       <td className="text-right p-2">{formatCurrency(asset.currentValue)}</td>
@@ -508,4 +552,4 @@ export default function DashboardPage() {
   );
 }
 
-      
+    
