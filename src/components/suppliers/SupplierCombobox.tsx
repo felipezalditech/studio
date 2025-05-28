@@ -43,10 +43,12 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
     if (!inputValue) {
       return suppliers;
     }
+    const lowerInputValue = inputValue.toLowerCase();
     return suppliers.filter((supplier) =>
-      supplier.nomeFantasia.toLowerCase().includes(inputValue.toLowerCase()) ||
-      supplier.razaoSocial.toLowerCase().includes(inputValue.toLowerCase()) ||
-      supplier.cnpj.includes(inputValue)
+      (supplier.nomeFantasia && supplier.nomeFantasia.toLowerCase().includes(lowerInputValue)) ||
+      (supplier.razaoSocial && supplier.razaoSocial.toLowerCase().includes(lowerInputValue)) ||
+      (supplier.cnpj && supplier.cnpj.includes(inputValue)) || // inputValue for direct match on numbers with mask
+      (supplier.cpf && supplier.cpf.includes(inputValue))      // inputValue for direct match on numbers with mask
     );
   }, [suppliers, inputValue]);
 
@@ -57,15 +59,15 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
   };
 
   const handleOpenNewSupplierDialog = () => {
-    setSupplierNameToCreate(inputValue); // Pre-fill with current input if any
+    setSupplierNameToCreate(inputValue); 
     setIsSupplierDialogOpen(true);
-    setOpen(false); // Close combobox popover
+    setOpen(false); 
   };
 
   const handleSupplierAdded = (newSupplierId: string) => {
-    onChange(newSupplierId); // Select the newly added supplier
+    onChange(newSupplierId); 
     setIsSupplierDialogOpen(false);
-    setInputValue(""); // Clear input
+    setInputValue(""); 
   };
 
   return (
@@ -80,7 +82,7 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
             disabled={disabled}
           >
             {selectedSupplier
-              ? `${selectedSupplier.nomeFantasia} (${selectedSupplier.razaoSocial.substring(0,15)}...)`
+              ? `${selectedSupplier.nomeFantasia || selectedSupplier.razaoSocial} (${selectedSupplier.type === 'juridica' ? selectedSupplier.cnpj?.substring(0,10) : selectedSupplier.cpf?.substring(0,9)}...)`
               : "Selecione um fornecedor"}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -116,8 +118,8 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
                       className="flex justify-between items-center"
                     >
                       <div>
-                        <span className="font-medium">{supplier.nomeFantasia}</span>
-                        <span className="text-xs text-muted-foreground ml-2">({supplier.razaoSocial})</span>
+                        <span className="font-medium">{supplier.nomeFantasia || supplier.razaoSocial}</span>
+                        <span className="text-xs text-muted-foreground ml-2">({supplier.type === 'juridica' ? supplier.cnpj : supplier.cpf})</span>
                       </div>
                       <Check
                         className={cn(
@@ -134,7 +136,7 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
                     <CommandGroup>
                       <CommandItem
                         onSelect={handleOpenNewSupplierDialog}
-                        value={`__add__${inputValue}`} // Unique value for the add item
+                        value={`__add__${inputValue}`} 
                         className="text-primary hover:!bg-primary/10 cursor-pointer"
                       >
                         <PlusCircle className="mr-2 h-4 w-4" />
