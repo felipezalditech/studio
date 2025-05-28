@@ -51,7 +51,7 @@ interface DashboardDataType {
 
 interface ChartDataType {
   pieChartData: Array<{ name: string; value: number; fill: string }>;
-  barChartData: Array<{ category: string; "Valor de Compra": number; "Valor Atual": number }>;
+  barChartData: Array<{ category: string; valorCompra: number; valorAtual: number }>;
   pieChartConfig: ChartConfig;
   barChartConfig: ChartConfig;
 }
@@ -211,17 +211,22 @@ export default function DashboardPage() {
     const pieChartData = Object.values(categoryCounts).map((cat, index) => ({
       name: cat.name, value: cat.count, fill: chartColors[index % chartColors.length],
     }));
+    
     const barChartData = Object.values(categoryValues).map(cat => ({
-      category: cat.name, "Valor de Compra": cat.purchaseValue, "Valor Atual": cat.currentValue,
+      category: cat.name, 
+      valorCompra: cat.purchaseValue, 
+      valorAtual: cat.currentValue,
     }));
+
     const pieChartConfig = pieChartData.reduce((acc, item) => {
       acc[item.name] = { label: item.name, color: item.fill };
       return acc;
     }, {} as ChartConfig);
     pieChartConfig["value"] = { label: "Contagem" };
+    
     const barChartConfig = {
-      "Valor de Compra": { label: "Valor de Compra", color: "hsl(var(--chart-2))" },
-      "Valor Atual": { label: "Valor Atual", color: "hsl(var(--chart-1))" },
+      valorCompra: { label: "Valor de Compra", color: "hsl(var(--chart-2))" },
+      valorAtual: { label: "Valor Atual", color: "hsl(var(--chart-1))" },
       category: { label: "Categoria" },
     } as ChartConfig;
 
@@ -339,8 +344,8 @@ export default function DashboardPage() {
                   <YAxis width={80} tickFormatter={(value) => formatCurrency(value)} />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <ChartLegend content={<ChartLegendContent />} />
-                  <Bar dataKey="Valor de Compra" fill="var(--chart-2)" radius={4} />
-                  <Bar dataKey="Valor Atual" fill="var(--chart-1)" radius={4} />
+                  <Bar dataKey="valorCompra" fill="var(--color-valorCompra)" radius={4} />
+                  <Bar dataKey="valorAtual" fill="var(--color-valorAtual)" radius={4} />
                 </BarChart>
               </ChartContainer>
             ) : (
