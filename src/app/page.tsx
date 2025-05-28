@@ -65,7 +65,7 @@ export default function DashboardPage() {
   const [chartData, setChartData] = useState<ChartDataType | null>(null);
 
   useEffect(() => {
-    if (assets.length === 0 && !localStorage.getItem('assets')) {
+    if (assets.length === 0 && typeof window !== 'undefined' && !localStorage.getItem('assets')) {
         // Ainda pode estar carregando do localStorage ou realmente não há ativos
         // Se você tiver uma lógica específica para "sem ativos ainda", pode tratar aqui
         // Por ora, vamos assumir que pode levar um ciclo para os ativos serem populados pelo useLocalStorage
@@ -336,7 +336,7 @@ export default function DashboardPage() {
                     tickMargin={10}
                     axisLine={false}
                   />
-                  <YAxis tickFormatter={(value) => formatCurrency(value)} />
+                  <YAxis width={80} tickFormatter={(value) => formatCurrency(value)} />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <ChartLegend content={<ChartLegendContent />} />
                   <Bar dataKey="Valor de Compra" fill="var(--chart-2)" radius={4} />
@@ -432,3 +432,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
