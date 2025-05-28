@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle, Search, BarChart3, ShoppingCart, TrendingUp, TrendingDown, DollarSign, CalendarDays, Award, Clock, PieChart as PieChartIcon, BarChartBig } from "lucide-react";
+import { PlusCircle, Search, BarChart3, ShoppingCart, TrendingUp, TrendingDown, DollarSign, CalendarDays, Award, Clock, PieChart as PieChartIcon, BarChartBig, Loader2 } from "lucide-react";
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { parseISO, format as formatDateFn, isValid, addDays, differenceInCalendarMonths } from 'date-fns';
@@ -27,24 +27,53 @@ const formatCurrency = (amount: number) => {
 const formatDate = (dateString: string) => {
   try {
     const date = parseISO(dateString);
-    if (!isValid(date)) { 
-        return dateString; 
+    if (!isValid(date)) {
+        return dateString;
     }
     return formatDateFn(date, 'dd/MM/yyyy', { locale: ptBR });
   } catch (error) {
     console.error("Erro ao formatar data:", dateString, error);
-    return dateString; 
+    return dateString;
   }
 };
+
+interface DashboardDataType {
+  totalAssets: number;
+  totalPurchaseValue: number;
+  totalCurrentValue: number;
+  totalDepreciation: number;
+  recentAssets: Array<{ name: string; category: string; currentValue: number; purchaseDate: string }>;
+  highlights: {
+    mostValuable: { name: string; value: number };
+    oldestAsset: { name: string; acquiredDate: string };
+  };
+}
+
+interface ChartDataType {
+  pieChartData: Array<{ name: string; value: number; fill: string }>;
+  barChartData: Array<{ category: string; "Valor de Compra": number; "Valor Atual": number }>;
+  pieChartConfig: ChartConfig;
+  barChartConfig: ChartConfig;
+}
 
 
 export default function DashboardPage() {
   const { assets } = useAssets();
-  const { getCategoryById, categories: allCategories } = useCategories();
+  const { getCategoryById } = useCategories();
+  const [isLoading, setIsLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<DashboardDataType | null>(null);
+  const [chartData, setChartData] = useState<ChartDataType | null>(null);
 
-  const processedAssets = useMemo(() => {
-    const today = new Date();
-    return assets.map(asset => {
+  useEffect(() => {
+    if (assets.length === 0 && !localStorage.getItem('assets')) {
+        // Ainda pode estar carregando do localStorage ou realmente não há ativos
+        // Se você tiver uma lógica específica para "sem ativos ainda", pode tratar aqui
+        // Por ora, vamos assumir que pode levar um ciclo para os ativos serem populados pelo useLocalStorage
+    }
+
+    const today = new Date(); // Usar new Date() dentro do useEffect garante que é do cliente
+
+    const processedAssets = assets.map(asset => {
       const category = getCategoryById(asset.categoryId);
       let finalDepreciatedValue = asset.previouslyDepreciatedValue || 0;
       let calculatedCurrentValue = asset.purchaseValue - finalDepreciatedValue;
@@ -88,9 +117,7 @@ export default function DashboardPage() {
       }
       return { ...asset, calculatedCurrentValue, finalDepreciatedValue, categoryName: category?.name || 'Desconhecida' };
     });
-  }, [assets, getCategoryById]);
 
-  const dashboardData = useMemo(() => {
     let totalPurchaseValue = 0;
     let totalCurrentValue = 0;
     let totalDepreciation = 0;
@@ -100,17 +127,17 @@ export default function DashboardPage() {
       totalDepreciation += asset.finalDepreciatedValue;
       totalCurrentValue += asset.calculatedCurrentValue;
     });
-    
+
     const recentAssets = [...processedAssets]
         .sort((a, b) => {
             const dateA = parseISO(a.purchaseDate);
             const dateB = parseISO(b.purchaseDate);
             if (!isValid(dateA) && !isValid(dateB)) return 0;
-            if (!isValid(dateA)) return 1; 
+            if (!isValid(dateA)) return 1;
             if (!isValid(dateB)) return -1;
             return dateB.getTime() - dateA.getTime();
         })
-        .slice(0, 5) 
+        .slice(0, 5)
         .map(asset => ({
             name: asset.name,
             category: asset.categoryName,
@@ -121,7 +148,7 @@ export default function DashboardPage() {
     let mostValuable = { name: "N/A", value: 0 };
     if (processedAssets.length > 0) {
       const sortedByValue = [...processedAssets].sort((a, b) => b.calculatedCurrentValue - a.calculatedCurrentValue);
-      if (sortedByValue.length > 0 && sortedByValue[0]) { 
+      if (sortedByValue.length > 0 && sortedByValue[0]) {
           mostValuable = { name: sortedByValue[0].name, value: sortedByValue[0].calculatedCurrentValue };
       }
     }
@@ -134,14 +161,15 @@ export default function DashboardPage() {
         if (!isValid(dateA) && !isValid(dateB)) return 0;
         if (!isValid(dateA)) return 1;
         if (!isValid(dateB)) return -1;
-        return dateA.getTime() - b.getTime();
+        // getTime() é de Date, precisamos garantir que b seja Date também
+        return dateA.getTime() - dateB.getTime(); // Correção: dateB.getTime() em vez de b.getTime()
       });
-      if (sortedByDate.length > 0 && sortedByDate[0]) { 
+      if (sortedByDate.length > 0 && sortedByDate[0]) {
           oldestAsset = { name: sortedByDate[0].name, acquiredDate: formatDate(sortedByDate[0].purchaseDate) };
       }
     }
-    
-    return {
+
+    setDashboardData({
       totalAssets: assets.length,
       totalPurchaseValue,
       totalCurrentValue,
@@ -151,24 +179,19 @@ export default function DashboardPage() {
         mostValuable,
         oldestAsset,
       },
-    };
-  }, [assets, processedAssets]);
+    });
 
-  const chartData = useMemo(() => {
+    // Chart Data Calculation
     const categoryCounts: { [categoryId: string]: { name: string; count: number } } = {};
     const categoryValues: { [categoryId: string]: { name: string; purchaseValue: number; currentValue: number } } = {};
 
     processedAssets.forEach(asset => {
       const categoryName = asset.categoryName || 'Desconhecida';
-
-      // For Pie Chart (count by category)
       if (categoryCounts[asset.categoryId]) {
         categoryCounts[asset.categoryId].count++;
       } else {
         categoryCounts[asset.categoryId] = { name: categoryName, count: 1 };
       }
-
-      // For Bar Chart (values by category)
       if (categoryValues[asset.categoryId]) {
         categoryValues[asset.categoryId].purchaseValue += asset.purchaseValue;
         categoryValues[asset.categoryId].currentValue += asset.calculatedCurrentValue;
@@ -182,40 +205,39 @@ export default function DashboardPage() {
     });
 
     const chartColors = [
-      "hsl(var(--chart-1))",
-      "hsl(var(--chart-2))",
-      "hsl(var(--chart-3))",
-      "hsl(var(--chart-4))",
-      "hsl(var(--chart-5))",
+      "hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))",
+      "hsl(var(--chart-4))", "hsl(var(--chart-5))",
     ];
-
     const pieChartData = Object.values(categoryCounts).map((cat, index) => ({
-      name: cat.name,
-      value: cat.count,
-      fill: chartColors[index % chartColors.length],
+      name: cat.name, value: cat.count, fill: chartColors[index % chartColors.length],
     }));
-
     const barChartData = Object.values(categoryValues).map(cat => ({
-      category: cat.name,
-      "Valor de Compra": cat.purchaseValue,
-      "Valor Atual": cat.currentValue,
+      category: cat.name, "Valor de Compra": cat.purchaseValue, "Valor Atual": cat.currentValue,
     }));
-
     const pieChartConfig = pieChartData.reduce((acc, item) => {
       acc[item.name] = { label: item.name, color: item.fill };
       return acc;
     }, {} as ChartConfig);
     pieChartConfig["value"] = { label: "Contagem" };
-
-
     const barChartConfig = {
       "Valor de Compra": { label: "Valor de Compra", color: "hsl(var(--chart-2))" },
       "Valor Atual": { label: "Valor Atual", color: "hsl(var(--chart-1))" },
       category: { label: "Categoria" },
     } as ChartConfig;
 
-    return { pieChartData, barChartData, pieChartConfig, barChartConfig };
-  }, [processedAssets]);
+    setChartData({ pieChartData, barChartData, pieChartConfig, barChartConfig });
+    setIsLoading(false);
+
+  }, [assets, getCategoryById]); // Dependência `assets` e `getCategoryById`
+
+  if (isLoading || !dashboardData || !chartData) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4 text-lg text-muted-foreground">Carregando dados do painel...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -266,7 +288,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -313,7 +335,6 @@ export default function DashboardPage() {
                     tickLine={false}
                     tickMargin={10}
                     axisLine={false}
-                    // tickFormatter={(value) => value.slice(0, 3)} // Uncomment to shorten labels if needed
                   />
                   <YAxis tickFormatter={(value) => formatCurrency(value)} />
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -411,6 +432,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-
-    
