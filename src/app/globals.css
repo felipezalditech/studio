@@ -27,9 +27,9 @@ body {
     --border: 0 0% 80%;
     --input: 0 0% 80%;
     --ring: 231 48% 48%; /* Primary color for focus rings */
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
+    --chart-1: 12 76% 61%; /* Orange-ish for current value in chart */
+    --chart-2: 173 58% 39%; /* Green-ish for purchase value in chart */
+    --chart-3: 0 84% 60%;   /* Red for depreciated value in chart (matches text-red-500) */
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
@@ -64,9 +64,9 @@ body {
     --border: 0 0% 30%;
     --input: 0 0% 30%;
     --ring: 231 48% 48%; /* Primary color for focus rings */
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
+    --chart-1: 12 76% 61%; /* Orange-ish for current value in chart */
+    --chart-2: 173 58% 39%; /* Green-ish for purchase value in chart */
+    --chart-3: 0 69% 50%;   /* Red for depreciated value in chart (matches text-red-600) */
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
