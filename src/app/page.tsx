@@ -159,7 +159,7 @@ export default function DashboardPage() {
         if (!isValid(dateA) && !isValid(dateB)) return 0;
         if (!isValid(dateA)) return 1;
         if (!isValid(dateB)) return -1;
-        return dateA.getTime() - dateB.getTime();
+        return dateA.getTime() - b.getTime();
       });
       if (sortedByDate.length > 0 && sortedByDate[0]) {
           oldestAsset = { name: sortedByDate[0].name, acquiredDate: formatDate(sortedByDate[0].purchaseDate) };
@@ -226,8 +226,8 @@ export default function DashboardPage() {
     
     const barChartConfig = {
       valorCompra: { label: "Valor de Compra", color: "hsl(var(--chart-2))" },
-      valorAtual: { label: "Valor Atual", color: "hsl(var(--chart-1))" },
       valorDepreciado: { label: "Valor Depreciado", color: "hsl(var(--chart-3))" },
+      valorAtual: { label: "Valor Atual", color: "hsl(var(--chart-1))" },
       category: { label: "Categoria" },
     } as ChartConfig;
 
@@ -346,8 +346,8 @@ export default function DashboardPage() {
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <ChartLegend content={<ChartLegendContent />} />
                   <Bar dataKey="valorCompra" fill="var(--color-valorCompra)" radius={4} />
-                  <Bar dataKey="valorAtual" fill="var(--color-valorAtual)" radius={4} />
                   <Bar dataKey="valorDepreciado" fill="var(--color-valorDepreciado)" radius={4} />
+                  <Bar dataKey="valorAtual" fill="var(--color-valorAtual)" radius={4} />
                 </BarChart>
               </ChartContainer>
             ) : (
