@@ -162,7 +162,7 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
         <div className="mt-4 flex justify-end">
             <Button
               onClick={onResetFilters}
-              className="w-full md:w-auto bg-[hsl(var(--chart-1))] hover:bg-[hsl(var(--chart-1)/0.9)] text-accent-foreground"
+              className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground"
             >
                 <RotateCcwIcon className="mr-2 h-4 w-4" /> Redefinir Filtros
             </Button>
@@ -171,3 +171,4 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
     </Card>
   );
 }
+
