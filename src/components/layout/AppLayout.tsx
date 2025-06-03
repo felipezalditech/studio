@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
+import React, { useState } from 'react'; // Adicionado useState
 import {
   SidebarProvider,
   Sidebar,
@@ -32,7 +33,7 @@ import {
   LogOut,
   PanelLeft,
   Building,
-  ListPlus, // Ícone para o novo menu Cadastros
+  ListPlus, 
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -43,7 +44,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 
-// Tipos atualizados para itens de menu e submenus
 interface BaseMenuItem {
   label: string;
   icon: React.ElementType;
@@ -56,7 +56,7 @@ interface RegularMenuItem extends BaseMenuItem {
 }
 
 interface SubmenuParentItem extends BaseMenuItem {
-  href?: string; // O pai pode ou não ter um link próprio
+  href?: string; 
   isSubmenuParent: true;
   subItems: RegularMenuItem[];
 }
@@ -73,8 +73,6 @@ const menuItems: MenuItemType[] = [
     // href: '/registrations', // Opcional: se o próprio "Cadastros" levar a uma página
     subItems: [
       { href: '/suppliers', label: 'Fornecedores', icon: Truck },
-      // Adicione outros itens de submenu aqui, ex:
-      // { href: '/clients', label: 'Clientes', icon: UsersIcon },
     ],
   },
   { href: '/reports', label: 'Relatórios', icon: BarChart3 },
@@ -95,6 +93,11 @@ const getInitials = (name: string) => {
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { brandingConfig } = useBranding();
+  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({}); // Estado para submenus
+
+  const toggleSubmenu = (label: string) => {
+    setOpenSubmenus(prev => ({ ...prev, [label]: !prev[label] }));
+  };
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -110,9 +113,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <SidebarMenu>
             {menuItems.map((item) => {
               if (item.isSubmenuParent && item.subItems) {
-                // Renderiza item pai de submenu e seus subitens
                 const isParentActive = item.subItems.some(subItem => pathname.startsWith(subItem.href));
                 const ParentIcon = item.icon;
+                const isSubmenuOpen = openSubmenus[item.label] || false;
 
                 return (
                   <SidebarMenuItem key={item.label}>
@@ -120,9 +123,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
                        <Link href={item.href} legacyBehavior passHref>
                         <SidebarMenuButton
                           asChild={false}
-                          isActive={isParentActive || (item.href && pathname.startsWith(item.href))}
+                          isActive={isSubmenuOpen || isParentActive || (item.href && pathname.startsWith(item.href))}
                           className="w-full justify-start"
                           tooltip={{ children: item.label, side: 'right', align: 'center' }}
+                          onClick={() => toggleSubmenu(item.label)} // Adicionado para caso o pai seja um link mas também toggle
                         >
                           <ParentIcon className="h-5 w-5 flex-shrink-0" />
                           <span className="truncate">{item.label}</span>
@@ -131,36 +135,38 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     ) : (
                       <SidebarMenuButton
                         asChild={false}
-                        isActive={isParentActive}
+                        isActive={isSubmenuOpen || isParentActive}
                         className="w-full justify-start"
                         tooltip={{ children: item.label, side: 'right', align: 'center' }}
+                        onClick={() => toggleSubmenu(item.label)}
                       >
                         <ParentIcon className="h-5 w-5 flex-shrink-0" />
                         <span className="truncate">{item.label}</span>
                       </SidebarMenuButton>
                     )}
-                    <SidebarMenuSub>
-                      {item.subItems.map((subItem) => {
-                        const SubIcon = subItem.icon;
-                        return (
-                          <SidebarMenuSubItem key={subItem.href}>
-                            <Link href={subItem.href} legacyBehavior passHref>
-                              <SidebarMenuSubButton
-                                asChild={false}
-                                isActive={pathname.startsWith(subItem.href)}
-                              >
-                                <SubIcon className="h-5 w-5 flex-shrink-0" />
-                                <span className="truncate">{subItem.label}</span>
-                              </SidebarMenuSubButton>
-                            </Link>
-                          </SidebarMenuSubItem>
-                        );
-                      })}
-                    </SidebarMenuSub>
+                    {isSubmenuOpen && ( // Renderização condicional do submenu
+                      <SidebarMenuSub>
+                        {item.subItems.map((subItem) => {
+                          const SubIcon = subItem.icon;
+                          return (
+                            <SidebarMenuSubItem key={subItem.href}>
+                              <Link href={subItem.href} legacyBehavior passHref>
+                                <SidebarMenuSubButton
+                                  asChild={false}
+                                  isActive={pathname.startsWith(subItem.href)}
+                                >
+                                  <SubIcon className="h-5 w-5 flex-shrink-0" />
+                                  <span className="truncate">{subItem.label}</span>
+                                </SidebarMenuSubButton>
+                              </Link>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    )}
                   </SidebarMenuItem>
                 );
               } else if ('href' in item) {
-                // Renderiza item de menu regular
                 const Icon = item.icon;
                 return (
                   <SidebarMenuItem key={item.href}>
