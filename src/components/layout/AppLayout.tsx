@@ -34,8 +34,9 @@ import {
   PanelLeft,
   Building,
   ListPlus, 
-  Layers, // Added for Categories
-  MapPin, // Added for Locations
+  Layers, 
+  MapPin, 
+  PlusCircle, // Adicionado para o novo item de menu
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -68,6 +69,7 @@ type MenuItemType = RegularMenuItem | SubmenuParentItem;
 const menuItems: MenuItemType[] = [
   { href: '/', label: 'Painel Principal', icon: Home },
   { href: '/assets', label: 'Consultar Ativos', icon: ListChecks },
+  { href: '/assets/add', label: 'Adicionar Ativo', icon: PlusCircle }, // Novo item adicionado aqui
   {
     label: 'Cadastros',
     icon: ListPlus,
@@ -246,3 +248,4 @@ export function AppLayout({ children }: { children: ReactNode }) {
     </SidebarProvider>
   );
 }
+
