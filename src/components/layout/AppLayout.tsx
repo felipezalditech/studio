@@ -16,6 +16,9 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarTrigger,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
 import { ThemeToggleButton } from '@/components/theme/ThemeToggleButton';
 import { useBranding } from '@/contexts/BrandingContext';
@@ -29,6 +32,7 @@ import {
   LogOut,
   PanelLeft,
   Building,
+  ListPlus, // Ícone para o novo menu Cadastros
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -39,17 +43,41 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 
-interface MenuItem {
-  href: string;
+// Tipos atualizados para itens de menu e submenus
+interface BaseMenuItem {
   label: string;
   icon: React.ElementType;
 }
 
-const menuItems: MenuItem[] = [
+interface RegularMenuItem extends BaseMenuItem {
+  href: string;
+  isSubmenuParent?: false;
+  subItems?: never;
+}
+
+interface SubmenuParentItem extends BaseMenuItem {
+  href?: string; // O pai pode ou não ter um link próprio
+  isSubmenuParent: true;
+  subItems: RegularMenuItem[];
+}
+
+type MenuItemType = RegularMenuItem | SubmenuParentItem;
+
+const menuItems: MenuItemType[] = [
   { href: '/', label: 'Painel Principal', icon: Home },
   { href: '/assets', label: 'Consultar Ativos', icon: ListChecks },
+  {
+    label: 'Cadastros',
+    icon: ListPlus,
+    isSubmenuParent: true,
+    // href: '/registrations', // Opcional: se o próprio "Cadastros" levar a uma página
+    subItems: [
+      { href: '/suppliers', label: 'Fornecedores', icon: Truck },
+      // Adicione outros itens de submenu aqui, ex:
+      // { href: '/clients', label: 'Clientes', icon: UsersIcon },
+    ],
+  },
   { href: '/reports', label: 'Relatórios', icon: BarChart3 },
-  { href: '/suppliers', label: 'Fornecedores', icon: Truck },
   { href: '/users', label: 'Gerenciar Usuários', icon: UsersRound },
   { href: '/settings', label: 'Configurações', icon: Settings },
 ];
@@ -80,21 +108,78 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </SidebarHeader>
         <SidebarContent className="p-2">
           <SidebarMenu>
-            {menuItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <Link href={item.href} legacyBehavior passHref>
-                  <SidebarMenuButton
-                    asChild={false}
-                    isActive={pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))}
-                    className="w-full justify-start"
-                    tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                  >
-                    <item.icon className="h-5 w-5 flex-shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-            ))}
+            {menuItems.map((item) => {
+              if (item.isSubmenuParent && item.subItems) {
+                // Renderiza item pai de submenu e seus subitens
+                const isParentActive = item.subItems.some(subItem => pathname.startsWith(subItem.href));
+                const ParentIcon = item.icon;
+
+                return (
+                  <SidebarMenuItem key={item.label}>
+                    {item.href ? (
+                       <Link href={item.href} legacyBehavior passHref>
+                        <SidebarMenuButton
+                          asChild={false}
+                          isActive={isParentActive || (item.href && pathname.startsWith(item.href))}
+                          className="w-full justify-start"
+                          tooltip={{ children: item.label, side: 'right', align: 'center' }}
+                        >
+                          <ParentIcon className="h-5 w-5 flex-shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                        </SidebarMenuButton>
+                       </Link>
+                    ) : (
+                      <SidebarMenuButton
+                        asChild={false}
+                        isActive={isParentActive}
+                        className="w-full justify-start"
+                        tooltip={{ children: item.label, side: 'right', align: 'center' }}
+                      >
+                        <ParentIcon className="h-5 w-5 flex-shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </SidebarMenuButton>
+                    )}
+                    <SidebarMenuSub>
+                      {item.subItems.map((subItem) => {
+                        const SubIcon = subItem.icon;
+                        return (
+                          <SidebarMenuSubItem key={subItem.href}>
+                            <Link href={subItem.href} legacyBehavior passHref>
+                              <SidebarMenuSubButton
+                                asChild={false}
+                                isActive={pathname.startsWith(subItem.href)}
+                              >
+                                <SubIcon className="h-5 w-5 flex-shrink-0" />
+                                <span className="truncate">{subItem.label}</span>
+                              </SidebarMenuSubButton>
+                            </Link>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
+                    </SidebarMenuSub>
+                  </SidebarMenuItem>
+                );
+              } else if ('href' in item) {
+                // Renderiza item de menu regular
+                const Icon = item.icon;
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <Link href={item.href} legacyBehavior passHref>
+                      <SidebarMenuButton
+                        asChild={false}
+                        isActive={pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))}
+                        className="w-full justify-start"
+                        tooltip={{ children: item.label, side: 'right', align: 'center' }}
+                      >
+                        <Icon className="h-5 w-5 flex-shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+                );
+              }
+              return null;
+            })}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="p-2 border-t border-sidebar-border">
@@ -102,7 +187,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <SidebarMenuItem>
               <ThemeToggleButton />
             </SidebarMenuItem>
-            {/* Removido o botão de Sair daqui */}
            </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
