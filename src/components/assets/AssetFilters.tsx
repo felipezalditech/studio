@@ -61,6 +61,14 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex items-center">
+            <Button
+              onClick={onResetFilters}
+              className="w-full md:w-auto bg-[hsl(var(--chart-1))] hover:bg-[hsl(var(--chart-1)/0.9)] text-accent-foreground"
+            >
+                <RotateCcwIcon className="mr-2 h-4 w-4" /> Redefinir Filtros
+            </Button>
+          </div>
           <Input
             placeholder="Nome, Patrimônio ou Nº Série..."
             name="name"
@@ -158,12 +166,6 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
             onChange={handleInputChange}
             className="text-sm"
           />
-
-           <div className="flex items-end justify-end md:col-start-4 md:justify-self-end lg:col-start-auto lg:justify-self-auto">
-            <Button onClick={onResetFilters} variant="outline" className="w-full md:w-auto">
-                <RotateCcwIcon className="mr-2 h-4 w-4" /> Redefinir Filtros
-            </Button>
-          </div>
         </div>
       </CardContent>
     </Card>
