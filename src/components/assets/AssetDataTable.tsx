@@ -71,8 +71,8 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
         pagination: {
             pageSize: 10,
         },
-        columnVisibility: { // Adicionar visibilidade padrão para a nova coluna
-            model: true, // Mostrar coluna 'model' por padrão
+        columnVisibility: {
+            model: true,
         }
     }
   })
@@ -99,18 +99,18 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
               .map((column) => {
                 const columnDisplayName =
                   column.id === "select" ? "Seleção" :
-                  column.id === "purchaseDate" ? "Data Compra" :
-                  column.id === "name" ? "Nome do Ativo" :
+                  column.id === "purchaseDate" ? "Data compra" :
+                  column.id === "name" ? "Nome do ativo" :
                   column.id === "model" ? "Modelo" :
                   column.id === "assetTag" ? "Patrimônio" :
-                  column.id === "invoiceNumber" ? "Nota Fiscal" :
-                  column.id === "serialNumber" ? "Nº de Série" :
+                  column.id === "invoiceNumber" ? "Nota fiscal" :
+                  column.id === "serialNumber" ? "Nº de série" :
                   column.id === "categoryName" ? "Categoria" :
                   column.id === "supplierName" ? "Fornecedor" :
-                  column.id === "locationName" ? "Local Alocado" :
-                  column.id === "purchaseValue" ? "Valor de Compra" :
-                  column.id === "depreciatedValue" ? "Valor Depreciado" :
-                  column.id === "calculatedCurrentValue" ? "Valor Atual" :
+                  column.id === "locationName" ? "Local alocado" :
+                  column.id === "purchaseValue" ? "Valor de compra" :
+                  column.id === "depreciatedValue" ? "Valor depreciado" :
+                  column.id === "calculatedCurrentValue" ? "Valor atual" :
                   column.id === "actions" ? "Ações" :
                   column.id;
                 return (

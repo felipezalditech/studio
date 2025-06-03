@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
-import React, { useState } from 'react'; 
+import React, { useState } from 'react';
 import {
   SidebarProvider,
   Sidebar,
@@ -33,9 +33,9 @@ import {
   LogOut,
   PanelLeft,
   Building,
-  ListPlus, 
-  Layers, 
-  MapPin, 
+  ListPlus,
+  Layers,
+  MapPin,
   PlusCircle,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -59,7 +59,7 @@ interface RegularMenuItem extends BaseMenuItem {
 }
 
 interface SubmenuParentItem extends BaseMenuItem {
-  href?: string; 
+  href?: string;
   isSubmenuParent: true;
   subItems: RegularMenuItem[];
 }
@@ -67,21 +67,21 @@ interface SubmenuParentItem extends BaseMenuItem {
 type MenuItemType = RegularMenuItem | SubmenuParentItem;
 
 const menuItems: MenuItemType[] = [
-  { href: '/', label: 'Painel Principal', icon: Home },
-  { href: '/assets/add', label: 'Adicionar Ativo', icon: PlusCircle },
-  { href: '/assets', label: 'Consultar Ativos', icon: ListChecks },
+  { href: '/', label: 'Painel principal', icon: Home },
+  { href: '/assets/add', label: 'Adicionar ativo', icon: PlusCircle },
+  { href: '/assets', label: 'Consultar ativos', icon: ListChecks },
   {
     label: 'Cadastros',
     icon: ListPlus,
     isSubmenuParent: true,
     subItems: [
       { href: '/suppliers', label: 'Fornecedores', icon: Truck },
-      { href: '/registrations/categories', label: 'Categorias de Ativos', icon: Layers },
-      { href: '/registrations/locations', label: 'Locais de Ativos', icon: MapPin },
+      { href: '/registrations/categories', label: 'Categorias de ativos', icon: Layers },
+      { href: '/registrations/locations', label: 'Locais de ativos', icon: MapPin },
     ],
   },
   { href: '/reports', label: 'Relatórios', icon: BarChart3 },
-  { href: '/users', label: 'Gerenciar Usuários', icon: UsersRound },
+  { href: '/users', label: 'Gerenciar usuários', icon: UsersRound },
   { href: '/settings', label: 'Configurações', icon: Settings },
 ];
 
@@ -98,7 +98,7 @@ const getInitials = (name: string) => {
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { brandingConfig } = useBranding();
-  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({}); 
+  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
 
   const toggleSubmenu = (label: string) => {
     setOpenSubmenus(prev => ({ ...prev, [label]: !prev[label] }));
@@ -131,7 +131,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                           isActive={isSubmenuOpen || isParentActive || (item.href && pathname.startsWith(item.href))}
                           className="w-full justify-start"
                           tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                          onClick={() => toggleSubmenu(item.label)} 
+                          onClick={() => toggleSubmenu(item.label)}
                         >
                           <ParentIcon className="h-5 w-5 flex-shrink-0" />
                           <span className="truncate">{item.label}</span>
@@ -149,7 +149,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                         <span className="truncate">{item.label}</span>
                       </SidebarMenuButton>
                     )}
-                    {isSubmenuOpen && ( 
+                    {isSubmenuOpen && (
                       <SidebarMenuSub>
                         {item.subItems.map((subItem) => {
                           const SubIcon = subItem.icon;
@@ -211,16 +211,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <PanelLeft />
             </SidebarTrigger>
           </div>
-          
+
           <div className="flex-1" />
 
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Avatar className="h-9 w-9 cursor-pointer">
-                  <AvatarImage 
+                  <AvatarImage
                     src={brandingConfig.logoUrl || undefined}
-                    alt={brandingConfig.companyName ? `${brandingConfig.companyName} Logo` : 'Logo da Empresa'} 
+                    alt={brandingConfig.companyName ? `${brandingConfig.companyName} Logo` : 'Logo da Empresa'}
                     data-ai-hint="company logo avatar"
                   />
                   <AvatarFallback>

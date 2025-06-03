@@ -4,7 +4,7 @@ import { Inter as FontSans } from 'next/font/google';
 import './globals.css';
 import { AppProviders } from '@/components/providers/AppProviders';
 import { Toaster } from "@/components/ui/toaster";
-import { AppLayout } from '@/components/layout/AppLayout'; 
+import { AppLayout } from '@/components/layout/AppLayout';
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -12,7 +12,7 @@ const fontSans = FontSans({
 });
 
 export const metadata: Metadata = {
-  title: 'Zaldi Imo - Gestão de Ativos Imobilizados',
+  title: 'Zaldi Imo - Gestão de ativos imobilizados',
   description: 'Gerencie seus ativos imobilizados de forma eficiente com o Zaldi Imo.',
 };
 

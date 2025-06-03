@@ -21,11 +21,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useLocations, type Location } from "@/contexts/LocationContext";
-import { LocationFormDialog } from "./LocationFormDialog"; 
+import { LocationFormDialog } from "./LocationFormDialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface LocationComboboxProps {
-  value: string | undefined; // Location ID or undefined
+  value: string | undefined;
   onChange: (value: string | undefined) => void;
   disabled?: boolean;
 }
@@ -56,15 +56,15 @@ export function LocationCombobox({ value, onChange, disabled }: LocationCombobox
   };
 
   const handleOpenNewLocationDialog = () => {
-    setLocationNameToCreate(inputValue); 
+    setLocationNameToCreate(inputValue);
     setIsLocationDialogOpen(true);
-    setOpen(false); 
+    setOpen(false);
   };
 
   const handleLocationAdded = (newLocationId: string) => {
-    onChange(newLocationId); 
+    onChange(newLocationId);
     setIsLocationDialogOpen(false);
-    setInputValue(""); 
+    setInputValue("");
   };
 
   return (
@@ -105,10 +105,9 @@ export function LocationCombobox({ value, onChange, disabled }: LocationCombobox
                     : "Nenhum local encontrado."}
                 </CommandEmpty>
                 <CommandGroup>
-                  {/* Opção para "Nenhum local selecionado" */}
                   <CommandItem
                     key="__NO_LOCATION__"
-                    value="" // Representa a limpeza da seleção
+                    value=""
                     onSelect={() => {
                       handleSelectLocation(undefined);
                     }}
@@ -125,7 +124,7 @@ export function LocationCombobox({ value, onChange, disabled }: LocationCombobox
                   {filteredLocations.map((location) => (
                     <CommandItem
                       key={location.id}
-                      value={location.id} 
+                      value={location.id}
                       onSelect={() => {
                         handleSelectLocation(location.id);
                       }}
@@ -150,7 +149,7 @@ export function LocationCombobox({ value, onChange, disabled }: LocationCombobox
                     <CommandGroup>
                       <CommandItem
                         onSelect={handleOpenNewLocationDialog}
-                        value={`__add__${inputValue}`} 
+                        value={`__add__${inputValue}`}
                         className="text-primary hover:!bg-primary/10 cursor-pointer"
                       >
                         <PlusCircle className="mr-2 h-4 w-4" />

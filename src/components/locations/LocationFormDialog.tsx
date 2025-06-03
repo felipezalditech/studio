@@ -39,7 +39,7 @@ export type LocationFormValues = z.infer<typeof locationFormSchema>;
 interface LocationFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: Partial<Location> | null; // Permitir Partial para pré-preenchimento
+  initialData?: Partial<Location> | null;
   onLocationAdded?: (locationId: string) => void;
 }
 
@@ -65,10 +65,10 @@ export function LocationFormDialog({ open, onOpenChange, initialData, onLocation
   }, [initialData, form, open]);
 
   function onSubmit(data: LocationFormValues) {
-    if (initialData && initialData.id) { // Editando
+    if (initialData && initialData.id) {
       updateLocationInContext({ ...initialData, ...data, id: initialData.id });
       toast({ title: "Sucesso!", description: "Local atualizado." });
-    } else { // Adicionando
+    } else {
       const newLocation = addLocationToContext(data);
       toast({ title: "Sucesso!", description: "Local adicionado." });
       if (onLocationAdded && newLocation) {
@@ -82,7 +82,7 @@ export function LocationFormDialog({ open, onOpenChange, initialData, onLocation
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>{initialData && initialData.id ? 'Editar Local' : 'Adicionar Novo Local'}</DialogTitle>
+          <DialogTitle>{initialData && initialData.id ? 'Editar local' : 'Adicionar novo local'}</DialogTitle>
           <DialogDescription>
             {initialData && initialData.id ? 'Modifique os dados do local abaixo.' : 'Preencha os dados para cadastrar um novo local.'}
           </DialogDescription>
@@ -94,7 +94,7 @@ export function LocationFormDialog({ open, onOpenChange, initialData, onLocation
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do Local</FormLabel>
+                  <FormLabel>Nome do local</FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: Escritório Central, Almoxarifado" {...field} />
                   </FormControl>
@@ -107,7 +107,7 @@ export function LocationFormDialog({ open, onOpenChange, initialData, onLocation
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Endereço (Opcional)</FormLabel>
+                  <FormLabel>Endereço (opcional)</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Rua Exemplo, 123, Bairro, Cidade - UF" {...field} />
                   </FormControl>
@@ -120,12 +120,12 @@ export function LocationFormDialog({ open, onOpenChange, initialData, onLocation
                 Cancelar
               </Button>
               <Button
-                type="button" // Alterado de submit para button
-                onClick={form.handleSubmit(onSubmit)} // Adicionado onClick para submeter o formulário do diálogo
+                type="button"
+                onClick={form.handleSubmit(onSubmit)}
                 disabled={form.formState.isSubmitting}
               >
                 <Save className="mr-2 h-4 w-4" />
-                {form.formState.isSubmitting ? "Salvando..." : (initialData && initialData.id ? "Salvar Alterações" : "Adicionar Local")}
+                {form.formState.isSubmitting ? "Salvando..." : (initialData && initialData.id ? "Salvar alterações" : "Adicionar local")}
               </Button>
             </DialogFooter>
           </form>

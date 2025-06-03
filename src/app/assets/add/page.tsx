@@ -82,7 +82,7 @@ export default function AddAssetPage() {
     const initialCurrentValue = data.purchaseValue - (data.previouslyDepreciatedValue || 0);
     if (initialCurrentValue < 0) {
         toast({
-            title: "Erro de Validação",
+            title: "Erro de validação",
             description: "O valor já depreciado não pode ser maior que o valor de compra.",
             variant: "destructive",
         });
@@ -115,7 +115,7 @@ export default function AddAssetPage() {
 
       if (availableSlots <= 0) {
         toast({
-          title: "Limite de Fotos Atingido",
+          title: "Limite de fotos atingido",
           description: `Você já adicionou o máximo de ${MAX_PHOTOS} fotos.`,
           variant: "destructive",
         });
@@ -127,7 +127,7 @@ export default function AddAssetPage() {
 
       if (files.length > filesToProcess.length) {
         toast({
-          title: "Algumas Fotos Não Adicionadas",
+          title: "Algumas fotos não adicionadas",
           description: `Você selecionou ${files.length} fotos, mas só ${availableSlots > 1 ? 'podiam' : 'podia'} ser adicionada${availableSlots > 1 ? 's' : ''} mais ${filesToProcess.length}. As primeiras ${filesToProcess.length} foram adicionadas.`,
           variant: "default",
         });
@@ -176,28 +176,28 @@ export default function AddAssetPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Adicionar Novo Ativo</h1>
+            <h1 className="text-3xl font-bold">Adicionar novo ativo</h1>
             <p className="text-muted-foreground">Preencha os campos abaixo para cadastrar um novo ativo.</p>
           </div>
         </div>
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Detalhes do Ativo</CardTitle>
+            <CardTitle>Detalhes do ativo</CardTitle>
             <CardDescription>Forneça todas as informações relevantes sobre o novo ativo.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  
+
                   <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Nome do Ativo</FormLabel>
+                          <FormLabel>Nome do ativo</FormLabel>
                         </div>
                         <FormControl>
                           <Input placeholder="Ex: Notebook Dell XPS 15" {...field} />
@@ -212,7 +212,7 @@ export default function AddAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Modelo (Opcional)</FormLabel>
+                          <FormLabel>Modelo (opcional)</FormLabel>
                         </div>
                         <FormControl>
                           <Input placeholder="Ex: 9570, Latitude 7490" {...field} />
@@ -227,7 +227,7 @@ export default function AddAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Nº de Patrimônio</FormLabel>
+                          <FormLabel>Nº de patrimônio</FormLabel>
                         </div>
                         <FormControl>
                           <Input placeholder="Ex: ZDI-00123" {...field} />
@@ -276,7 +276,7 @@ export default function AddAssetPage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="supplier"
@@ -309,7 +309,7 @@ export default function AddAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Local Alocado</FormLabel>
+                          <FormLabel>Local alocado</FormLabel>
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -335,7 +335,7 @@ export default function AddAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Data da Compra</FormLabel>
+                          <FormLabel>Data da compra</FormLabel>
                         </div>
                         <Popover>
                           <PopoverTrigger asChild>
@@ -379,7 +379,7 @@ export default function AddAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                          <div className="flex items-center">
-                          <FormLabel>Nº da Nota Fiscal</FormLabel>
+                          <FormLabel>Nº da nota fiscal</FormLabel>
                         </div>
                         <FormControl>
                           <Input placeholder="Ex: NF-000123456" {...field} />
@@ -394,7 +394,7 @@ export default function AddAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Nº de Série (Opcional)</FormLabel>
+                          <FormLabel>Nº de série (opcional)</FormLabel>
                         </div>
                         <FormControl>
                           <Input placeholder="Ex: SN-ABC123XYZ" {...field} />
@@ -409,7 +409,7 @@ export default function AddAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Valor de Compra (R$)</FormLabel>
+                          <FormLabel>Valor de compra (R$)</FormLabel>
                         </div>
                         <FormControl>
                           <Input type="number" step="0.01" placeholder="Ex: 2500.00" {...field} />
@@ -424,7 +424,7 @@ export default function AddAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Valor Depreciado R$ (Opcional)</FormLabel>
+                          <FormLabel>Valor depreciado R$ (opcional)</FormLabel>
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -449,7 +449,7 @@ export default function AddAssetPage() {
                     render={({ field }) => (
                       <FormItem className="lg:col-span-2 md:col-span-2">
                         <div className="flex items-center">
-                          <FormLabel>Informações Adicionais (Opcional)</FormLabel>
+                          <FormLabel>Informações adicionais (opcional)</FormLabel>
                         </div>
                         <FormControl>
                           <Textarea
@@ -473,7 +473,7 @@ export default function AddAssetPage() {
                         <div className="flex items-center">
                           <FormLabel className="flex items-center">
                             <UploadCloud className="mr-2 h-5 w-5" />
-                            Fotos do Ativo (Máx. {MAX_PHOTOS})
+                            Fotos do ativo (Máx. {MAX_PHOTOS})
                           </FormLabel>
                           <TooltipProvider>
                             <Tooltip>
@@ -517,7 +517,7 @@ export default function AddAssetPage() {
                               size="icon"
                               onClick={() => handleRemoveImage(index, form.setValue.bind(form, 'imageDateUris') as any)}
                               className="absolute top-1 right-1 h-6 w-6 opacity-70 group-hover:opacity-100"
-                              title="Remover esta imagem"
+                              title="Remover imagem"
                             >
                               <XCircle className="h-4 w-4" />
                             </Button>
@@ -534,7 +534,7 @@ export default function AddAssetPage() {
                     </Button>
                   <Button type="submit" disabled={form.formState.isSubmitting}>
                     <Save className="mr-2 h-4 w-4" />
-                    {form.formState.isSubmitting ? "Salvando..." : "Salvar Ativo"}
+                    {form.formState.isSubmitting ? "Salvando..." : "Salvar ativo"}
                   </Button>
                 </div>
               </form>

@@ -49,7 +49,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
     updateAsset({ ...baseAsset, imageDateUris: updatedImageUris });
 
     toast({
-      title: "Foto Removida",
+      title: "Foto removida",
       description: "A foto selecionada foi removida com sucesso.",
     });
     setImageIndexToDelete(null);
@@ -66,7 +66,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
     link.click();
     document.body.removeChild(link);
     toast({
-      title: "Download Iniciado",
+      title: "Download iniciado",
       description: "O download da foto do ativo foi iniciado.",
     });
   };
@@ -75,22 +75,22 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Detalhes do Ativo: {asset.name}</DialogTitle>
+          <DialogTitle>Detalhes do ativo: {asset.name}</DialogTitle>
           <DialogDescription>
             Informações completas sobre o ativo selecionado.
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 py-4">
           <div>
-            <h3 className="font-semibold mb-2 text-lg">Informações Gerais</h3>
+            <h3 className="font-semibold mb-2 text-lg">Informações gerais</h3>
             <div className="space-y-1.5 text-sm">
               <p><strong>Nome:</strong> {asset.name}</p>
               <p><strong>Modelo:</strong> {asset.model || "N/A"}</p>
               <p><strong>Patrimônio:</strong> {asset.assetTag}</p>
               <p><strong>Categoria:</strong> {asset.categoryName || asset.categoryId}</p>
               <p><strong>Fornecedor:</strong> {asset.supplierName || asset.supplier}</p>
-              <p><strong>Local Alocado:</strong> {asset.locationName || 'N/A'}</p>
-              <p><strong>Data da Compra:</strong> {formatDate(asset.purchaseDate)}</p>
+              <p><strong>Local alocado:</strong> {asset.locationName || 'N/A'}</p>
+              <p><strong>Data da compra:</strong> {formatDate(asset.purchaseDate)}</p>
               <p><strong>Nº Nota Fiscal:</strong> {asset.invoiceNumber}</p>
               <p><strong>Nº Série:</strong> {asset.serialNumber || "N/A"}</p>
             </div>
@@ -98,19 +98,19 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
           <div>
             <h3 className="font-semibold mb-2 text-lg">Valores</h3>
             <div className="space-y-1.5 text-sm">
-              <p><strong>Valor de Compra:</strong> {formatCurrency(asset.purchaseValue)}</p>
+              <p><strong>Valor de compra:</strong> {formatCurrency(asset.purchaseValue)}</p>
               {asset.previouslyDepreciatedValue !== undefined && asset.previouslyDepreciatedValue > 0 && (
-                <p><strong>Valor Já Depreciado (Inicial):</strong> {formatCurrency(asset.previouslyDepreciatedValue)}</p>
+                <p><strong>Valor já depreciado (inicial):</strong> {formatCurrency(asset.previouslyDepreciatedValue)}</p>
               )}
-              <p><strong>Valor Depreciado Total:</strong> <span className="text-orange-600 dark:text-orange-500">{formatCurrency(asset.depreciatedValue)}</span></p>
-              <p><strong>Valor Atual:</strong> <span className="text-green-600 dark:text-green-500">{formatCurrency(asset.calculatedCurrentValue)}</span></p>
+              <p><strong>Valor depreciado total:</strong> <span className="text-orange-600 dark:text-orange-500">{formatCurrency(asset.depreciatedValue)}</span></p>
+              <p><strong>Valor atual:</strong> <span className="text-green-600 dark:text-green-500">{formatCurrency(asset.calculatedCurrentValue)}</span></p>
             </div>
           </div>
         </div>
 
         {asset.additionalInfo && (
           <div className="mt-2">
-            <h3 className="font-semibold mb-2 text-lg">Informações Adicionais</h3>
+            <h3 className="font-semibold mb-2 text-lg">Informações adicionais</h3>
             <Textarea
                 value={asset.additionalInfo}
                 readOnly
@@ -122,7 +122,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
 
 
         <div className="mt-2">
-          <h3 className="font-semibold mb-3 text-lg">Fotos do Ativo</h3>
+          <h3 className="font-semibold mb-3 text-lg">Fotos do ativo</h3>
           {asset.imageDateUris && asset.imageDateUris.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-2 border rounded-md bg-muted/10">
               {asset.imageDateUris.map((uri, index) => (
@@ -140,7 +140,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
                       size="icon"
                       className="h-7 w-7 border-gray-300 text-gray-300 hover:bg-white/20 hover:text-white"
                       onClick={() => handleDownloadImage(uri, index)}
-                      title="Baixar Foto"
+                      title="Baixar foto"
                     >
                       <Download className="h-4 w-4" />
                     </Button>
@@ -149,7 +149,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => handleRemoveImageRequest(index)}
-                      title="Excluir Foto"
+                      title="Excluir foto"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -176,7 +176,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
           open={isConfirmDeleteImageDialogOpen}
           onOpenChange={setIsConfirmDeleteImageDialogOpen}
           onConfirm={confirmRemoveImage}
-          title="Confirmar Exclusão de Foto"
+          title="Confirmar exclusão de foto"
           description={`Tem certeza que deseja remover esta foto do ativo ${asset.name}?`}
         />
       )}

@@ -1,22 +1,22 @@
 
 "use client";
 
-import React, { useEffect, useRef } from 'react'; // Removed useState
+import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import Image from 'next/image'; 
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { SettingsIcon, Building2, UploadCloud, XCircle } from "lucide-react"; // Removed Layers, MapPin, PlusCircle, Edit2, Trash2, MoreHorizontal
+import { SettingsIcon, Building2, UploadCloud, XCircle } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useBranding } from '@/contexts/BrandingContext';
 
 const brandingFormSchema = z.object({
   companyName: z.string().min(1, "Nome da empresa é obrigatório").max(50, "Nome da empresa muito longo"),
-  logoUrl: z.string().optional(), 
+  logoUrl: z.string().optional(),
 });
 type BrandingFormValues = z.infer<typeof brandingFormSchema>;
 
@@ -75,7 +75,7 @@ export default function SettingsPage() {
                 name="companyName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome da Empresa</FormLabel>
+                    <FormLabel>Nome da empresa</FormLabel>
                     <FormControl>
                       <Input placeholder="Sua Empresa LTDA" {...field} />
                     </FormControl>
@@ -90,7 +90,7 @@ export default function SettingsPage() {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       <UploadCloud className="mr-2 h-5 w-5" />
-                      Logo da Empresa
+                      Logo da empresa
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -107,13 +107,13 @@ export default function SettingsPage() {
                     <FormMessage />
                     {field.value && (
                       <div className="mt-4 space-y-2">
-                        <p className="text-sm font-medium text-muted-foreground">Pré-visualização do Logo:</p>
+                        <p className="text-sm font-medium text-muted-foreground">Pré-visualização do logo:</p>
                         <div className="relative w-40 h-40 border rounded-md overflow-hidden group">
-                           <Image 
-                            src={field.value} 
-                            alt="Pré-visualização do Logo" 
-                            layout="fill" 
-                            objectFit="contain" 
+                           <Image
+                            src={field.value}
+                            alt="Pré-visualização do Logo"
+                            layout="fill"
+                            objectFit="contain"
                             data-ai-hint="company logo preview"
                            />
                            <Button
@@ -123,11 +123,11 @@ export default function SettingsPage() {
                               onClick={() => {
                                 field.onChange('');
                                 if (logoInputRef.current) {
-                                  logoInputRef.current.value = ''; 
+                                  logoInputRef.current.value = '';
                                 }
                               }}
                               className="absolute top-1 right-1 h-7 w-7 opacity-70 group-hover:opacity-100"
-                              title="Remover Logo"
+                              title="Remover logo"
                             >
                               <XCircle className="h-4 w-4" />
                             </Button>
@@ -138,7 +138,7 @@ export default function SettingsPage() {
                 )}
               />
               <div className="flex justify-end">
-                <Button type="submit">Salvar Alterações de Marca</Button>
+                <Button type="submit">Salvar alterações de marca</Button>
               </div>
             </form>
           </Form>
@@ -149,7 +149,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center text-xl">
             <SettingsIcon className="mr-2 h-5 w-5" />
-            Outras Configurações
+            Outras configurações
           </CardTitle>
           <CardDescription>
             Opções gerais da aplicação.
@@ -160,7 +160,7 @@ export default function SettingsPage() {
             Outras opções de configuração da aplicação estarão disponíveis aqui.
           </p>
           <Button variant="outline" disabled>
-            Acessar (Em Breve)
+            Acessar (em breve)
           </Button>
         </CardContent>
       </Card>

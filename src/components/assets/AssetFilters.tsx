@@ -57,19 +57,19 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
   return (
     <Card className="mb-6 shadow-lg">
       <CardHeader>
-        <CardTitle className="text-xl">Filtrar Ativos</CardTitle>
+        <CardTitle className="text-xl">Filtrar ativos</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Input
-            placeholder="Nome, Patrimônio ou Nº Série..."
+            placeholder="Nome, patrimônio ou nº série..."
             name="name"
             value={filters.name}
             onChange={handleInputChange}
             className="text-sm"
           />
           <Input
-            placeholder="Filtrar por Nº da Fatura..."
+            placeholder="Filtrar por nº da fatura..."
             name="invoiceNumber"
             value={filters.invoiceNumber}
             onChange={handleInputChange}
@@ -77,28 +77,28 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
           />
            <Select value={filters.supplier || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('supplier')}>
             <SelectTrigger className="text-sm">
-              <SelectValue placeholder="Filtrar por Fornecedor" />
+              <SelectValue placeholder="Filtrar por fornecedor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todos os Fornecedores</SelectItem>
+              <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todos os fornecedores</SelectItem>
               {allSuppliersFromContext.map(s => <SelectItem key={s.id} value={s.id}>{s.nomeFantasia || s.razaoSocial}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filters.categoryId || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('categoryId')}>
             <SelectTrigger className="text-sm">
-              <SelectValue placeholder="Filtrar por Categoria" />
+              <SelectValue placeholder="Filtrar por categoria" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todas as Categorias</SelectItem>
+              <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todas as categorias</SelectItem>
               {allCategoriesFromContext.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filters.locationId || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('locationId')}>
             <SelectTrigger className="text-sm">
-              <SelectValue placeholder="Filtrar por Local Alocado" />
+              <SelectValue placeholder="Filtrar por local alocado" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todos os Locais</SelectItem>
+              <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todos os locais</SelectItem>
               {allLocationsFromContext.map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -113,7 +113,7 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {filters.purchaseDateFrom && isValid(filters.purchaseDateFrom) ? format(filters.purchaseDateFrom, "PPP", { locale: ptBR }) : <span>Data de Compra Inicial</span>}
+                {filters.purchaseDateFrom && isValid(filters.purchaseDateFrom) ? format(filters.purchaseDateFrom, "PPP", { locale: ptBR }) : <span>Data de compra inicial</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -137,7 +137,7 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {filters.purchaseDateTo && isValid(filters.purchaseDateTo) ? format(filters.purchaseDateTo, "PPP", { locale: ptBR }) : <span>Data da Compra Até</span>}
+                {filters.purchaseDateTo && isValid(filters.purchaseDateTo) ? format(filters.purchaseDateTo, "PPP", { locale: ptBR }) : <span>Data da compra até</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -150,9 +150,9 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
               />
             </PopoverContent>
           </Popover>
-          
+
           <Input
-            placeholder="Filtrar por Modelo..."
+            placeholder="Filtrar por modelo..."
             name="model"
             value={filters.model}
             onChange={handleInputChange}
@@ -164,11 +164,10 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
               onClick={onResetFilters}
               className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground"
             >
-                <RotateCcwIcon className="mr-2 h-4 w-4" /> Redefinir Filtros
+                <RotateCcwIcon className="mr-2 h-4 w-4" /> Redefinir filtros
             </Button>
         </div>
       </CardContent>
     </Card>
   );
 }
-

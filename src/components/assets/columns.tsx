@@ -75,12 +75,12 @@ export const getColumns = (
   },
   {
     accessorKey: "purchaseDate",
-    header: ({ column }) => <SortableHeader column={column} title="Data Compra" />,
+    header: ({ column }) => <SortableHeader column={column} title="Data compra" />,
     cell: ({ row }) => formatDate(row.getValue("purchaseDate")),
   },
   {
     accessorKey: "name",
-    header: ({ column }) => <SortableHeader column={column} title="Nome do Ativo" />,
+    header: ({ column }) => <SortableHeader column={column} title="Nome do ativo" />,
   },
   {
     accessorKey: "model",
@@ -93,11 +93,11 @@ export const getColumns = (
   },
   {
     accessorKey: "invoiceNumber",
-    header: ({ column }) => <SortableHeader column={column} title="Nota Fiscal" />,
+    header: ({ column }) => <SortableHeader column={column} title="Nota fiscal" />,
   },
   {
     accessorKey: "serialNumber",
-    header: ({ column }) => <SortableHeader column={column} title="Nº de Série" />,
+    header: ({ column }) => <SortableHeader column={column} title="Nº de série" />,
     cell: ({ row }) => row.getValue("serialNumber") || "N/A",
   },
   {
@@ -114,26 +114,26 @@ export const getColumns = (
       return row.original.supplierName || "Desconhecido";
     },
   },
-  { 
+  {
     accessorKey: "locationName",
-    header: ({ column }) => <SortableHeader column={column} title="Local Alocado" />,
+    header: ({ column }) => <SortableHeader column={column} title="Local alocado" />,
     cell: ({ row }) => {
       return row.original.locationName || "N/A";
     },
   },
   {
     accessorKey: "purchaseValue",
-    header: ({ column }) => <SortableHeader column={column} title="Valor de Compra" />,
+    header: ({ column }) => <SortableHeader column={column} title="Valor de compra" />,
     cell: ({ row }) => formatCurrency(row.getValue("purchaseValue")),
   },
   {
     accessorKey: "depreciatedValue",
-    header: ({ column }) => <SortableHeader column={column} title="Valor Depreciado" />,
+    header: ({ column }) => <SortableHeader column={column} title="Valor depreciado" />,
     cell: ({ row }) => formatCurrency(row.original.depreciatedValue),
   },
   {
     accessorKey: "calculatedCurrentValue",
-    header: ({ column }) => <SortableHeader column={column} title="Valor Atual" />,
+    header: ({ column }) => <SortableHeader column={column} title="Valor atual" />,
     cell: ({ row }) => formatCurrency(row.original.calculatedCurrentValue),
   },
   {
@@ -163,7 +163,7 @@ export const getColumns = (
               <DropdownMenuLabel>Ações</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => onViewDetails(asset)}>
                 <Eye className="mr-2 h-4 w-4" />
-                Visualizar Detalhes
+                Visualizar detalhes
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleEditRequest}>
                 <Edit2 className="mr-2 h-4 w-4" />
@@ -171,7 +171,7 @@ export const getColumns = (
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => console.log(`Baixar ativo: ${asset.name}`)} disabled>
                 <Archive className="mr-2 h-4 w-4" />
-                Baixar Ativo
+                Baixar ativo
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -179,7 +179,7 @@ export const getColumns = (
                 className="text-red-600 hover:!text-red-600 focus:text-red-600 focus:!bg-red-100 dark:focus:!bg-red-700/50"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Deletar Permanentemente
+                Deletar permanentemente
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

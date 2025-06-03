@@ -41,7 +41,7 @@ export default function ManageLocationsPage() {
   return (
     <div className="container mx-auto py-10 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Gerenciar Locais dos Ativos</h1>
+        <h1 className="text-3xl font-bold mb-2">Gerenciar locais dos ativos</h1>
         <p className="text-muted-foreground">Defina os locais onde os ativos podem ser alocados.</p>
       </div>
 
@@ -50,14 +50,14 @@ export default function ManageLocationsPage() {
           <div>
             <CardTitle className="flex items-center text-xl">
               <MapPin className="mr-2 h-5 w-5" />
-              Lista de Locais
+              Lista de locais
             </CardTitle>
             <CardDescription>
               Locais cadastrados no sistema.
             </CardDescription>
           </div>
           <Button onClick={() => handleOpenLocationDialog()}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Local
+            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar local
           </Button>
         </CardHeader>
         <CardContent>
@@ -67,7 +67,7 @@ export default function ManageLocationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome do Local</TableHead>
+                  <TableHead>Nome do local</TableHead>
                   <TableHead>Endereço</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -120,7 +120,7 @@ export default function ManageLocationsPage() {
         open={isConfirmDeleteDialogOpen}
         onOpenChange={setIsConfirmDeleteDialogOpen}
         onConfirm={confirmDelete}
-        title="Confirmar Exclusão de Local"
+        title="Confirmar exclusão de local"
         description="Tem certeza que deseja excluir o local selecionado? Esta ação não pode ser desfeita."
       />
     </div>

@@ -38,17 +38,12 @@ const categoryFormSchema = z.object({
   depreciationRateType: z.enum(['annual', 'monthly']).optional(),
   depreciationRateValue: z.coerce.number().min(0, "Taxa de depreciação não pode ser negativa.").max(100, "Taxa de depreciação não pode exceder 100%.").optional(),
 }).refine(data => {
-  // Se um dos campos de taxa explícita for preenchido, o outro também deve ser.
   if (data.depreciationRateType && data.depreciationRateValue === undefined) return false;
   if (data.depreciationRateValue !== undefined && !data.depreciationRateType) return false;
-  // Pelo menos a vida útil OU a taxa explícita (tipo e valor) devem ser fornecidas
   if (data.usefulLifeInYears === undefined && (data.depreciationRateType === undefined || data.depreciationRateValue === undefined)) return false;
   return true;
 }, {
   message: "Defina a depreciação pela Vida Útil OU forneça um Tipo de Taxa e um Valor de Taxa.",
-  // Você pode direcionar a mensagem de erro para um campo específico se desejar,
-  // mas uma mensagem geral no formulário pode ser suficiente.
-  // path: ["usefulLifeInYears"], // Ou outro campo relevante
 });
 
 
@@ -62,8 +57,7 @@ interface CategoryFormDialogProps {
 }
 
 const depreciationMethodOptions: { value: DepreciationMethod; label: string }[] = [
-  { value: 'linear', label: 'Linear (Linha Reta)' },
-  // { value: 'reducing_balance', label: 'Saldos Decrescentes (Não implementado)' },
+  { value: 'linear', label: 'Linear (linha reta)' },
 ];
 
 const depreciationRateTypeOptions: { value: 'annual' | 'monthly'; label: string }[] = [
@@ -107,7 +101,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
   function onSubmit(data: CategoryFormValues) {
     const dataToSubmit: CategoryFormValues = {
         ...data,
-        usefulLifeInYears: data.usefulLifeInYears === 0 ? undefined : data.usefulLifeInYears, // Trata 0 como não definido se necessário
+        usefulLifeInYears: data.usefulLifeInYears === 0 ? undefined : data.usefulLifeInYears,
     };
     onSubmitAction(dataToSubmit);
     onOpenChange(false);
@@ -117,14 +111,14 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Editar Categoria' : 'Adicionar Nova Categoria'}</DialogTitle>
+          <DialogTitle>{initialData ? 'Editar categoria' : 'Adicionar nova categoria'}</DialogTitle>
           <DialogDescription>
             {initialData ? 'Modifique os dados da categoria abaixo.' : 'Preencha os dados para cadastrar uma nova categoria e suas regras de depreciação.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form 
-            onSubmit={form.handleSubmit(onSubmit)} 
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-3"
           >
             <FormField
@@ -132,7 +126,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome da Categoria</FormLabel>
+                  <FormLabel>Nome da categoria</FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: Eletrônicos de Escritório" {...field} />
                   </FormControl>
@@ -145,7 +139,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
               name="depreciationMethod"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Método de Depreciação</FormLabel>
+                  <FormLabel>Método de depreciação</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -169,7 +163,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
               name="usefulLifeInYears"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Vida Útil (em anos)</FormLabel>
+                  <FormLabel>Vida útil (em anos)</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="Ex: 5 (deixe 0 ou vazio se usar taxa)" {...field} />
                   </FormControl>
@@ -185,7 +179,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
               name="depreciationRateType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tipo de Taxa de Depreciação (Opcional)</FormLabel>
+                  <FormLabel>Tipo de taxa de depreciação (opcional)</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -212,7 +206,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
               name="depreciationRateValue"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Valor da Taxa de Depreciação (%, opcional)</FormLabel>
+                  <FormLabel>Valor da taxa de depreciação (%, opcional)</FormLabel>
                   <FormControl>
                     <Input type="number" step="0.01" placeholder="Ex: 20 (para 20%)" {...field} />
                   </FormControl>
@@ -228,7 +222,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
               name="residualValuePercentage"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Valor Residual (Percentual %)</FormLabel>
+                  <FormLabel>Valor residual (percentual %)</FormLabel>
                   <FormControl>
                     <Input type="number" step="0.01" placeholder="Ex: 10 (para 10%)" {...field} />
                   </FormControl>
@@ -248,17 +242,16 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button 
-            type="button" 
-            onClick={form.handleSubmit(onSubmit)} // Alterado para chamar o submit do form
+          <Button
+            type="button"
+            onClick={form.handleSubmit(onSubmit)}
             disabled={form.formState.isSubmitting}
           >
             <Save className="mr-2 h-4 w-4" />
-            {form.formState.isSubmitting ? "Salvando..." : (initialData ? "Salvar Alterações" : "Adicionar Categoria")}
+            {form.formState.isSubmitting ? "Salvando..." : (initialData ? "Salvar alterações" : "Adicionar categoria")}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-

@@ -21,11 +21,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useSuppliers, type Supplier } from "@/contexts/SupplierContext";
-import { SupplierFormDialog } from "./SupplierFormDialog"; 
+import { SupplierFormDialog } from "./SupplierFormDialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SupplierComboboxProps {
-  value: string; // Supplier ID
+  value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
 }
@@ -47,8 +47,8 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
     return suppliers.filter((supplier) =>
       (supplier.nomeFantasia && supplier.nomeFantasia.toLowerCase().includes(lowerInputValue)) ||
       (supplier.razaoSocial && supplier.razaoSocial.toLowerCase().includes(lowerInputValue)) ||
-      (supplier.cnpj && supplier.cnpj.includes(inputValue)) || // inputValue for direct match on numbers with mask
-      (supplier.cpf && supplier.cpf.includes(inputValue))      // inputValue for direct match on numbers with mask
+      (supplier.cnpj && supplier.cnpj.includes(inputValue)) ||
+      (supplier.cpf && supplier.cpf.includes(inputValue))
     );
   }, [suppliers, inputValue]);
 
@@ -59,15 +59,15 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
   };
 
   const handleOpenNewSupplierDialog = () => {
-    setSupplierNameToCreate(inputValue); 
+    setSupplierNameToCreate(inputValue);
     setIsSupplierDialogOpen(true);
-    setOpen(false); 
+    setOpen(false);
   };
 
   const handleSupplierAdded = (newSupplierId: string) => {
-    onChange(newSupplierId); 
+    onChange(newSupplierId);
     setIsSupplierDialogOpen(false);
-    setInputValue(""); 
+    setInputValue("");
   };
 
   return (
@@ -111,7 +111,7 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
                   {filteredSuppliers.map((supplier) => (
                     <CommandItem
                       key={supplier.id}
-                      value={supplier.id} 
+                      value={supplier.id}
                       onSelect={() => {
                         handleSelectSupplier(supplier.id);
                       }}
@@ -136,7 +136,7 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
                     <CommandGroup>
                       <CommandItem
                         onSelect={handleOpenNewSupplierDialog}
-                        value={`__add__${inputValue}`} 
+                        value={`__add__${inputValue}`}
                         className="text-primary hover:!bg-primary/10 cursor-pointer"
                       >
                         <PlusCircle className="mr-2 h-4 w-4" />

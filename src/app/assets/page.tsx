@@ -18,7 +18,7 @@ import { isValid, parseISO, addDays, differenceInCalendarMonths } from 'date-fns
 import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useCategories } from '@/contexts/CategoryContext';
-import { useLocations } from '@/contexts/LocationContext'; 
+import { useLocations } from '@/contexts/LocationContext';
 import { AssetDetailsDialog } from '@/components/assets/AssetDetailsDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useBranding } from '@/contexts/BrandingContext';
@@ -28,8 +28,8 @@ const initialFilters: AssetFiltersState = {
   supplier: '',
   invoiceNumber: '',
   categoryId: '',
-  locationId: '', 
-  model: '', // Adicionado model aos filtros iniciais
+  locationId: '',
+  model: '',
   purchaseDateFrom: undefined,
   purchaseDateTo: undefined,
 };
@@ -43,14 +43,14 @@ export interface AssetWithCalculatedValues extends Asset {
   calculatedCurrentValue: number;
   categoryName?: string;
   supplierName?: string;
-  locationName?: string; 
+  locationName?: string;
 }
 
 export default function AssetsPage() {
   const { assets, deleteAsset } = useAssets();
   const { suppliers: allSuppliersFromContext, getSupplierById } = useSuppliers();
   const { categories: allCategoriesFromContext, getCategoryById } = useCategories();
-  const { locations: allLocationsFromContext, getLocationById } = useLocations(); 
+  const { locations: allLocationsFromContext, getLocationById } = useLocations();
   const { brandingConfig } = useBranding();
   const [filters, setFilters] = useState<AssetFiltersState>(initialFilters);
   const { toast } = useToast();
@@ -78,7 +78,7 @@ export default function AssetsPage() {
     return map;
   }, [allCategoriesFromContext]);
 
-  const locationNameMap = useMemo(() => { 
+  const locationNameMap = useMemo(() => {
     const map = new Map<string, string>();
     allLocationsFromContext.forEach(location => {
       map.set(location.id, location.name);
@@ -125,22 +125,22 @@ export default function AssetsPage() {
         const dateFrom = filters.purchaseDateFrom;
         const dateTo = filters.purchaseDateTo;
         const searchTerm = filters.name.toLowerCase();
-        const modelTerm = filters.model.toLowerCase(); // Adicionado filtro de modelo
+        const modelTerm = filters.model.toLowerCase();
 
         const searchTermMatch = searchTerm
           ? asset.name.toLowerCase().includes(searchTerm) ||
             asset.assetTag.toLowerCase().includes(searchTerm) ||
             (asset.serialNumber && asset.serialNumber.toLowerCase().includes(searchTerm))
           : true;
-        
-        const modelMatch = modelTerm 
+
+        const modelMatch = modelTerm
             ? asset.model && asset.model.toLowerCase().includes(modelTerm)
             : true;
 
         const supplierMatch = filters.supplier ? asset.supplier === filters.supplier : true;
         const invoiceMatch = asset.invoiceNumber.toLowerCase().includes(filters.invoiceNumber.toLowerCase());
         const categoryMatch = filters.categoryId ? asset.categoryId === filters.categoryId : true;
-        const locationMatch = filters.locationId ? asset.locationId === filters.locationId : true; 
+        const locationMatch = filters.locationId ? asset.locationId === filters.locationId : true;
 
         const dateFromMatch = dateFrom && isValid(purchaseDate) ? purchaseDate >= dateFrom : true;
         const dateToMatch = dateTo && isValid(purchaseDate) ? purchaseDate <= dateTo : true;
@@ -198,7 +198,7 @@ export default function AssetsPage() {
           calculatedCurrentValue,
           categoryName: categoryNameMap.get(asset.categoryId) || asset.categoryId,
           supplierName: supplierNameMap.get(asset.supplier) || asset.supplier,
-          locationName: asset.locationId ? locationNameMap.get(asset.locationId) || asset.locationId : 'N/A', 
+          locationName: asset.locationId ? locationNameMap.get(asset.locationId) || asset.locationId : 'N/A',
         };
       });
   }, [assets, filters, getCategoryById, categoryNameMap, supplierNameMap, locationNameMap]);
@@ -211,7 +211,7 @@ export default function AssetsPage() {
 
   const handleExportCSV = () => {
     if (assetsWithCalculatedValues.length === 0) {
-      toast({ title: "Aviso de Exportação", description: "Nenhum ativo para exportar.", variant: "default" });
+      toast({ title: "Aviso de exportação", description: "Nenhum ativo para exportar.", variant: "default" });
       return;
     }
     const assetsForExport = assetsWithCalculatedValues.map(asset => ({
@@ -224,7 +224,7 @@ export default function AssetsPage() {
       'Nº Série': asset.serialNumber || 'N/A',
       'Categoria': asset.categoryName,
       'Fornecedor': asset.supplierName,
-      'Local Alocado': asset.locationName || 'N/A', 
+      'Local Alocado': asset.locationName || 'N/A',
       'Valor Compra': asset.purchaseValue,
       'Valor Já Depreciado (Inicial)': asset.previouslyDepreciatedValue || 0,
       'Valor Depreciado Total': asset.depreciatedValue,
@@ -232,12 +232,12 @@ export default function AssetsPage() {
       'Informações Adicionais': asset.additionalInfo || 'N/A',
     }));
     exportToCSV(assetsForExport, 'ativos_filtrados.csv');
-    toast({ title: "Exportação Concluída", description: "Ativos exportados para CSV." });
+    toast({ title: "Exportação concluída", description: "Ativos exportados para CSV." });
   };
 
   const handleExportPDF = () => {
      if (assetsWithCalculatedValues.length === 0) {
-      toast({ title: "Aviso de Exportação", description: "Nenhum ativo para exportar.", variant: "default" });
+      toast({ title: "Aviso de exportação", description: "Nenhum ativo para exportar.", variant: "default" });
       return;
     }
     const assetsForExport = assetsWithCalculatedValues.map(asset => ({
@@ -251,15 +251,15 @@ export default function AssetsPage() {
       serialNumber: asset.serialNumber || 'N/A',
       category: asset.categoryName,
       supplier: asset.supplierName,
-      location: asset.locationName || 'N/A', 
+      location: asset.locationName || 'N/A',
       purchaseValue: asset.purchaseValue,
       previouslyDepreciatedValue: asset.previouslyDepreciatedValue || 0,
       depreciatedValue: asset.depreciatedValue,
       currentValue: asset.calculatedCurrentValue,
       additionalInfo: asset.additionalInfo || 'N/A',
     }));
-    exportToPDF(assetsForExport, 'ativos_filtrados.pdf', undefined, brandingConfig.logoUrl); // Passando undefined para usar colunas padrão
-    toast({ title: "Exportação Concluída", description: "Ativos exportados para PDF." });
+    exportToPDF(assetsForExport, 'ativos_filtrados.pdf', undefined, brandingConfig.logoUrl);
+    toast({ title: "Exportação concluída", description: "Ativos exportados para PDF." });
   };
 
   const { totalPurchaseValueFiltered, totalCurrentValueFiltered, totalDepreciatedValueFiltered } = useMemo(() => {
@@ -300,7 +300,7 @@ export default function AssetsPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold mb-6">Consultar Ativos</h1>
+      <h1 className="text-3xl font-bold mb-6">Consultar ativos</h1>
       <AssetFilters
         filters={filters}
         setFilters={setFilters}
@@ -310,13 +310,13 @@ export default function AssetsPage() {
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-2xl">Lista de Ativos</CardTitle>
+            <CardTitle className="text-2xl">Lista de ativos</CardTitle>
             <CardDescription>Visualize, ordene e gerencie seus ativos imobilizados.</CardDescription>
           </div>
           <div className="flex items-center space-x-2">
             <Button asChild>
               <Link href="/assets/add">
-                <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Ativo
+                <PlusCircle className="mr-2 h-4 w-4" /> Adicionar ativo
               </Link>
             </Button>
             <Button onClick={handleExportCSV} variant="outline">
@@ -387,7 +387,7 @@ export default function AssetsPage() {
           open={isConfirmDeleteAssetDialogOpen}
           onOpenChange={setIsConfirmDeleteAssetDialogOpen}
           onConfirm={confirmDeleteAsset}
-          title="Confirmar Exclusão de Ativo"
+          title="Confirmar exclusão de ativo"
           description={`Tem certeza que deseja excluir o ativo "${assetToDelete.name}"? Esta ação não pode ser desfeita.`}
         />
       )}

@@ -53,17 +53,17 @@ export default function SuppliersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Gerenciar Fornecedores</h1>
+          <h1 className="text-3xl font-bold">Gerenciar fornecedores</h1>
           <p className="text-muted-foreground">Adicione, edite ou remova fornecedores.</p>
         </div>
         <Button onClick={() => handleOpenDialog()}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Fornecedor
+          <PlusCircle className="mr-2 h-4 w-4" /> Adicionar fornecedor
         </Button>
       </div>
 
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Lista de Fornecedores</CardTitle>
+          <CardTitle>Lista de fornecedores</CardTitle>
           <CardDescription>Fornecedores cadastrados no sistema.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -73,8 +73,8 @@ export default function SuppliersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome Fantasia</TableHead>
-                  <TableHead>Razão Social / Nome Completo</TableHead>
+                  <TableHead>Nome fantasia</TableHead>
+                  <TableHead>Razão social / Nome completo</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>CNPJ/CPF</TableHead>
                   <TableHead>Contato</TableHead>
@@ -132,7 +132,7 @@ export default function SuppliersPage() {
         open={isConfirmDeleteDialogOpen}
         onOpenChange={setIsConfirmDeleteDialogOpen}
         onConfirm={confirmDeleteSupplier}
-        title="Confirmar Exclusão de Fornecedor"
+        title="Confirmar exclusão de fornecedor"
         description={`Tem certeza que deseja excluir o fornecedor "${suppliers.find(s => s.id === supplierToDeleteId)?.nomeFantasia || suppliers.find(s => s.id === supplierToDeleteId)?.razaoSocial || ''}"? Esta ação não pode ser desfeita.`}
       />
     </div>

@@ -33,25 +33,25 @@ import { maskCPF, maskCNPJ } from '@/lib/utils';
 const supplierFormSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("juridica"),
-    razaoSocial: z.string().min(3, "Razão Social deve ter no mínimo 3 caracteres."),
-    nomeFantasia: z.string().min(2, "Nome Fantasia deve ter no mínimo 2 caracteres."),
+    razaoSocial: z.string().min(3, "Razão social deve ter no mínimo 3 caracteres."),
+    nomeFantasia: z.string().min(2, "Nome fantasia deve ter no mínimo 2 caracteres."),
     cnpj: z.string().refine(value => /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value) || /^\d{14}$/.test(value), {
         message: "CNPJ inválido. Use XX.XXX.XXX/XXXX-XX ou XXXXXXXXXXXXXX.",
     }),
     contato: z.string().min(5, "Contato é obrigatório."),
     endereco: z.string().min(5, "Endereço é obrigatório."),
-    cpf: z.string().optional(), 
+    cpf: z.string().optional(),
   }),
   z.object({
     type: z.literal("fisica"),
-    razaoSocial: z.string().min(3, "Nome Completo deve ter no mínimo 3 caracteres."),
-    nomeFantasia: z.string().optional(), // Nome fantasia é opcional para pessoa física
+    razaoSocial: z.string().min(3, "Nome completo deve ter no mínimo 3 caracteres."),
+    nomeFantasia: z.string().optional(),
     cpf: z.string().refine(value => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(value) || /^\d{11}$/.test(value), {
         message: "CPF inválido. Use XXX.XXX.XXX-XX ou XXXXXXXXXXX.",
     }),
     contato: z.string().min(5, "Contato é obrigatório."),
     endereco: z.string().min(5, "Endereço é obrigatório."),
-    cnpj: z.string().optional(), 
+    cnpj: z.string().optional(),
   }),
 ]);
 
@@ -98,17 +98,16 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
   }, [initialData, form, open]);
 
   useEffect(() => {
-    // Quando o tipo muda, limpa os campos de documento do tipo anterior e dispara a validação.
     if (selectedType === 'fisica') {
       form.setValue('cnpj', undefined);
-      form.clearErrors('cnpj'); // Limpa explicitamente erros de CNPJ
+      form.clearErrors('cnpj');
       form.trigger('cpf');
-      form.trigger('nomeFantasia'); // Revalida nomeFantasia (deve ser válido se vazio para PF)
+      form.trigger('nomeFantasia');
     } else if (selectedType === 'juridica') {
       form.setValue('cpf', undefined);
-      form.clearErrors('cpf'); // Limpa explicitamente erros de CPF
+      form.clearErrors('cpf');
       form.trigger('cnpj');
-      form.trigger('nomeFantasia'); // Revalida nomeFantasia (obrigatório para PJ)
+      form.trigger('nomeFantasia');
     }
   }, [selectedType, form]);
 
@@ -117,7 +116,7 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
     const dataToSave: Omit<Supplier, 'id'> = {
         type: data.type,
         razaoSocial: data.razaoSocial,
-        nomeFantasia: data.type === 'juridica' ? data.nomeFantasia : (data.nomeFantasia || ''), // Garante que nomeFantasia para PF seja string vazia se undefined
+        nomeFantasia: data.type === 'juridica' ? data.nomeFantasia : (data.nomeFantasia || ''),
         cnpj: data.type === 'juridica' ? data.cnpj : undefined,
         cpf: data.type === 'fisica' ? data.cpf : undefined,
         contato: data.contato,
@@ -141,7 +140,7 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>{initialData && 'id' in initialData && initialData.id ? 'Editar Fornecedor' : 'Adicionar Novo Fornecedor'}</DialogTitle>
+          <DialogTitle>{initialData && 'id' in initialData && initialData.id ? 'Editar fornecedor' : 'Adicionar novo fornecedor'}</DialogTitle>
           <DialogDescription>
             {initialData && 'id' in initialData && initialData.id ? 'Modifique os dados do fornecedor abaixo.' : 'Preencha os dados para cadastrar um novo fornecedor.'}
           </DialogDescription>
@@ -153,14 +152,12 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
               name="type"
               render={({ field }) => (
                 <FormItem className="space-y-3">
-                  <FormLabel>Tipo de Cadastro</FormLabel>
+                  <FormLabel>Tipo de cadastro</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={(value) => {
                         field.onChange(value);
-                        // Disparar a revalidação de todo o formulário ao mudar o tipo
-                        // para que a lógica de campos obrigatórios do Zod discriminatedUnion seja aplicada
-                        form.trigger(); 
+                        form.trigger();
                       }}
                       defaultValue={field.value}
                       className="flex space-x-4"
@@ -169,13 +166,13 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
                         <FormControl>
                           <RadioGroupItem value="juridica" />
                         </FormControl>
-                        <FormLabel className="font-normal">Pessoa Jurídica</FormLabel>
+                        <FormLabel className="font-normal">Pessoa jurídica</FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-2 space-y-0">
                         <FormControl>
                           <RadioGroupItem value="fisica" />
                         </FormControl>
-                        <FormLabel className="font-normal">Pessoa Física</FormLabel>
+                        <FormLabel className="font-normal">Pessoa física</FormLabel>
                       </FormItem>
                     </RadioGroup>
                   </FormControl>
@@ -189,7 +186,7 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
               name="razaoSocial"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{selectedType === 'fisica' ? 'Nome Completo' : 'Razão Social'}</FormLabel>
+                  <FormLabel>{selectedType === 'fisica' ? 'Nome completo' : 'Razão social'}</FormLabel>
                   <FormControl>
                     <Input placeholder={selectedType === 'fisica' ? 'Ex: João da Silva' : 'Ex: Empresa Exemplo LTDA ME'} {...field} />
                   </FormControl>
@@ -202,7 +199,7 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
               name="nomeFantasia"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome Fantasia {selectedType === 'fisica' && '(Opcional)'}</FormLabel>
+                  <FormLabel>Nome fantasia {selectedType === 'fisica' && '(opcional)'}</FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: Loja Exemplo ou Apelido" {...field} />
                   </FormControl>
@@ -219,9 +216,9 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
                   <FormItem>
                     <FormLabel>CNPJ</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="XX.XXX.XXX/XXXX-XX" 
-                        {...field} 
+                      <Input
+                        placeholder="XX.XXX.XXX/XXXX-XX"
+                        {...field}
                         onChange={(e) => {
                           field.onChange(maskCNPJ(e.target.value));
                         }}
@@ -241,9 +238,9 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
                   <FormItem>
                     <FormLabel>CPF</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="XXX.XXX.XXX-XX" 
-                        {...field} 
+                      <Input
+                        placeholder="XXX.XXX.XXX-XX"
+                        {...field}
                         onChange={(e) => {
                           field.onChange(maskCPF(e.target.value));
                         }}
@@ -260,7 +257,7 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
               name="contato"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contato (Telefone/Email)</FormLabel>
+                  <FormLabel>Contato (telefone/email)</FormLabel>
                   <FormControl>
                     <Input placeholder="(XX) XXXXX-XXXX ou email@exemplo.com" {...field} />
                   </FormControl>
@@ -273,7 +270,7 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
               name="endereco"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Endereço Completo</FormLabel>
+                  <FormLabel>Endereço completo</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Rua Exemplo, 123, Bairro, Cidade - UF, CEP XXXXX-XXX" {...field} />
                   </FormControl>
@@ -291,7 +288,7 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
                 disabled={form.formState.isSubmitting}
               >
                 <Save className="mr-2 h-4 w-4" />
-                {form.formState.isSubmitting ? "Salvando..." : (initialData && 'id' in initialData && initialData.id ? "Salvar Alterações" : "Adicionar Fornecedor")}
+                {form.formState.isSubmitting ? "Salvando..." : (initialData && 'id' in initialData && initialData.id ? "Salvar alterações" : "Adicionar fornecedor")}
               </Button>
             </DialogFooter>
           </form>

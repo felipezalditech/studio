@@ -60,7 +60,7 @@ export default function ManageCategoriesPage() {
 
   const getDepreciationMethodLabel = (method: AssetCategory['depreciationMethod']) => {
     if (method === 'linear') return 'Linear';
-    if (method === 'reducing_balance') return 'Saldos Decrescentes';
+    if (method === 'reducing_balance') return 'Saldos decrescentes';
     return method;
   }
 
@@ -73,7 +73,7 @@ export default function ManageCategoriesPage() {
   return (
     <div className="container mx-auto py-10 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Gerenciar Categorias de Ativos</h1>
+        <h1 className="text-3xl font-bold mb-2">Gerenciar categorias de ativos</h1>
         <p className="text-muted-foreground">Defina as categorias de ativos e suas respectivas regras de depreciação.</p>
       </div>
       <Card>
@@ -81,14 +81,14 @@ export default function ManageCategoriesPage() {
           <div>
             <CardTitle className="flex items-center text-xl">
               <Layers className="mr-2 h-5 w-5" />
-              Lista de Categorias
+              Lista de categorias
             </CardTitle>
             <CardDescription>
               Categorias cadastradas no sistema.
             </CardDescription>
           </div>
           <Button onClick={() => handleOpenCategoryDialog()}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Categoria
+            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar categoria
           </Button>
         </CardHeader>
         <CardContent>
@@ -99,11 +99,11 @@ export default function ManageCategoriesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Método Depreciação</TableHead>
-                  <TableHead className="text-center">Vida Útil (Anos)</TableHead>
-                  <TableHead className="text-center">Tx. Depreciação</TableHead>
-                  <TableHead className="text-center">Tipo Taxa</TableHead>
-                  <TableHead className="text-center">Valor Residual (%)</TableHead>
+                  <TableHead>Método depreciação</TableHead>
+                  <TableHead className="text-center">Vida útil (anos)</TableHead>
+                  <TableHead className="text-center">Tx. depreciação</TableHead>
+                  <TableHead className="text-center">Tipo taxa</TableHead>
+                  <TableHead className="text-center">Valor residual (%)</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -160,7 +160,7 @@ export default function ManageCategoriesPage() {
         open={isConfirmDeleteDialogOpen}
         onOpenChange={setIsConfirmDeleteDialogOpen}
         onConfirm={confirmDelete}
-        title="Confirmar Exclusão de Categoria"
+        title="Confirmar exclusão de categoria"
         description="Tem certeza que deseja excluir a categoria selecionada? Esta ação não pode ser desfeita."
       />
     </div>

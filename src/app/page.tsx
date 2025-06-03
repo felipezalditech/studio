@@ -8,7 +8,7 @@ import Link from "next/link";
 import { PlusCircle, Search, BarChart3, ShoppingCart, TrendingUp, TrendingDown, DollarSign, CalendarDays, Award, Clock, PieChart as PieChartIcon, BarChartBig, Loader2, Filter, MapPin } from "lucide-react";
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
-import { useLocations } from '@/contexts/LocationContext'; // Importado
+import { useLocations } from '@/contexts/LocationContext';
 import { parseISO, format as formatDateFn, isValid, addDays, differenceInCalendarMonths, subDays, subMonths, subYears, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -77,7 +77,7 @@ const dateFilterOptions = [
 export default function DashboardPage() {
   const { assets } = useAssets();
   const { getCategoryById } = useCategories();
-  const { locations, getLocationById } = useLocations(); // Importado
+  const { locations, getLocationById } = useLocations();
   const [isLoading, setIsLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<DashboardDataType | null>(null);
   const [chartData, setChartData] = useState<ChartDataType | null>(null);
@@ -187,7 +187,7 @@ export default function DashboardPage() {
         })
         .slice(0, 5)
         .map(asset => ({
-            id: asset.id, // Adicionado id para key na renderização
+            id: asset.id,
             name: asset.name,
             category: asset.categoryName,
             currentValue: asset.calculatedCurrentValue,
@@ -216,8 +216,7 @@ export default function DashboardPage() {
           oldestAsset = { name: sortedByDate[0].name, acquiredDate: formatDate(sortedByDate[0].purchaseDate) };
       }
     }
-    
-    // Calculate value by location
+
     const valueByLocationMap = new Map<string, number>();
     processedAssets.forEach(asset => {
       if (asset.locationId) {
@@ -237,7 +236,7 @@ export default function DashboardPage() {
 
 
     setDashboardData({
-      totalAssets: assetsToDisplay.length, 
+      totalAssets: assetsToDisplay.length,
       totalPurchaseValue,
       totalCurrentValue,
       totalDepreciation,
@@ -249,7 +248,6 @@ export default function DashboardPage() {
       valueByLocation: valueByLocationData,
     });
 
-    // Chart Data Calculation
     const categoryCounts: { [categoryId: string]: { name: string; count: number } } = {};
     const categoryValues: { [categoryId: string]: { name: string; purchaseValue: number; currentValue: number; depreciatedValue: number } } = {};
 
@@ -281,10 +279,10 @@ export default function DashboardPage() {
     const pieChartData = Object.values(categoryCounts).map((cat, index) => ({
       name: cat.name, value: cat.count, fill: chartColors[index % chartColors.length],
     }));
-    
+
     const barChartData = Object.values(categoryValues).map(cat => ({
-      category: cat.name, 
-      valorCompra: cat.purchaseValue, 
+      category: cat.name,
+      valorCompra: cat.purchaseValue,
       valorDepreciado: cat.depreciatedValue,
       valorAtual: cat.currentValue,
     }));
@@ -294,18 +292,18 @@ export default function DashboardPage() {
       return acc;
     }, {} as ChartConfig);
     pieChartConfig["value"] = { label: "Contagem" };
-    
+
     const barChartConfig = {
-      valorCompra: { label: "Valor de Compra", color: "hsl(var(--chart-2))" },
-      valorDepreciado: { label: "Valor Depreciado", color: "hsl(var(--chart-3))" },
-      valorAtual: { label: "Valor Atual", color: "hsl(var(--chart-1))" },
+      valorCompra: { label: "Valor de compra", color: "hsl(var(--chart-2))" },
+      valorDepreciado: { label: "Valor depreciado", color: "hsl(var(--chart-3))" },
+      valorAtual: { label: "Valor atual", color: "hsl(var(--chart-1))" },
       category: { label: "Categoria" },
     } as ChartConfig;
 
     setChartData({ pieChartData, barChartData, pieChartConfig, barChartConfig });
     setIsLoading(false);
 
-  }, [assets, getCategoryById, selectedDateFilter, getLocationById, locations]); // Adicionado locations
+  }, [assets, getCategoryById, selectedDateFilter, getLocationById, locations]);
 
   if (isLoading || !dashboardData || !chartData) {
     return (
@@ -344,7 +342,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Ativos</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de ativos</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -356,7 +354,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total de Compra</CardTitle>
+            <CardTitle className="text-sm font-medium">Valor total de compra</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -366,7 +364,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Depreciação Total</CardTitle>
+            <CardTitle className="text-sm font-medium">Depreciação total</CardTitle>
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -376,7 +374,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Atual Total</CardTitle>
+            <CardTitle className="text-sm font-medium">Valor atual total</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -391,7 +389,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <PieChartIcon className="mr-2 h-5 w-5" />
-              Contagem de Ativos por Categoria
+              Contagem de ativos por categoria
             </CardTitle>
             <CardDescription>Distribuição quantitativa dos seus ativos por categoria {selectedDateFilter !== 'allTime' && '(no período selecionado)'}.</CardDescription>
           </CardHeader>
@@ -418,7 +416,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <BarChartBig className="mr-2 h-5 w-5" />
-              Valores por Categoria
+              Valores por categoria
             </CardTitle>
             <CardDescription>Comparativo do valor de compra, atual e depreciado por categoria {selectedDateFilter !== 'allTime' && '(no período selecionado)'}.</CardDescription>
           </CardHeader>
@@ -432,7 +430,7 @@ export default function DashboardPage() {
                     tickLine={false}
                     tickMargin={10}
                     axisLine={false}
-                    interval={0} 
+                    interval={0}
                   />
                   <YAxis width={80} tickFormatter={(value) => formatCurrency(value)} />
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -455,7 +453,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
                 <MapPin className="mr-2 h-5 w-5 text-blue-500" />
-                Valor Atual por Local
+                Valor atual por local
             </CardTitle>
             <CardDescription>
                 Soma do valor atual dos ativos agrupados por local {selectedDateFilter !== 'allTime' && '(no período selecionado)'}.
@@ -463,12 +461,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {dashboardData.valueByLocation.length > 0 ? (
-                 <div className="overflow-x-auto max-h-60"> {/* Adicionado max-h-60 e overflow-x-auto */}
+                 <div className="overflow-x-auto max-h-60">
                     <table className="w-full text-sm">
                         <thead>
                         <tr className="border-b">
                             <th className="text-left p-2 font-semibold">Local</th>
-                            <th className="text-right p-2 font-semibold">Valor Atual Total</th>
+                            <th className="text-right p-2 font-semibold">Valor atual total</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -496,12 +494,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm font-medium flex items-center"><Award className="mr-2 h-4 w-4 text-yellow-500"/>Ativo Mais Valioso</p>
+              <p className="text-sm font-medium flex items-center"><Award className="mr-2 h-4 w-4 text-yellow-500"/>Ativo mais valioso</p>
               <p className="text-lg text-primary">{dashboardData.highlights.mostValuable.name}</p>
               <p className="text-sm text-muted-foreground">{formatCurrency(dashboardData.highlights.mostValuable.value)}</p>
             </div>
             <div>
-              <p className="text-sm font-medium flex items-center"><Clock className="mr-2 h-4 w-4 text-blue-500"/>Ativo Mais Antigo</p>
+              <p className="text-sm font-medium flex items-center"><Clock className="mr-2 h-4 w-4 text-blue-500"/>Ativo mais antigo</p>
               <p className="text-lg text-primary">{dashboardData.highlights.oldestAsset.name}</p>
               <p className="text-sm text-muted-foreground">Adquirido em: {dashboardData.highlights.oldestAsset.acquiredDate}</p>
             </div>
@@ -511,9 +509,9 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Visão Geral dos Ativos Recentes</CardTitle>
+          <CardTitle>Visão geral dos ativos recentes</CardTitle>
           <CardDescription>
-            {dashboardData.recentAssets.length > 0 
+            {dashboardData.recentAssets.length > 0
               ? `Os últimos ${dashboardData.recentAssets.length} ativos ${selectedDateFilter === 'allTime' ? 'adicionados ou com movimentações' : 'do período selecionado'}.`
               : `Nenhum ativo recente ${selectedDateFilter === 'allTime' ? '' : 'no período selecionado'}.`
             }
@@ -527,8 +525,8 @@ export default function DashboardPage() {
                   <tr className="border-b">
                     <th className="text-left p-2 font-semibold">Nome</th>
                     <th className="text-left p-2 font-semibold">Categoria</th>
-                    <th className="text-right p-2 font-semibold">Valor Atual</th>
-                    <th className="text-right p-2 font-semibold">Data de Compra</th>
+                    <th className="text-right p-2 font-semibold">Valor atual</th>
+                    <th className="text-right p-2 font-semibold">Data de compra</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -551,5 +549,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
