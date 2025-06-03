@@ -36,7 +36,7 @@ import {
   ListPlus, 
   Layers, 
   MapPin, 
-  PlusCircle, // Adicionado para o novo item de menu
+  PlusCircle,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -68,8 +68,8 @@ type MenuItemType = RegularMenuItem | SubmenuParentItem;
 
 const menuItems: MenuItemType[] = [
   { href: '/', label: 'Painel Principal', icon: Home },
+  { href: '/assets/add', label: 'Adicionar Ativo', icon: PlusCircle },
   { href: '/assets', label: 'Consultar Ativos', icon: ListChecks },
-  { href: '/assets/add', label: 'Adicionar Ativo', icon: PlusCircle }, // Novo item adicionado aqui
   {
     label: 'Cadastros',
     icon: ListPlus,
