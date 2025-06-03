@@ -15,14 +15,15 @@ import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useCategories } from '@/contexts/CategoryContext';
-import { useLocations } from '@/contexts/LocationContext'; // Importado
+import { useLocations } from '@/contexts/LocationContext';
 
 export interface AssetFiltersState {
   name: string;
   supplier: string;
   invoiceNumber: string;
   categoryId: string;
-  locationId: string; // Novo
+  locationId: string;
+  model: string; // Novo campo para filtro de modelo
   purchaseDateFrom: Date | undefined;
   purchaseDateTo: Date | undefined;
 }
@@ -38,7 +39,7 @@ const ALL_ITEMS_SENTINEL_VALUE = "_ALL_";
 export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFiltersProps) {
   const { suppliers: allSuppliersFromContext } = useSuppliers();
   const { categories: allCategoriesFromContext } = useCategories();
-  const { locations: allLocationsFromContext } = useLocations(); // Novo
+  const { locations: allLocationsFromContext } = useLocations();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -80,7 +81,7 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todos os Fornecedores</SelectItem>
-              {allSuppliersFromContext.map(s => <SelectItem key={s.id} value={s.id}>{s.nomeFantasia}</SelectItem>)}
+              {allSuppliersFromContext.map(s => <SelectItem key={s.id} value={s.id}>{s.nomeFantasia || s.razaoSocial}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filters.categoryId || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('categoryId')}>
@@ -92,7 +93,6 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
               {allCategoriesFromContext.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          {/* Novo filtro de Local Alocado */}
           <Select value={filters.locationId || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('locationId')}>
             <SelectTrigger className="text-sm">
               <SelectValue placeholder="Filtrar por Local Alocado" />
@@ -150,8 +150,16 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
               />
             </PopoverContent>
           </Popover>
-           {/* Espaço para manter o layout de 4 colunas, ou um botão de reset */}
-           <div className="flex items-end justify-end">
+          
+          <Input
+            placeholder="Filtrar por Modelo..."
+            name="model"
+            value={filters.model}
+            onChange={handleInputChange}
+            className="text-sm"
+          />
+
+           <div className="flex items-end justify-end md:col-start-4 md:justify-self-end lg:col-start-auto lg:justify-self-auto">
             <Button onClick={onResetFilters} variant="outline" className="w-full md:w-auto">
                 <RotateCcwIcon className="mr-2 h-4 w-4" /> Redefinir Filtros
             </Button>

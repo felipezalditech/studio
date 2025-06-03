@@ -29,6 +29,7 @@ const initialFilters: AssetFiltersState = {
   invoiceNumber: '',
   categoryId: '',
   locationId: '', 
+  model: '', // Adicionado model aos filtros iniciais
   purchaseDateFrom: undefined,
   purchaseDateTo: undefined,
 };
@@ -124,13 +125,17 @@ export default function AssetsPage() {
         const dateFrom = filters.purchaseDateFrom;
         const dateTo = filters.purchaseDateTo;
         const searchTerm = filters.name.toLowerCase();
+        const modelTerm = filters.model.toLowerCase(); // Adicionado filtro de modelo
 
         const searchTermMatch = searchTerm
           ? asset.name.toLowerCase().includes(searchTerm) ||
-            (asset.model && asset.model.toLowerCase().includes(searchTerm)) ||
             asset.assetTag.toLowerCase().includes(searchTerm) ||
             (asset.serialNumber && asset.serialNumber.toLowerCase().includes(searchTerm))
           : true;
+        
+        const modelMatch = modelTerm 
+            ? asset.model && asset.model.toLowerCase().includes(modelTerm)
+            : true;
 
         const supplierMatch = filters.supplier ? asset.supplier === filters.supplier : true;
         const invoiceMatch = asset.invoiceNumber.toLowerCase().includes(filters.invoiceNumber.toLowerCase());
@@ -140,7 +145,7 @@ export default function AssetsPage() {
         const dateFromMatch = dateFrom && isValid(purchaseDate) ? purchaseDate >= dateFrom : true;
         const dateToMatch = dateTo && isValid(purchaseDate) ? purchaseDate <= dateTo : true;
 
-        return searchTermMatch && supplierMatch && invoiceMatch && categoryMatch && locationMatch && dateFromMatch && dateToMatch;
+        return searchTermMatch && modelMatch && supplierMatch && invoiceMatch && categoryMatch && locationMatch && dateFromMatch && dateToMatch;
       })
       .map(asset => {
         const category = getCategoryById(asset.categoryId);
