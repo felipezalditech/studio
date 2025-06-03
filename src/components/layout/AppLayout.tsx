@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
-import React, { useState } from 'react'; // Adicionado useState
+import React, { useState } from 'react'; 
 import {
   SidebarProvider,
   Sidebar,
@@ -34,6 +34,8 @@ import {
   PanelLeft,
   Building,
   ListPlus, 
+  Layers, // Added for Categories
+  MapPin, // Added for Locations
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -70,9 +72,10 @@ const menuItems: MenuItemType[] = [
     label: 'Cadastros',
     icon: ListPlus,
     isSubmenuParent: true,
-    // href: '/registrations', // Opcional: se o próprio "Cadastros" levar a uma página
     subItems: [
       { href: '/suppliers', label: 'Fornecedores', icon: Truck },
+      { href: '/registrations/categories', label: 'Categorias de Ativos', icon: Layers },
+      { href: '/registrations/locations', label: 'Locais de Ativos', icon: MapPin },
     ],
   },
   { href: '/reports', label: 'Relatórios', icon: BarChart3 },
@@ -93,7 +96,7 @@ const getInitials = (name: string) => {
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { brandingConfig } = useBranding();
-  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({}); // Estado para submenus
+  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({}); 
 
   const toggleSubmenu = (label: string) => {
     setOpenSubmenus(prev => ({ ...prev, [label]: !prev[label] }));
@@ -126,7 +129,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                           isActive={isSubmenuOpen || isParentActive || (item.href && pathname.startsWith(item.href))}
                           className="w-full justify-start"
                           tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                          onClick={() => toggleSubmenu(item.label)} // Adicionado para caso o pai seja um link mas também toggle
+                          onClick={() => toggleSubmenu(item.label)} 
                         >
                           <ParentIcon className="h-5 w-5 flex-shrink-0" />
                           <span className="truncate">{item.label}</span>
@@ -144,7 +147,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                         <span className="truncate">{item.label}</span>
                       </SidebarMenuButton>
                     )}
-                    {isSubmenuOpen && ( // Renderização condicional do submenu
+                    {isSubmenuOpen && ( 
                       <SidebarMenuSub>
                         {item.subItems.map((subItem) => {
                           const SubIcon = subItem.icon;
