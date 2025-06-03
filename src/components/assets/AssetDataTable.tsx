@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select" // Adicionado
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronDown } from "lucide-react"
 import type { AssetWithCalculatedValues } from "@/app/assets/page";
 
@@ -69,7 +69,10 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
     },
     initialState: {
         pagination: {
-            pageSize: 10, // Default page size
+            pageSize: 10,
+        },
+        columnVisibility: { // Adicionar visibilidade padrão para a nova coluna
+            model: true, // Mostrar coluna 'model' por padrão
         }
     }
   })
@@ -98,6 +101,7 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
                   column.id === "select" ? "Seleção" :
                   column.id === "purchaseDate" ? "Data Compra" :
                   column.id === "name" ? "Nome do Ativo" :
+                  column.id === "model" ? "Modelo" :
                   column.id === "assetTag" ? "Patrimônio" :
                   column.id === "invoiceNumber" ? "Nota Fiscal" :
                   column.id === "serialNumber" ? "Nº de Série" :

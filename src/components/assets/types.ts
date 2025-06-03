@@ -3,6 +3,7 @@ export interface Asset {
   id: string;
   purchaseDate: string;
   name: string;
+  model?: string; // Novo campo Modelo
   invoiceNumber: string;
   serialNumber: string;
   assetTag: string;

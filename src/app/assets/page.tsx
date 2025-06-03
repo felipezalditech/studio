@@ -3,7 +3,7 @@
 
 import React, { useMemo, useCallback, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // Importado
+import { useRouter } from 'next/navigation';
 import type { RowSelectionState } from '@tanstack/react-table';
 import { AssetDataTable } from '@/components/assets/AssetDataTable';
 import { getColumns } from '@/components/assets/columns';
@@ -56,7 +56,7 @@ export default function AssetsPage() {
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<AssetWithCalculatedValues | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const router = useRouter(); // Adicionado
+  const router = useRouter();
 
   const [assetToDelete, setAssetToDelete] = useState<AssetWithCalculatedValues | null>(null);
   const [isConfirmDeleteAssetDialogOpen, setIsConfirmDeleteAssetDialogOpen] = useState(false);
@@ -64,7 +64,7 @@ export default function AssetsPage() {
   const supplierNameMap = useMemo(() => {
     const map = new Map<string, string>();
     allSuppliersFromContext.forEach(supplier => {
-      map.set(supplier.id, supplier.nomeFantasia);
+      map.set(supplier.id, supplier.nomeFantasia || supplier.razaoSocial);
     });
     return map;
   }, [allSuppliersFromContext]);
@@ -96,7 +96,6 @@ export default function AssetsPage() {
   }, []);
 
   const handleEditAsset = useCallback((asset: AssetWithCalculatedValues) => {
-    // TODO: Adicionar verificação de permissão aqui no futuro, se necessário
     router.push(`/assets/edit/${asset.id}`);
   }, [router]);
 
@@ -113,7 +112,7 @@ export default function AssetsPage() {
   };
 
   const columns = useMemo(
-    () => getColumns(handleViewDetails, handleDeleteAssetRequest, handleEditAsset), // Adicionado handleEditAsset
+    () => getColumns(handleViewDetails, handleDeleteAssetRequest, handleEditAsset),
     [handleViewDetails, handleDeleteAssetRequest, handleEditAsset]
   );
 
@@ -128,6 +127,7 @@ export default function AssetsPage() {
 
         const searchTermMatch = searchTerm
           ? asset.name.toLowerCase().includes(searchTerm) ||
+            (asset.model && asset.model.toLowerCase().includes(searchTerm)) ||
             asset.assetTag.toLowerCase().includes(searchTerm) ||
             (asset.serialNumber && asset.serialNumber.toLowerCase().includes(searchTerm))
           : true;
@@ -213,6 +213,7 @@ export default function AssetsPage() {
       'ID': asset.id,
       'Data Compra': asset.purchaseDate,
       'Nome': asset.name,
+      'Modelo': asset.model || 'N/A',
       'Patrimônio': asset.assetTag,
       'Nota Fiscal': asset.invoiceNumber,
       'Nº Série': asset.serialNumber || 'N/A',
@@ -239,6 +240,7 @@ export default function AssetsPage() {
       id: asset.id,
       purchaseDate: asset.purchaseDate,
       name: asset.name,
+      model: asset.model || 'N/A',
       assetTag: asset.assetTag,
       invoiceNumber: asset.invoiceNumber,
       serialNumber: asset.serialNumber || 'N/A',
@@ -251,20 +253,7 @@ export default function AssetsPage() {
       currentValue: asset.calculatedCurrentValue,
       additionalInfo: asset.additionalInfo || 'N/A',
     }));
-    exportToPDF(assetsForExport, 'ativos_filtrados.pdf', [
-      { header: 'ID', dataKey: 'id' },
-      { header: 'Data Compra', dataKey: 'purchaseDate' },
-      { header: 'Nome', dataKey: 'name' },
-      { header: 'Patrimônio', dataKey: 'assetTag' },
-      { header: 'Categoria', dataKey: 'category' },
-      { header: 'Fornecedor', dataKey: 'supplier' },
-      { header: 'Local', dataKey: 'location' }, 
-      { header: 'Valor Compra', dataKey: 'purchaseValue' },
-      { header: 'Valor Já Deprec.', dataKey: 'previouslyDepreciatedValue' },
-      { header: 'Depreciação Total', dataKey: 'depreciatedValue' },
-      { header: 'Valor Atual', dataKey: 'currentValue' },
-      { header: 'Info Adicional', dataKey: 'additionalInfo' },
-    ], brandingConfig.logoUrl);
+    exportToPDF(assetsForExport, 'ativos_filtrados.pdf', undefined, brandingConfig.logoUrl); // Passando undefined para usar colunas padrão
     toast({ title: "Exportação Concluída", description: "Ativos exportados para PDF." });
   };
 

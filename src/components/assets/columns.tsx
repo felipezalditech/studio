@@ -49,7 +49,7 @@ const SortableHeader = <TData, TValue>({ column, title }: { column: HeaderContex
 export const getColumns = (
   onViewDetails: (asset: AssetWithCalculatedValues) => void,
   onDeleteAssetRequest: (asset: AssetWithCalculatedValues) => void,
-  onEditAsset: (asset: AssetWithCalculatedValues) => void // Adicionado
+  onEditAsset: (asset: AssetWithCalculatedValues) => void
 ): ColumnDef<AssetWithCalculatedValues>[] => [
   {
     id: "select",
@@ -81,6 +81,11 @@ export const getColumns = (
   {
     accessorKey: "name",
     header: ({ column }) => <SortableHeader column={column} title="Nome do Ativo" />,
+  },
+  {
+    accessorKey: "model",
+    header: ({ column }) => <SortableHeader column={column} title="Modelo" />,
+    cell: ({ row }) => row.getValue("model") || "N/A",
   },
   {
     accessorKey: "assetTag",
@@ -142,7 +147,6 @@ export const getColumns = (
       };
 
       const handleEditRequest = () => {
-        // TODO: Adicionar verificação de permissão aqui no futuro
         onEditAsset(asset);
       };
 

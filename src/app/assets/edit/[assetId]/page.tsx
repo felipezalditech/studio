@@ -16,7 +16,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
-// import { useLocations } from '@/contexts/LocationContext'; // Removido
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
 import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle } from 'lucide-react';
@@ -29,10 +28,10 @@ import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox';
 import { LocationCombobox } from '@/components/locations/LocationCombobox';
 
 const MAX_PHOTOS = 10;
-// const NO_LOCATION_SELECTED_VALUE = "__NO_LOCATION_SELECTED__"; // Não mais necessário
 
 const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
+  model: z.string().optional(),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
   categoryId: z.string().min(1, "Categoria é obrigatória."),
   supplier: z.string().min(1, "Fornecedor é obrigatório."),
@@ -54,7 +53,6 @@ type AssetFormValues = z.infer<typeof assetFormSchema>;
 export default function EditAssetPage() {
   const { assets, updateAsset, getAssetById } = useAssets();
   const { categories } = useCategories();
-  // const { locations } = useLocations(); // Removido
   const { toast } = useToast();
   const router = useRouter();
   const params = useParams();
@@ -69,10 +67,11 @@ export default function EditAssetPage() {
     resolver: zodResolver(assetFormSchema),
     defaultValues: {
       name: '',
+      model: '',
       assetTag: '',
       categoryId: '',
       supplier: '',
-      locationId: undefined, // Default para undefined
+      locationId: undefined,
       purchaseDate: undefined,
       invoiceNumber: '',
       serialNumber: '',
@@ -84,14 +83,15 @@ export default function EditAssetPage() {
   });
 
   useEffect(() => {
-    if (assetId && assets.length > 0) { // Adicionado assets.length > 0 para garantir que os ativos foram carregados
+    if (assetId && assets.length > 0) {
       const assetToEdit = getAssetById(assetId);
       if (assetToEdit) {
         form.reset({
           ...assetToEdit,
+          model: assetToEdit.model || '',
           purchaseDate: assetToEdit.purchaseDate ? parseISO(assetToEdit.purchaseDate) : undefined,
           previouslyDepreciatedValue: assetToEdit.previouslyDepreciatedValue || undefined,
-          locationId: assetToEdit.locationId || undefined, // Usa undefined se vazio
+          locationId: assetToEdit.locationId || undefined,
           additionalInfo: assetToEdit.additionalInfo || '',
           imageDateUris: assetToEdit.imageDateUris || [],
         });
@@ -103,11 +103,10 @@ export default function EditAssetPage() {
         setIsLoading(false);
       }
     } else if (assetId && assets.length === 0) {
-      // Ainda esperando os ativos carregarem, mantenha isLoading true
       setIsLoading(true);
     } else if (!assetId) {
       setIsLoading(false);
-      setAssetNotFound(true); // ou redirecionar
+      setAssetNotFound(true);
     }
   }, [assetId, form, getAssetById, assets]);
 
@@ -128,6 +127,7 @@ export default function EditAssetPage() {
     const assetDataToUpdate: Asset = {
       id: assetId,
       ...data,
+      model: data.model || undefined,
       purchaseDate: format(data.purchaseDate, 'yyyy-MM-dd'),
       currentValue: initialCurrentValue, 
       imageDateUris: data.imageDateUris || [],
@@ -250,6 +250,21 @@ export default function EditAssetPage() {
                         </div>
                         <FormControl>
                           <Input placeholder="Ex: Notebook Dell XPS 15" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="model"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center">
+                          <FormLabel>Modelo (Opcional)</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Input placeholder="Ex: 9570, Latitude 7490" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

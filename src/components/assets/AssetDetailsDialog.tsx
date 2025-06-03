@@ -13,7 +13,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea"; // Importar Textarea
+import { Textarea } from "@/components/ui/textarea";
 import type { AssetWithCalculatedValues } from "@/app/assets/page";
 import { useAssets } from "@/contexts/AssetContext";
 import { formatDate, formatCurrency } from "@/components/assets/columns";
@@ -85,6 +85,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
             <h3 className="font-semibold mb-2 text-lg">Informações Gerais</h3>
             <div className="space-y-1.5 text-sm">
               <p><strong>Nome:</strong> {asset.name}</p>
+              <p><strong>Modelo:</strong> {asset.model || "N/A"}</p>
               <p><strong>Patrimônio:</strong> {asset.assetTag}</p>
               <p><strong>Categoria:</strong> {asset.categoryName || asset.categoryId}</p>
               <p><strong>Fornecedor:</strong> {asset.supplierName || asset.supplier}</p>

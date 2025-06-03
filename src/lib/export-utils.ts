@@ -53,14 +53,14 @@ export const exportToPDF = (
   assets: AssetWithCalculatedValues[],
   filename: string = 'ativos.pdf',
   columns?: PdfColumn[],
-  logoDataUri?: string // Novo parâmetro para o logo
+  logoDataUri?: string
 ) => {
   if (assets.length === 0) {
     return;
   }
 
   const doc = new jsPDF({ orientation: 'landscape' });
-  const pageMargin = 10; // Margem da página
+  const pageMargin = 10;
   let logoFinalWidth = 0;
   let logoFinalHeight = 0;
 
@@ -77,11 +77,9 @@ export const exportToPDF = (
       }
       logoFinalWidth = logoWidth;
       logoFinalHeight = logoHeight;
-      // Adiciona o logo no canto superior esquerdo
       doc.addImage(logoDataUri, imgProps.format.toUpperCase(), pageMargin, pageMargin, logoFinalWidth, logoFinalHeight);
     } catch (e) {
       console.error("Erro ao adicionar logo ao PDF:", e);
-      // Prossegue sem o logo se houver erro
     }
   }
   
@@ -89,6 +87,7 @@ export const exportToPDF = (
     { header: 'ID', dataKey: 'id' },
     { header: 'Data Compra', dataKey: 'purchaseDate' },
     { header: 'Nome', dataKey: 'name' },
+    { header: 'Modelo', dataKey: 'model'},
     { header: 'Patrimônio', dataKey: 'assetTag' },
     { header: 'Nota Fiscal', dataKey: 'invoiceNumber' },
     { header: 'Nº Série', dataKey: 'serialNumber' },
@@ -134,30 +133,29 @@ export const exportToPDF = (
     body: tableRows.map(row => tableColumnsToUse.map(col => row[col.dataKey])),
     startY: tableStartY,
     theme: 'grid',
-    headStyles: { fillColor: [63, 81, 181] }, // Azul Indigo
+    headStyles: { fillColor: [63, 81, 181] },
     styles: { fontSize: 5, cellPadding: 1, overflow: 'linebreak' },
     columnStyles: {
       id: { cellWidth: 8 },
       purchaseDate: { cellWidth: 12 },
-      name: { cellWidth: 25 },
+      name: { cellWidth: 20 },
+      model: { cellWidth: 15 },
       assetTag: {cellWidth: 12},
       invoiceNumber: {cellWidth: 12},
       serialNumber: {cellWidth: 12},
       categoryName: {cellWidth: 15},
-      supplierName: {cellWidth: 18},
-      locationName: {cellWidth: 18},
+      supplierName: {cellWidth: 15},
+      locationName: {cellWidth: 15},
       purchaseValue: {cellWidth: 15, halign: 'right'},
       previouslyDepreciatedValue: {cellWidth: 15, halign: 'right'},
       depreciatedValue: {cellWidth: 15, halign: 'right'},
       calculatedCurrentValue: {cellWidth: 15, halign: 'right'},
-      additionalInfo: { cellWidth: 25}
+      additionalInfo: { cellWidth: 20}
     },
-    didDrawPage: (dataHook) => { // Renomeado para evitar conflito de escopo
+    didDrawPage: (dataHook) => {
         doc.setFontSize(16);
         doc.setTextColor(40);
-        // Ajusta a posição X do título se o logo existir
         const titleX = pageMargin + (logoDataUri && logoFinalWidth > 0 ? logoFinalWidth + 5 : 0);
-        // Ajusta a posição Y do título para estar alinhado verticalmente com o centro do logo, se houver, ou na margem.
         const titleY = pageMargin + (logoDataUri && logoFinalHeight > 0 ? logoFinalHeight / 2 : 0); 
         
         doc.text('Relatório de Ativos Imobilizados', titleX, titleY, { baseline: 'middle' });
@@ -171,5 +169,3 @@ export const exportToPDF = (
 
   doc.save(filename);
 };
-    
-    

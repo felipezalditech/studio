@@ -16,7 +16,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
-// import { useLocations } from '@/contexts/LocationContext'; // Removido, pois LocationCombobox lida com isso
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle } from 'lucide-react';
@@ -30,14 +29,14 @@ import { LocationCombobox } from '@/components/locations/LocationCombobox';
 
 
 const MAX_PHOTOS = 10;
-// const NO_LOCATION_SELECTED_VALUE = "__NO_LOCATION_SELECTED__"; // Não mais necessário com Combobox
 
 const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
+  model: z.string().optional(),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
   categoryId: z.string().min(1, "Categoria é obrigatória."),
   supplier: z.string().min(1, "Fornecedor é obrigatório."),
-  locationId: z.string().optional(), // O valor será string ou undefined
+  locationId: z.string().optional(),
   purchaseDate: z.date({
     required_error: "Data da compra é obrigatória.",
     invalid_type_error: "Formato de data inválido.",
@@ -55,7 +54,6 @@ type AssetFormValues = z.infer<typeof assetFormSchema>;
 export default function AddAssetPage() {
   const { addAsset } = useAssets();
   const { categories } = useCategories();
-  // const { locations } = useLocations(); // Removido
   const { toast } = useToast();
   const router = useRouter();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -65,10 +63,11 @@ export default function AddAssetPage() {
     resolver: zodResolver(assetFormSchema),
     defaultValues: {
       name: '',
+      model: '',
       assetTag: '',
       categoryId: '',
       supplier: '',
-      locationId: undefined, // Default para undefined
+      locationId: undefined,
       purchaseDate: undefined,
       invoiceNumber: '',
       serialNumber: '',
@@ -98,6 +97,7 @@ export default function AddAssetPage() {
       previouslyDepreciatedValue: data.previouslyDepreciatedValue,
       locationId: data.locationId || undefined,
       additionalInfo: data.additionalInfo || undefined,
+      model: data.model || undefined,
     };
     addAsset(assetDataToSave);
     toast({
@@ -201,6 +201,21 @@ export default function AddAssetPage() {
                         </div>
                         <FormControl>
                           <Input placeholder="Ex: Notebook Dell XPS 15" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="model"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center">
+                          <FormLabel>Modelo (Opcional)</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Input placeholder="Ex: 9570, Latitude 7490" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

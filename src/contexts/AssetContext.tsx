@@ -30,6 +30,7 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
     const newAsset: Asset = {
       ...assetData,
       id: `asset-${Date.now().toString()}-${Math.random().toString(36).substring(2, 7)}`,
+      model: assetData.model || undefined,
       serialNumber: assetData.serialNumber || undefined,
       imageDateUris: assetData.imageDateUris || [],
       locationId: assetData.locationId || undefined,
@@ -45,6 +46,7 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
       prevAssets.map(asset => (asset.id === updatedAsset.id ? { 
         ...asset, 
         ...updatedAsset,
+        model: updatedAsset.model || undefined,
         serialNumber: updatedAsset.serialNumber || undefined, 
         previouslyDepreciatedValue: updatedAsset.previouslyDepreciatedValue || 0,
         currentValue: updatedAsset.purchaseValue - (updatedAsset.previouslyDepreciatedValue || 0),
