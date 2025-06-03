@@ -7,7 +7,8 @@ import { BrandingProvider } from '@/contexts/BrandingContext';
 import { AssetProvider } from '@/contexts/AssetContext';
 import { SupplierProvider } from '@/contexts/SupplierContext';
 import { CategoryProvider } from '@/contexts/CategoryContext';
-import { LocationProvider } from '@/contexts/LocationContext'; // Importado
+import { LocationProvider } from '@/contexts/LocationContext';
+import { AssetModelProvider } from '@/contexts/AssetModelContext'; // Importado
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function AppProviders({ children }: { children: ReactNode }) {
@@ -16,12 +17,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <BrandingProvider>
         <SupplierProvider>
           <CategoryProvider>
-            <LocationProvider> {/* Adicionado */}
-              <AssetProvider>
-                <TooltipProvider>
-                  {children}
-                </TooltipProvider>
-              </AssetProvider>
+            <LocationProvider>
+              <AssetModelProvider> {/* Adicionado */}
+                <AssetProvider>
+                  <TooltipProvider>
+                    {children}
+                  </TooltipProvider>
+                </AssetProvider>
+              </AssetModelProvider>
             </LocationProvider>
           </CategoryProvider>
         </SupplierProvider>

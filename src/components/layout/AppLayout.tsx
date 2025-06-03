@@ -37,6 +37,7 @@ import {
   Layers,
   MapPin,
   PlusCircle,
+  Shapes, // Ícone para Modelos de Ativos
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -78,6 +79,7 @@ const menuItems: MenuItemType[] = [
       { href: '/suppliers', label: 'Fornecedores', icon: Truck },
       { href: '/registrations/categories', label: 'Categorias de ativos', icon: Layers },
       { href: '/registrations/locations', label: 'Locais de ativos', icon: MapPin },
+      { href: '/registrations/asset-models', label: 'Modelos de ativos', icon: Shapes },
     ],
   },
   { href: '/reports', label: 'Relatórios', icon: BarChart3 },
@@ -248,4 +250,3 @@ export function AppLayout({ children }: { children: ReactNode }) {
     </SidebarProvider>
   );
 }
-
