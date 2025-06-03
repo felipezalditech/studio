@@ -23,6 +23,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import type { AssetModel } from '@/types/assetModel';
 import { useAssetModels } from '@/contexts/AssetModelContext';
@@ -32,6 +33,11 @@ import { Save } from 'lucide-react';
 const assetModelFormSchema = z.object({
   name: z.string().min(2, "Nome do modelo deve ter no mínimo 2 caracteres."),
   description: z.string().optional(),
+  brand: z.string().optional(),
+  color: z.string().optional(),
+  width: z.coerce.number().positive("Largura deve ser um número positivo.").optional().nullable(),
+  height: z.coerce.number().positive("Altura deve ser um número positivo.").optional().nullable(),
+  weight: z.coerce.number().positive("Peso deve ser um número positivo.").optional().nullable(),
 });
 
 export type AssetModelFormValues = z.infer<typeof assetModelFormSchema>;
@@ -50,8 +56,13 @@ export function AssetModelFormDialog({ open, onOpenChange, initialData, onModelA
   const form = useForm<AssetModelFormValues>({
     resolver: zodResolver(assetModelFormSchema),
     defaultValues: {
-      name: initialData?.name || '',
-      description: initialData?.description || '',
+      name: '',
+      description: '',
+      brand: '',
+      color: '',
+      width: undefined,
+      height: undefined,
+      weight: undefined,
     },
   });
 
@@ -60,16 +71,28 @@ export function AssetModelFormDialog({ open, onOpenChange, initialData, onModelA
       form.reset({
         name: initialData?.name || '',
         description: initialData?.description || '',
+        brand: initialData?.brand || '',
+        color: initialData?.color || '',
+        width: initialData?.width ?? undefined,
+        height: initialData?.height ?? undefined,
+        weight: initialData?.weight ?? undefined,
       });
     }
   }, [initialData, form, open]);
 
   function onSubmit(data: AssetModelFormValues) {
+    const dataToSave = {
+      ...data,
+      width: data.width === null ? undefined : data.width,
+      height: data.height === null ? undefined : data.height,
+      weight: data.weight === null ? undefined : data.weight,
+    };
+
     if (initialData && initialData.id) {
-      updateAssetModel({ ...initialData, ...data, id: initialData.id });
+      updateAssetModel({ ...initialData, ...dataToSave, id: initialData.id });
       toast({ title: "Sucesso!", description: "Modelo de ativo atualizado." });
     } else {
-      const newModel = addAssetModel(data);
+      const newModel = addAssetModel(dataToSave);
       toast({ title: "Sucesso!", description: "Modelo de ativo adicionado." });
       if (onModelAdded && newModel) {
         onModelAdded(newModel.id);
@@ -88,7 +111,7 @@ export function AssetModelFormDialog({ open, onOpenChange, initialData, onModelA
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-3">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-3">
             <FormField
               control={form.control}
               name="name"
@@ -102,6 +125,76 @@ export function AssetModelFormDialog({ open, onOpenChange, initialData, onModelA
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="brand"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Marca (opcional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: Dell, Flexform" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cor (opcional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: Preto, Prata com detalhes azuis" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="width"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Largura (opcional)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" placeholder="cm" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                     <FormDescription className="text-xs">Em centímetros (cm)</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="height"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Altura (opcional)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" placeholder="cm" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormDescription className="text-xs">Em centímetros (cm)</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="weight"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Peso (opcional)</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" placeholder="kg" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormDescription className="text-xs">Em quilogramas (kg)</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="description"
@@ -120,8 +213,7 @@ export function AssetModelFormDialog({ open, onOpenChange, initialData, onModelA
                 Cancelar
               </Button>
               <Button
-                type="button"
-                onClick={form.handleSubmit(onSubmit)}
+                type="submit" // Alterado de button para submit
                 disabled={form.formState.isSubmitting}
               >
                 <Save className="mr-2 h-4 w-4" />
