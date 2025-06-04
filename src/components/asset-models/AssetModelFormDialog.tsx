@@ -45,7 +45,7 @@ export type AssetModelFormValues = z.infer<typeof assetModelFormSchema>;
 interface AssetModelFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: AssetModel | null;
+  initialData?: Partial<AssetModel> | null; // Alterado para aceitar Partial<AssetModel> para criação com apenas nome
   onModelAdded?: (modelId: string) => void;
 }
 
@@ -105,9 +105,9 @@ export function AssetModelFormDialog({ open, onOpenChange, initialData, onModelA
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Editar modelo de ativo' : 'Adicionar novo modelo de ativo'}</DialogTitle>
+          <DialogTitle>{initialData && initialData.id ? 'Editar modelo de ativo' : 'Adicionar novo modelo de ativo'}</DialogTitle>
           <DialogDescription>
-            {initialData ? 'Modifique os dados do modelo de ativo abaixo.' : 'Preencha os dados para cadastrar um novo modelo de ativo.'}
+            {initialData && initialData.id ? 'Modifique os dados do modelo de ativo abaixo.' : 'Preencha os dados para cadastrar um novo modelo de ativo.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -213,11 +213,12 @@ export function AssetModelFormDialog({ open, onOpenChange, initialData, onModelA
                 Cancelar
               </Button>
               <Button
-                type="submit" // Alterado de button para submit
+                type="button" // Alterado de "submit" para "button"
+                onClick={form.handleSubmit(onSubmit)} // Chama o submit do formulário do diálogo programaticamente
                 disabled={form.formState.isSubmitting}
               >
                 <Save className="mr-2 h-4 w-4" />
-                {form.formState.isSubmitting ? "Salvando..." : (initialData ? "Salvar alterações" : "Adicionar modelo")}
+                {form.formState.isSubmitting ? "Salvando..." : (initialData && initialData.id ? "Salvar alterações" : "Adicionar modelo")}
               </Button>
             </DialogFooter>
           </form>
