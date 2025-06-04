@@ -11,6 +11,7 @@ interface AssetModelContextType {
   updateAssetModel: (modelData: AssetModel) => void;
   deleteAssetModel: (modelId: string) => void;
   getAssetModelById: (modelId: string) => AssetModel | undefined;
+  getAssetModelNameById: (modelId?: string) => string | undefined; // Added
   setAssetModels: Dispatch<SetStateAction<AssetModel[]>>;
 }
 
@@ -63,8 +64,14 @@ export const AssetModelProvider = ({ children }: { children: ReactNode }) => {
     return assetModels.find(m => m.id === modelId);
   };
 
+  const getAssetModelNameById = (modelId?: string): string | undefined => { // Added
+    if (!modelId) return undefined;
+    const model = assetModels.find(m => m.id === modelId);
+    return model?.name;
+  };
+
   return (
-    <AssetModelContext.Provider value={{ assetModels, addAssetModel, updateAssetModel, deleteAssetModel, getAssetModelById, setAssetModels }}>
+    <AssetModelContext.Provider value={{ assetModels, addAssetModel, updateAssetModel, deleteAssetModel, getAssetModelById, getAssetModelNameById, setAssetModels }}>
       {children}
     </AssetModelContext.Provider>
   );

@@ -46,7 +46,7 @@ export const exportToCSV = (data: CsvExportData[], filename: string = 'ativos.cs
 
 interface PdfColumn {
   header: string;
-  dataKey: keyof AssetWithCalculatedValues | string;
+  dataKey: keyof AssetWithCalculatedValues | string; // Allow string for custom keys like model (name)
 }
 
 export const exportToPDF = (
@@ -87,7 +87,7 @@ export const exportToPDF = (
     { header: 'ID', dataKey: 'id' },
     { header: 'Data Compra', dataKey: 'purchaseDate' },
     { header: 'Nome', dataKey: 'name' },
-    { header: 'Modelo', dataKey: 'model'},
+    { header: 'Modelo', dataKey: 'modelName'}, // Changed from model to modelName
     { header: 'Patrimônio', dataKey: 'assetTag' },
     { header: 'Nota Fiscal', dataKey: 'invoiceNumber' },
     { header: 'Nº Série', dataKey: 'serialNumber' },
@@ -106,20 +106,32 @@ export const exportToPDF = (
   const tableRows = assets.map(asset => {
     const row: { [key: string]: any } = {};
     tableColumnsToUse.forEach(col => {
-      const dataKey = col.dataKey as keyof AssetWithCalculatedValues;
-      let value = asset[dataKey as keyof AssetWithCalculatedValues];
+      let value: any;
+      // Handle specific dataKeys that might not directly exist on AssetWithCalculatedValues
+      if (col.dataKey === 'modelName') {
+        value = asset.modelName;
+      } else if (col.dataKey === 'categoryName') {
+        value = asset.categoryName;
+      } else if (col.dataKey === 'supplierName') {
+        value = asset.supplierName;
+      } else if (col.dataKey === 'locationName') {
+        value = asset.locationName;
+      } else {
+         value = asset[col.dataKey as keyof AssetWithCalculatedValues];
+      }
 
-      if (dataKey === 'purchaseValue' || dataKey === 'depreciatedValue' || dataKey === 'calculatedCurrentValue' || dataKey === 'previouslyDepreciatedValue') {
-        row[dataKey] = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value as number);
-      } else if (dataKey === 'purchaseDate' && typeof value === 'string') {
+
+      if (col.dataKey === 'purchaseValue' || col.dataKey === 'depreciatedValue' || col.dataKey === 'calculatedCurrentValue' || col.dataKey === 'previouslyDepreciatedValue') {
+        row[col.dataKey] = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value as number);
+      } else if (col.dataKey === 'purchaseDate' && typeof value === 'string') {
          try {
             const date = parseISO(value);
-            row[dataKey] = formatDateFn(date, 'dd/MM/yyyy', { locale: ptBR });
+            row[col.dataKey] = formatDateFn(date, 'dd/MM/yyyy', { locale: ptBR });
           } catch (e) {
-            row[dataKey] = value;
+            row[col.dataKey] = value;
           }
       } else {
-        row[dataKey] = value === undefined || value === null ? 'N/A' : String(value);
+        row[col.dataKey] = value === undefined || value === null ? 'N/A' : String(value);
       }
     });
     return row;
@@ -139,7 +151,7 @@ export const exportToPDF = (
       id: { cellWidth: 8 },
       purchaseDate: { cellWidth: 12 },
       name: { cellWidth: 20 },
-      model: { cellWidth: 15 },
+      modelName: { cellWidth: 15 }, // Changed from model to modelName
       assetTag: {cellWidth: 12},
       invoiceNumber: {cellWidth: 12},
       serialNumber: {cellWidth: 12},

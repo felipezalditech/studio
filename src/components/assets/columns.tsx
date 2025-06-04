@@ -83,9 +83,9 @@ export const getColumns = (
     header: ({ column }) => <SortableHeader column={column} title="Nome do ativo" />,
   },
   {
-    accessorKey: "model",
+    accessorKey: "modelName", // Changed from model to modelName
     header: ({ column }) => <SortableHeader column={column} title="Modelo" />,
-    cell: ({ row }) => row.getValue("model") || "N/A",
+    cell: ({ row }) => row.original.modelName || "N/A",
   },
   {
     accessorKey: "assetTag",
@@ -187,6 +187,6 @@ export const getColumns = (
       );
     },
     enableSorting: false,
-    enableHiding: true,
+    enableHiding: true, // A coluna Ações pode ser escondida, mas não a de seleção
   },
 ];

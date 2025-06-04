@@ -9,6 +9,7 @@ import { PlusCircle, Search, BarChart3, ShoppingCart, TrendingUp, TrendingDown, 
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useLocations } from '@/contexts/LocationContext';
+import { useAssetModels } from '@/contexts/AssetModelContext'; // Import useAssetModels
 import { parseISO, format as formatDateFn, isValid, addDays, differenceInCalendarMonths, subDays, subMonths, subYears, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -49,7 +50,7 @@ interface DashboardDataType {
   totalPurchaseValue: number;
   totalCurrentValue: number;
   totalDepreciation: number;
-  recentAssets: Array<{ id: string; name: string; category: string; currentValue: number; purchaseDate: string }>;
+  recentAssets: Array<{ id: string; name: string; modelName?: string; category: string; currentValue: number; purchaseDate: string }>;
   highlights: {
     mostValuable: { name: string; value: number };
     oldestAsset: { name: string; acquiredDate: string };
@@ -78,6 +79,7 @@ export default function DashboardPage() {
   const { assets } = useAssets();
   const { getCategoryById } = useCategories();
   const { locations, getLocationById } = useLocations();
+  const { getAssetModelNameById } = useAssetModels(); // Get model name function
   const [isLoading, setIsLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<DashboardDataType | null>(null);
   const [chartData, setChartData] = useState<ChartDataType | null>(null);
@@ -123,6 +125,7 @@ export default function DashboardPage() {
 
     const processedAssets = assetsToDisplay.map(asset => {
       const category = getCategoryById(asset.categoryId);
+      const modelName = getAssetModelNameById(asset.modelId);
       let finalDepreciatedValue = asset.previouslyDepreciatedValue || 0;
       let calculatedCurrentValue = asset.purchaseValue - finalDepreciatedValue;
 
@@ -163,7 +166,7 @@ export default function DashboardPage() {
           }
         }
       }
-      return { ...asset, calculatedCurrentValue, finalDepreciatedValue, categoryName: category?.name || 'Desconhecida' };
+      return { ...asset, calculatedCurrentValue, finalDepreciatedValue, categoryName: category?.name || 'Desconhecida', modelName };
     });
 
     let totalPurchaseValue = 0;
@@ -189,6 +192,7 @@ export default function DashboardPage() {
         .map(asset => ({
             id: asset.id,
             name: asset.name,
+            modelName: asset.modelName || 'N/A',
             category: asset.categoryName,
             currentValue: asset.calculatedCurrentValue,
             purchaseDate: formatDate(asset.purchaseDate),
@@ -303,7 +307,7 @@ export default function DashboardPage() {
     setChartData({ pieChartData, barChartData, pieChartConfig, barChartConfig });
     setIsLoading(false);
 
-  }, [assets, getCategoryById, selectedDateFilter, getLocationById, locations]);
+  }, [assets, getCategoryById, selectedDateFilter, getLocationById, locations, getAssetModelNameById]);
 
   if (isLoading || !dashboardData || !chartData) {
     return (
@@ -524,6 +528,7 @@ export default function DashboardPage() {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-2 font-semibold">Nome</th>
+                    <th className="text-left p-2 font-semibold">Modelo</th>
                     <th className="text-left p-2 font-semibold">Categoria</th>
                     <th className="text-right p-2 font-semibold">Valor atual</th>
                     <th className="text-right p-2 font-semibold">Data de compra</th>
@@ -533,6 +538,7 @@ export default function DashboardPage() {
                   {dashboardData.recentAssets.map((asset) => (
                     <tr key={asset.id} className="border-b last:border-b-0 hover:bg-muted/50">
                       <td className="p-2">{asset.name}</td>
+                      <td className="p-2">{asset.modelName}</td>
                       <td className="p-2">{asset.category}</td>
                       <td className="text-right p-2">{formatCurrency(asset.currentValue)}</td>
                       <td className="text-right p-2">{asset.purchaseDate}</td>

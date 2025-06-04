@@ -20,6 +20,7 @@ import { formatDate, formatCurrency } from "@/components/assets/columns";
 import { Trash2, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
+import { useAssetModels } from '@/contexts/AssetModelContext'; // Import useAssetModels
 
 interface AssetDetailsDialogProps {
   asset: AssetWithCalculatedValues | null;
@@ -29,12 +30,15 @@ interface AssetDetailsDialogProps {
 
 export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDialogProps) {
   const { updateAsset } = useAssets();
+  const { getAssetModelNameById } = useAssetModels(); // Get model name function
   const { toast } = useToast();
 
   const [imageIndexToDelete, setImageIndexToDelete] = useState<number | null>(null);
   const [isConfirmDeleteImageDialogOpen, setIsConfirmDeleteImageDialogOpen] = useState(false);
 
   if (!asset) return null;
+
+  const modelName = asset.modelId ? getAssetModelNameById(asset.modelId) : "N/A";
 
   const handleRemoveImageRequest = (indexToRemove: number) => {
     setImageIndexToDelete(indexToRemove);
@@ -45,7 +49,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
     if (!asset || !asset.imageDateUris || imageIndexToDelete === null) return;
 
     const updatedImageUris = asset.imageDateUris.filter((_, index) => index !== imageIndexToDelete);
-    const { depreciatedValue, calculatedCurrentValue, categoryName, supplierName, locationName, ...baseAsset } = asset;
+    const { depreciatedValue, calculatedCurrentValue, categoryName, supplierName, locationName, modelName: _modelName, ...baseAsset } = asset;
     updateAsset({ ...baseAsset, imageDateUris: updatedImageUris });
 
     toast({
@@ -85,7 +89,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
             <h3 className="font-semibold mb-2 text-lg">Informações gerais</h3>
             <div className="space-y-1.5 text-sm">
               <p><strong>Nome:</strong> {asset.name}</p>
-              <p><strong>Modelo:</strong> {asset.model || "N/A"}</p>
+              <p><strong>Modelo:</strong> {modelName}</p> {/* Use resolved modelName */}
               <p><strong>Patrimônio:</strong> {asset.assetTag}</p>
               <p><strong>Categoria:</strong> {asset.categoryName || asset.categoryId}</p>
               <p><strong>Fornecedor:</strong> {asset.supplierName || asset.supplier}</p>

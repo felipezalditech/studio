@@ -23,7 +23,7 @@ export interface AssetFiltersState {
   invoiceNumber: string;
   categoryId: string;
   locationId: string;
-  model: string;
+  model: string; // This will filter by model name text
   purchaseDateFrom: Date | undefined;
   purchaseDateTo: Date | undefined;
 }
@@ -113,7 +113,7 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {filters.purchaseDateFrom && isValid(filters.purchaseDateFrom) ? format(filters.purchaseDateFrom, "PPP", { locale: ptBR }) : <span>Data de compra inicial</span>}
+                {filters.purchaseDateFrom && isValid(filters.purchaseDateFrom) ? format(filters.purchaseDateFrom, "PPP", { locale: ptBR }) : <span>Data da compra (de)</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -137,7 +137,7 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {filters.purchaseDateTo && isValid(filters.purchaseDateTo) ? format(filters.purchaseDateTo, "PPP", { locale: ptBR }) : <span>Data da compra até</span>}
+                {filters.purchaseDateTo && isValid(filters.purchaseDateTo) ? format(filters.purchaseDateTo, "PPP", { locale: ptBR }) : <span>Data da compra (até)</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -150,22 +150,21 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
               />
             </PopoverContent>
           </Popover>
-
           <Input
-            placeholder="Filtrar por modelo..."
-            name="model"
+            placeholder="Filtrar por nome do modelo..."
+            name="model" // This input corresponds to filters.model
             value={filters.model}
             onChange={handleInputChange}
             className="text-sm"
           />
         </div>
         <div className="mt-4 flex justify-end">
-            <Button
-              onClick={onResetFilters}
-              className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground"
-            >
-                <RotateCcwIcon className="mr-2 h-4 w-4" /> Redefinir filtros
-            </Button>
+          <Button
+            onClick={onResetFilters}
+            className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground"
+          >
+            <RotateCcwIcon className="mr-2 h-4 w-4" /> Redefinir filtros
+          </Button>
         </div>
       </CardContent>
     </Card>

@@ -7,6 +7,7 @@ import type { Asset } from '@/components/assets/types';
 import { mockAssets as initialMockAssets } from '@/components/assets/data'; 
 import { useCategories } from './CategoryContext';
 import { useLocations } from './LocationContext';
+import { useAssetModels } from './AssetModelContext'; // Import useAssetModels
 
 interface AssetContextType {
   assets: Asset[];
@@ -17,6 +18,7 @@ interface AssetContextType {
   setAssets: Dispatch<SetStateAction<Asset[]>>;
   getCategoryNameById: (categoryId: string) => string | undefined;
   getLocationNameById: (locationId?: string) => string | undefined;
+  getAssetModelNameById: (modelId?: string) => string | undefined; // Added
 }
 
 const AssetContext = createContext<AssetContextType | undefined>(undefined);
@@ -25,12 +27,13 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
   const [assets, setAssets] = useLocalStorage<Asset[]>('assets', initialMockAssets);
   const { getCategoryById } = useCategories();
   const { getLocationById } = useLocations();
+  const { getAssetModelById: getModelCtxById } = useAssetModels(); // Renamed for clarity
 
   const addAsset = (assetData: Omit<Asset, 'id'>) => {
     const newAsset: Asset = {
       ...assetData,
       id: `asset-${Date.now().toString()}-${Math.random().toString(36).substring(2, 7)}`,
-      model: assetData.model || undefined,
+      modelId: assetData.modelId || undefined, // Use modelId
       serialNumber: assetData.serialNumber || undefined,
       imageDateUris: assetData.imageDateUris || [],
       locationId: assetData.locationId || undefined,
@@ -46,7 +49,7 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
       prevAssets.map(asset => (asset.id === updatedAsset.id ? { 
         ...asset, 
         ...updatedAsset,
-        model: updatedAsset.model || undefined,
+        modelId: updatedAsset.modelId || undefined, // Use modelId
         serialNumber: updatedAsset.serialNumber || undefined, 
         previouslyDepreciatedValue: updatedAsset.previouslyDepreciatedValue || 0,
         currentValue: updatedAsset.purchaseValue - (updatedAsset.previouslyDepreciatedValue || 0),
@@ -73,9 +76,15 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
     return location?.name;
   };
 
+  const getAssetModelNameById = (modelId?: string): string | undefined => { // Added
+    if (!modelId) return undefined;
+    const model = getModelCtxById(modelId); // Use renamed function
+    return model?.name;
+  };
+
 
   return (
-    <AssetContext.Provider value={{ assets, addAsset, updateAsset, deleteAsset, getAssetById, setAssets, getCategoryNameById, getLocationNameById }}>
+    <AssetContext.Provider value={{ assets, addAsset, updateAsset, deleteAsset, getAssetById, setAssets, getCategoryNameById, getLocationNameById, getAssetModelNameById }}>
       {children}
     </AssetContext.Provider>
   );

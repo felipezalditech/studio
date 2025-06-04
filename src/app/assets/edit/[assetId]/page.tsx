@@ -26,12 +26,13 @@ import type { Asset } from '@/components/assets/types';
 import Image from 'next/image';
 import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox';
 import { LocationCombobox } from '@/components/locations/LocationCombobox';
+import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox';
 
 const MAX_PHOTOS = 10;
 
 const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
-  model: z.string().optional(),
+  modelId: z.string().optional(), // Alterado de model para modelId
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
   categoryId: z.string().min(1, "Categoria é obrigatória."),
   supplier: z.string().min(1, "Fornecedor é obrigatório."),
@@ -67,7 +68,7 @@ export default function EditAssetPage() {
     resolver: zodResolver(assetFormSchema),
     defaultValues: {
       name: '',
-      model: '',
+      modelId: undefined, // Alterado de model para modelId
       assetTag: '',
       categoryId: '',
       supplier: '',
@@ -88,7 +89,7 @@ export default function EditAssetPage() {
       if (assetToEdit) {
         form.reset({
           ...assetToEdit,
-          model: assetToEdit.model || '',
+          modelId: assetToEdit.modelId || undefined, // Alterado de model para modelId
           purchaseDate: assetToEdit.purchaseDate ? parseISO(assetToEdit.purchaseDate) : undefined,
           previouslyDepreciatedValue: assetToEdit.previouslyDepreciatedValue || undefined,
           locationId: assetToEdit.locationId || undefined,
@@ -127,7 +128,7 @@ export default function EditAssetPage() {
     const assetDataToUpdate: Asset = {
       id: assetId,
       ...data,
-      model: data.model || undefined,
+      modelId: data.modelId || undefined, // Garantir que modelId seja usado
       purchaseDate: format(data.purchaseDate, 'yyyy-MM-dd'),
       currentValue: initialCurrentValue,
       imageDateUris: data.imageDateUris || [],
@@ -257,15 +258,26 @@ export default function EditAssetPage() {
                   />
                   <FormField
                     control={form.control}
-                    name="model"
+                    name="modelId" // Alterado de model para modelId
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
                           <FormLabel>Modelo (opcional)</FormLabel>
+                           <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Digite para buscar. Se o modelo não existir, a opção para cadastrá-lo aparecerá. Clique no campo para ver todos os modelos.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
-                        <FormControl>
-                          <Input placeholder="Ex: 9570, Latitude 7490" {...field} />
-                        </FormControl>
+                        <AssetModelCombobox
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
                         <FormMessage />
                       </FormItem>
                     )}

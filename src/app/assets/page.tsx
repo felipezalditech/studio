@@ -19,6 +19,7 @@ import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useLocations } from '@/contexts/LocationContext';
+import { useAssetModels } from '@/contexts/AssetModelContext'; // Import useAssetModels
 import { AssetDetailsDialog } from '@/components/assets/AssetDetailsDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useBranding } from '@/contexts/BrandingContext';
@@ -29,7 +30,7 @@ const initialFilters: AssetFiltersState = {
   invoiceNumber: '',
   categoryId: '',
   locationId: '',
-  model: '',
+  model: '', // This 'model' in filters will be for searching model name text
   purchaseDateFrom: undefined,
   purchaseDateTo: undefined,
 };
@@ -44,6 +45,7 @@ export interface AssetWithCalculatedValues extends Asset {
   categoryName?: string;
   supplierName?: string;
   locationName?: string;
+  modelName?: string; // Added modelName
 }
 
 export default function AssetsPage() {
@@ -51,6 +53,7 @@ export default function AssetsPage() {
   const { suppliers: allSuppliersFromContext, getSupplierById } = useSuppliers();
   const { categories: allCategoriesFromContext, getCategoryById } = useCategories();
   const { locations: allLocationsFromContext, getLocationById } = useLocations();
+  const { getAssetModelNameById } = useAssetModels(); // Get model name function
   const { brandingConfig } = useBranding();
   const [filters, setFilters] = useState<AssetFiltersState>(initialFilters);
   const { toast } = useToast();
@@ -120,12 +123,16 @@ export default function AssetsPage() {
   const assetsWithCalculatedValues = useMemo(() => {
     const today = new Date();
     return assets
+      .map(asset => { // First map to add modelName
+        const modelName = getAssetModelNameById(asset.modelId) || "N/A";
+        return { ...asset, modelName };
+      })
       .filter(asset => {
         const purchaseDate = parseISO(asset.purchaseDate);
         const dateFrom = filters.purchaseDateFrom;
         const dateTo = filters.purchaseDateTo;
         const searchTerm = filters.name.toLowerCase();
-        const modelTerm = filters.model.toLowerCase();
+        const modelFilterTerm = filters.model.toLowerCase(); // Filter for model name
 
         const searchTermMatch = searchTerm
           ? asset.name.toLowerCase().includes(searchTerm) ||
@@ -133,8 +140,9 @@ export default function AssetsPage() {
             (asset.serialNumber && asset.serialNumber.toLowerCase().includes(searchTerm))
           : true;
 
-        const modelMatch = modelTerm
-            ? asset.model && asset.model.toLowerCase().includes(modelTerm)
+        // Match against the resolved modelName
+        const modelMatch = modelFilterTerm
+            ? asset.modelName && asset.modelName.toLowerCase().includes(modelFilterTerm)
             : true;
 
         const supplierMatch = filters.supplier ? asset.supplier === filters.supplier : true;
@@ -147,7 +155,7 @@ export default function AssetsPage() {
 
         return searchTermMatch && modelMatch && supplierMatch && invoiceMatch && categoryMatch && locationMatch && dateFromMatch && dateToMatch;
       })
-      .map(asset => {
+      .map(asset => { // Second map for depreciation and other names
         const category = getCategoryById(asset.categoryId);
         let finalDepreciatedValue = asset.previouslyDepreciatedValue || 0;
         let calculatedCurrentValue = asset.purchaseValue - finalDepreciatedValue;
@@ -199,9 +207,10 @@ export default function AssetsPage() {
           categoryName: categoryNameMap.get(asset.categoryId) || asset.categoryId,
           supplierName: supplierNameMap.get(asset.supplier) || asset.supplier,
           locationName: asset.locationId ? locationNameMap.get(asset.locationId) || asset.locationId : 'N/A',
+          // modelName is already added in the first map
         };
       });
-  }, [assets, filters, getCategoryById, categoryNameMap, supplierNameMap, locationNameMap]);
+  }, [assets, filters, getCategoryById, categoryNameMap, supplierNameMap, locationNameMap, getAssetModelNameById]);
 
 
   const handleResetFilters = useCallback(() => {
@@ -218,7 +227,7 @@ export default function AssetsPage() {
       'ID': asset.id,
       'Data Compra': asset.purchaseDate,
       'Nome': asset.name,
-      'Modelo': asset.model || 'N/A',
+      'Modelo': asset.modelName || 'N/A', // Use modelName
       'Patrimônio': asset.assetTag,
       'Nota Fiscal': asset.invoiceNumber,
       'Nº Série': asset.serialNumber || 'N/A',
@@ -245,7 +254,7 @@ export default function AssetsPage() {
       id: asset.id,
       purchaseDate: asset.purchaseDate,
       name: asset.name,
-      model: asset.model || 'N/A',
+      model: asset.modelName || 'N/A', // Use modelName
       assetTag: asset.assetTag,
       invoiceNumber: asset.invoiceNumber,
       serialNumber: asset.serialNumber || 'N/A',
