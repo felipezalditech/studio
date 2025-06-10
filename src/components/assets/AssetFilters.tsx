@@ -14,13 +14,13 @@ import { format, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCategories } from '@/contexts/CategoryContext';
-import { useLocations } from '@/contexts/LocationContext';
+import { LocationCombobox } from '@/components/locations/LocationCombobox'; // Importado
 import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox';
-import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox'; // Importado
+import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox';
 
 export interface AssetFiltersState {
   name: string;
-  supplier: string; // Armazena o ID do fornecedor
+  supplier: string;
   invoiceNumber: string;
   categoryId: string;
   locationId: string;
@@ -39,7 +39,6 @@ const ALL_ITEMS_SENTINEL_VALUE = "_ALL_";
 
 export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFiltersProps) {
   const { categories: allCategoriesFromContext } = useCategories();
-  const { locations: allLocationsFromContext } = useLocations();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -92,15 +91,11 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
               {allCategoriesFromContext.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={filters.locationId || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('locationId')}>
-            <SelectTrigger className="text-sm">
-              <SelectValue placeholder="Filtrar por local alocado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todos os locais</SelectItem>
-              {allLocationsFromContext.map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          
+          <LocationCombobox
+            value={filters.locationId}
+            onChange={handleComboboxChange('locationId')}
+          />
           
           <AssetModelCombobox
             value={filters.modelId}
@@ -167,3 +162,4 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
     </Card>
   );
 }
+
