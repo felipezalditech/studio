@@ -233,6 +233,7 @@ const Sidebar = React.forwardRef<
         ref={ref}
         className={cn(
           "group peer hidden md:flex flex-col text-sidebar-foreground bg-sidebar transition-all duration-300 ease-in-out",
+          "sticky top-0 h-screen self-start", // Added sticky positioning
           // Width logic: if "none", always full width. Otherwise, depends on 'state'.
           actualCollapsibleMode === "none" ? "w-[--sidebar-width]" : (state === "expanded" ? "w-[--sidebar-width]" : "w-[--sidebar-width-icon]"),
           // Offcanvas hiding logic (should not apply if actualCollapsibleMode is "none" or "icon" on desktop)
