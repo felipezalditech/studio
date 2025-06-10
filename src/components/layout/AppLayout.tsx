@@ -115,7 +115,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </span>
           </Link>
         </SidebarHeader>
-        <SidebarContent className="p-2">
+        <SidebarContent className="p-2"> {/* Este é flex-1 e overflow-y-auto */}
           <SidebarMenu>
             {menuItems.map((item) => {
               if (item.isSubmenuParent && item.subItems) {
@@ -192,12 +192,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
               }
               return null;
             })}
-             <SidebarMenuItem className="mt-auto"> {/* Adiciona ThemeToggleButton no final do menu, dentro de SidebarContent */}
-              <ThemeToggleButton />
-            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
-        {/* SidebarFooter foi removido */}
+        {/* Wrapper para o ThemeToggleButton, posicionado no rodapé do Sidebar e fora da área de rolagem do SidebarContent */}
+        <div className="p-2 mt-auto border-t border-sidebar-border">
+            <ThemeToggleButton />
+        </div>
       </Sidebar>
 
       <SidebarInset>
