@@ -30,7 +30,7 @@ const initialFilters: AssetFiltersState = {
   invoiceNumber: '',
   categoryId: '',
   locationId: '',
-  model: '', // This 'model' in filters will be for searching model name text
+  modelId: '', // Alterado de model para modelId
   purchaseDateFrom: undefined,
   purchaseDateTo: undefined,
 };
@@ -45,7 +45,7 @@ export interface AssetWithCalculatedValues extends Asset {
   categoryName?: string;
   supplierName?: string;
   locationName?: string;
-  modelName?: string; // Added modelName
+  modelName?: string;
 }
 
 export default function AssetsPage() {
@@ -53,7 +53,7 @@ export default function AssetsPage() {
   const { suppliers: allSuppliersFromContext, getSupplierById } = useSuppliers();
   const { categories: allCategoriesFromContext, getCategoryById } = useCategories();
   const { locations: allLocationsFromContext, getLocationById } = useLocations();
-  const { getAssetModelNameById } = useAssetModels(); // Get model name function
+  const { getAssetModelNameById } = useAssetModels();
   const { brandingConfig } = useBranding();
   const [filters, setFilters] = useState<AssetFiltersState>(initialFilters);
   const { toast } = useToast();
@@ -123,7 +123,7 @@ export default function AssetsPage() {
   const assetsWithCalculatedValues = useMemo(() => {
     const today = new Date();
     return assets
-      .map(asset => { // First map to add modelName
+      .map(asset => {
         const modelName = getAssetModelNameById(asset.modelId) || "N/A";
         return { ...asset, modelName };
       })
@@ -132,18 +132,14 @@ export default function AssetsPage() {
         const dateFrom = filters.purchaseDateFrom;
         const dateTo = filters.purchaseDateTo;
         const searchTerm = filters.name.toLowerCase();
-        const modelFilterTerm = filters.model.toLowerCase(); // Filter for model name
-
+        
         const searchTermMatch = searchTerm
           ? asset.name.toLowerCase().includes(searchTerm) ||
             asset.assetTag.toLowerCase().includes(searchTerm) ||
             (asset.serialNumber && asset.serialNumber.toLowerCase().includes(searchTerm))
           : true;
 
-        // Match against the resolved modelName
-        const modelMatch = modelFilterTerm
-            ? asset.modelName && asset.modelName.toLowerCase().includes(modelFilterTerm)
-            : true;
+        const modelMatch = filters.modelId ? asset.modelId === filters.modelId : true; // Alterado para usar modelId
 
         const supplierMatch = filters.supplier ? asset.supplier === filters.supplier : true;
         const invoiceMatch = asset.invoiceNumber.toLowerCase().includes(filters.invoiceNumber.toLowerCase());
@@ -155,7 +151,7 @@ export default function AssetsPage() {
 
         return searchTermMatch && modelMatch && supplierMatch && invoiceMatch && categoryMatch && locationMatch && dateFromMatch && dateToMatch;
       })
-      .map(asset => { // Second map for depreciation and other names
+      .map(asset => {
         const category = getCategoryById(asset.categoryId);
         let finalDepreciatedValue = asset.previouslyDepreciatedValue || 0;
         let calculatedCurrentValue = asset.purchaseValue - finalDepreciatedValue;
@@ -207,7 +203,6 @@ export default function AssetsPage() {
           categoryName: categoryNameMap.get(asset.categoryId) || asset.categoryId,
           supplierName: supplierNameMap.get(asset.supplier) || asset.supplier,
           locationName: asset.locationId ? locationNameMap.get(asset.locationId) || asset.locationId : 'N/A',
-          // modelName is already added in the first map
         };
       });
   }, [assets, filters, getCategoryById, categoryNameMap, supplierNameMap, locationNameMap, getAssetModelNameById]);
@@ -227,7 +222,7 @@ export default function AssetsPage() {
       'ID': asset.id,
       'Data Compra': asset.purchaseDate,
       'Nome': asset.name,
-      'Modelo': asset.modelName || 'N/A', // Use modelName
+      'Modelo': asset.modelName || 'N/A',
       'Patrimônio': asset.assetTag,
       'Nota Fiscal': asset.invoiceNumber,
       'Nº Série': asset.serialNumber || 'N/A',
@@ -254,7 +249,7 @@ export default function AssetsPage() {
       id: asset.id,
       purchaseDate: asset.purchaseDate,
       name: asset.name,
-      model: asset.modelName || 'N/A', // Use modelName
+      model: asset.modelName || 'N/A',
       assetTag: asset.assetTag,
       invoiceNumber: asset.invoiceNumber,
       serialNumber: asset.serialNumber || 'N/A',

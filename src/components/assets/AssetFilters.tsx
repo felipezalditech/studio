@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useLocations } from '@/contexts/LocationContext';
+import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox'; // Importado
 
 export interface AssetFiltersState {
   name: string;
@@ -23,7 +24,7 @@ export interface AssetFiltersState {
   invoiceNumber: string;
   categoryId: string;
   locationId: string;
-  model: string; // This will filter by model name text
+  modelId: string; // Alterado de model para modelId
   purchaseDateFrom: Date | undefined;
   purchaseDateTo: Date | undefined;
 }
@@ -102,6 +103,11 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
               {allLocationsFromContext.map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}
             </SelectContent>
           </Select>
+          
+          <AssetModelCombobox // Substituído Input por AssetModelCombobox
+            value={filters.modelId}
+            onChange={handleSelectChange('modelId') as any} // Ajustar 'any' se possível com melhor tipagem para handleSelectChange
+          />
 
           <Popover>
             <PopoverTrigger asChild>
@@ -150,13 +156,6 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
               />
             </PopoverContent>
           </Popover>
-          <Input
-            placeholder="Filtrar por nome do modelo..."
-            name="model" // This input corresponds to filters.model
-            value={filters.model}
-            onChange={handleInputChange}
-            className="text-sm"
-          />
         </div>
         <div className="mt-4 flex justify-end">
           <Button
