@@ -13,18 +13,18 @@ import { cn } from '@/lib/utils';
 import { format, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSuppliers } from '@/contexts/SupplierContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useLocations } from '@/contexts/LocationContext';
-import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox'; // Importado
+import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox';
+import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox'; // Importado
 
 export interface AssetFiltersState {
   name: string;
-  supplier: string;
+  supplier: string; // Armazena o ID do fornecedor
   invoiceNumber: string;
   categoryId: string;
   locationId: string;
-  modelId: string; // Alterado de model para modelId
+  modelId: string;
   purchaseDateFrom: Date | undefined;
   purchaseDateTo: Date | undefined;
 }
@@ -38,7 +38,6 @@ interface AssetFiltersProps {
 const ALL_ITEMS_SENTINEL_VALUE = "_ALL_";
 
 export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFiltersProps) {
-  const { suppliers: allSuppliersFromContext } = useSuppliers();
   const { categories: allCategoriesFromContext } = useCategories();
   const { locations: allLocationsFromContext } = useLocations();
 
@@ -49,6 +48,10 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
 
   const handleSelectChange = (name: keyof AssetFiltersState) => (value: string) => {
     setFilters(prev => ({ ...prev, [name]: value === ALL_ITEMS_SENTINEL_VALUE ? "" : value }));
+  };
+
+  const handleComboboxChange = (name: keyof AssetFiltersState) => (value: string | undefined) => {
+    setFilters(prev => ({ ...prev, [name]: value || "" }));
   };
 
   const handleDateChange = (name: 'purchaseDateFrom' | 'purchaseDateTo') => (date: Date | undefined) => {
@@ -76,15 +79,10 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
             onChange={handleInputChange}
             className="text-sm"
           />
-           <Select value={filters.supplier || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('supplier')}>
-            <SelectTrigger className="text-sm">
-              <SelectValue placeholder="Filtrar por fornecedor" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_ITEMS_SENTINEL_VALUE}>Todos os fornecedores</SelectItem>
-              {allSuppliersFromContext.map(s => <SelectItem key={s.id} value={s.id}>{s.nomeFantasia || s.razaoSocial}</SelectItem>)}
-            </SelectContent>
-          </Select>
+           <SupplierCombobox
+            value={filters.supplier}
+            onChange={handleComboboxChange('supplier')}
+          />
           <Select value={filters.categoryId || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('categoryId')}>
             <SelectTrigger className="text-sm">
               <SelectValue placeholder="Filtrar por categoria" />
@@ -104,9 +102,9 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
             </SelectContent>
           </Select>
           
-          <AssetModelCombobox // Substituído Input por AssetModelCombobox
+          <AssetModelCombobox
             value={filters.modelId}
-            onChange={handleSelectChange('modelId') as any} // Ajustar 'any' se possível com melhor tipagem para handleSelectChange
+            onChange={handleComboboxChange('modelId')}
           />
 
           <Popover>
