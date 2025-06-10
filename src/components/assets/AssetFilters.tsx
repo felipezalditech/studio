@@ -95,12 +95,13 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
           <LocationCombobox
             value={filters.locationId}
             onChange={handleComboboxChange('locationId')}
-            disableQuickAdd={true} // Impede o cadastro rápido aqui
+            disableQuickAdd={true}
           />
           
           <AssetModelCombobox
             value={filters.modelId}
             onChange={handleComboboxChange('modelId')}
+            disableQuickAdd={true} // Adicionado aqui
           />
 
           <Popover>

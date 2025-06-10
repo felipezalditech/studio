@@ -28,9 +28,10 @@ interface AssetModelComboboxProps {
   value: string | undefined; // Stores modelId
   onChange: (value: string | undefined) => void;
   disabled?: boolean;
+  disableQuickAdd?: boolean; // Nova propriedade
 }
 
-export function AssetModelCombobox({ value, onChange, disabled }: AssetModelComboboxProps) {
+export function AssetModelCombobox({ value, onChange, disabled, disableQuickAdd = false }: AssetModelComboboxProps) {
   const { assetModels, getAssetModelById } = useAssetModels();
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
@@ -57,6 +58,7 @@ export function AssetModelCombobox({ value, onChange, disabled }: AssetModelComb
   };
 
   const handleOpenNewModelDialog = () => {
+    if (disableQuickAdd) return;
     setModelNameToCreate(inputValue);
     setIsAssetModelDialogOpen(true);
     setOpen(false);
@@ -97,12 +99,12 @@ export function AssetModelCombobox({ value, onChange, disabled }: AssetModelComb
                 <CommandEmpty
                   className={cn(
                     "py-6 text-center text-sm",
-                    inputValue && "cursor-pointer hover:bg-accent"
+                    inputValue && !disableQuickAdd && "cursor-pointer hover:bg-accent"
                   )}
-                  onClick={inputValue ? handleOpenNewModelDialog : undefined}
+                  onClick={inputValue && !disableQuickAdd ? handleOpenNewModelDialog : undefined}
                 >
                   {inputValue
-                    ? `Nenhum modelo encontrado. Cadastrar "${inputValue}"?`
+                    ? (disableQuickAdd ? `Nenhum modelo encontrado com "${inputValue}".` : `Nenhum modelo encontrado. Cadastrar "${inputValue}"?`)
                     : "Nenhum modelo encontrado."}
                 </CommandEmpty>
                 <CommandGroup>
@@ -144,7 +146,7 @@ export function AssetModelCombobox({ value, onChange, disabled }: AssetModelComb
                     </CommandItem>
                   ))}
                 </CommandGroup>
-                {inputValue && (
+                {inputValue && !disableQuickAdd && (
                   <>
                     <CommandSeparator />
                     <CommandGroup>
@@ -165,7 +167,7 @@ export function AssetModelCombobox({ value, onChange, disabled }: AssetModelComb
         </PopoverContent>
       </Popover>
 
-      {isAssetModelDialogOpen && (
+      {isAssetModelDialogOpen && !disableQuickAdd && (
         <AssetModelFormDialog
           open={isAssetModelDialogOpen}
           onOpenChange={setIsAssetModelDialogOpen}
