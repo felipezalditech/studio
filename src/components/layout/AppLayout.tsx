@@ -11,7 +11,6 @@ import {
   Sidebar,
   SidebarHeader,
   SidebarContent,
-  SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -193,15 +192,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
               }
               return null;
             })}
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter className="p-2 border-t border-sidebar-border">
-           <SidebarMenu>
-            <SidebarMenuItem>
+             <SidebarMenuItem className="mt-auto"> {/* Adiciona ThemeToggleButton no final do menu, dentro de SidebarContent */}
               <ThemeToggleButton />
             </SidebarMenuItem>
-           </SidebarMenu>
-        </SidebarFooter>
+          </SidebarMenu>
+        </SidebarContent>
+        {/* SidebarFooter foi removido */}
       </Sidebar>
 
       <SidebarInset>
