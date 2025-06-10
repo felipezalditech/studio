@@ -20,7 +20,7 @@ import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox';
 
 export interface AssetFiltersState {
   name: string;
-  supplier: string;
+  supplier: string; // Mantém como string (ID do fornecedor)
   invoiceNumber: string;
   categoryId: string;
   locationId: string;
@@ -81,6 +81,7 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
            <SupplierCombobox
             value={filters.supplier}
             onChange={handleComboboxChange('supplier')}
+            disableQuickAdd={true} // Adicionado aqui
           />
           <Select value={filters.categoryId || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('categoryId')}>
             <SelectTrigger className="text-sm">
@@ -101,7 +102,7 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
           <AssetModelCombobox
             value={filters.modelId}
             onChange={handleComboboxChange('modelId')}
-            disableQuickAdd={true} // Adicionado aqui
+            disableQuickAdd={true}
           />
 
           <Popover>

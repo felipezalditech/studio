@@ -28,9 +28,10 @@ interface SupplierComboboxProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  disableQuickAdd?: boolean; // Nova propriedade
 }
 
-export function SupplierCombobox({ value, onChange, disabled }: SupplierComboboxProps) {
+export function SupplierCombobox({ value, onChange, disabled, disableQuickAdd = false }: SupplierComboboxProps) {
   const { suppliers, getSupplierById } = useSuppliers();
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
@@ -59,6 +60,7 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
   };
 
   const handleOpenNewSupplierDialog = () => {
+    if (disableQuickAdd) return;
     setSupplierNameToCreate(inputValue);
     setIsSupplierDialogOpen(true);
     setOpen(false);
@@ -83,7 +85,7 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
           >
             {selectedSupplier
               ? `${selectedSupplier.nomeFantasia || selectedSupplier.razaoSocial} (${selectedSupplier.type === 'juridica' ? selectedSupplier.cnpj?.substring(0,10) : selectedSupplier.cpf?.substring(0,9)}...)`
-              : "Selecione um fornecedor"}
+              : "Todos os fornecedores"}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -99,15 +101,31 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
                 <CommandEmpty
                   className={cn(
                     "py-6 text-center text-sm",
-                    inputValue && "cursor-pointer hover:bg-accent"
+                    inputValue && !disableQuickAdd && "cursor-pointer hover:bg-accent"
                   )}
-                  onClick={inputValue ? handleOpenNewSupplierDialog : undefined}
+                  onClick={inputValue && !disableQuickAdd ? handleOpenNewSupplierDialog : undefined}
                 >
                   {inputValue
-                    ? `Nenhum fornecedor encontrado. Cadastrar "${inputValue}"?`
+                    ? (disableQuickAdd ? `Nenhum fornecedor encontrado com "${inputValue}".` : `Nenhum fornecedor encontrado. Cadastrar "${inputValue}"?`)
                     : "Nenhum fornecedor encontrado."}
                 </CommandEmpty>
                 <CommandGroup>
+                   <CommandItem
+                      key="__ALL_SUPPLIERS__"
+                      value=""
+                      onSelect={() => {
+                        handleSelectSupplier(""); // Use an empty string or a specific sentinel value
+                      }}
+                      className="flex justify-between items-center"
+                    >
+                      Todos os fornecedores
+                      <Check
+                        className={cn(
+                          "h-4 w-4",
+                          !value ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                    </CommandItem>
                   {filteredSuppliers.map((supplier) => (
                     <CommandItem
                       key={supplier.id}
@@ -130,7 +148,7 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
                     </CommandItem>
                   ))}
                 </CommandGroup>
-                {inputValue && (
+                {inputValue && !disableQuickAdd && (
                   <>
                     <CommandSeparator />
                     <CommandGroup>
@@ -151,7 +169,7 @@ export function SupplierCombobox({ value, onChange, disabled }: SupplierCombobox
         </PopoverContent>
       </Popover>
 
-      {isSupplierDialogOpen && (
+      {isSupplierDialogOpen && !disableQuickAdd && (
         <SupplierFormDialog
           open={isSupplierDialogOpen}
           onOpenChange={setIsSupplierDialogOpen}
