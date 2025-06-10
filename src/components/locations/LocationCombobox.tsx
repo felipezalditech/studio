@@ -28,9 +28,10 @@ interface LocationComboboxProps {
   value: string | undefined;
   onChange: (value: string | undefined) => void;
   disabled?: boolean;
+  disableQuickAdd?: boolean; // Nova propriedade
 }
 
-export function LocationCombobox({ value, onChange, disabled }: LocationComboboxProps) {
+export function LocationCombobox({ value, onChange, disabled, disableQuickAdd = false }: LocationComboboxProps) {
   const { locations, getLocationById } = useLocations();
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
@@ -56,6 +57,7 @@ export function LocationCombobox({ value, onChange, disabled }: LocationCombobox
   };
 
   const handleOpenNewLocationDialog = () => {
+    if (disableQuickAdd) return;
     setLocationNameToCreate(inputValue);
     setIsLocationDialogOpen(true);
     setOpen(false);
@@ -96,12 +98,12 @@ export function LocationCombobox({ value, onChange, disabled }: LocationCombobox
                 <CommandEmpty
                   className={cn(
                     "py-6 text-center text-sm",
-                    inputValue && "cursor-pointer hover:bg-accent"
+                    inputValue && !disableQuickAdd && "cursor-pointer hover:bg-accent"
                   )}
-                  onClick={inputValue ? handleOpenNewLocationDialog : undefined}
+                  onClick={inputValue && !disableQuickAdd ? handleOpenNewLocationDialog : undefined}
                 >
                   {inputValue
-                    ? `Nenhum local encontrado. Cadastrar "${inputValue}"?`
+                    ? (disableQuickAdd ? `Nenhum local encontrado com "${inputValue}".` : `Nenhum local encontrado. Cadastrar "${inputValue}"?`)
                     : "Nenhum local encontrado."}
                 </CommandEmpty>
                 <CommandGroup>
@@ -143,7 +145,7 @@ export function LocationCombobox({ value, onChange, disabled }: LocationCombobox
                     </CommandItem>
                   ))}
                 </CommandGroup>
-                {inputValue && (
+                {inputValue && !disableQuickAdd && (
                   <>
                     <CommandSeparator />
                     <CommandGroup>
@@ -164,7 +166,7 @@ export function LocationCombobox({ value, onChange, disabled }: LocationCombobox
         </PopoverContent>
       </Popover>
 
-      {isLocationDialogOpen && (
+      {isLocationDialogOpen && !disableQuickAdd && (
         <LocationFormDialog
           open={isLocationDialogOpen}
           onOpenChange={setIsLocationDialogOpen}

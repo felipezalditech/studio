@@ -14,7 +14,7 @@ import { format, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCategories } from '@/contexts/CategoryContext';
-import { LocationCombobox } from '@/components/locations/LocationCombobox'; // Importado
+import { LocationCombobox } from '@/components/locations/LocationCombobox'; 
 import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox';
 import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox';
 
@@ -95,6 +95,7 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
           <LocationCombobox
             value={filters.locationId}
             onChange={handleComboboxChange('locationId')}
+            disableQuickAdd={true} // Impede o cadastro rápido aqui
           />
           
           <AssetModelCombobox
@@ -162,4 +163,3 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
     </Card>
   );
 }
-
