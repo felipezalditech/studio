@@ -79,7 +79,7 @@ export default function DashboardPage() {
   const { assets } = useAssets();
   const { getCategoryById } = useCategories();
   const { locations, getLocationById } = useLocations();
-  const { getAssetModelNameById } = useAssetModels(); // Get model name function
+  const { getAssetModelNameById } = useAssetModels();
   const [isLoading, setIsLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<DashboardDataType | null>(null);
   const [chartData, setChartData] = useState<ChartDataType | null>(null);
@@ -91,39 +91,9 @@ export default function DashboardPage() {
     }
 
     const today = new Date();
-    let filterStartDate: Date | null = null;
-
-    switch (selectedDateFilter) {
-      case 'last7days':
-        filterStartDate = startOfDay(subDays(today, 7));
-        break;
-      case 'last30days':
-        filterStartDate = startOfDay(subMonths(today, 1));
-        break;
-      case 'last3months':
-        filterStartDate = startOfDay(subMonths(today, 3));
-        break;
-      case 'last6months':
-        filterStartDate = startOfDay(subMonths(today, 6));
-        break;
-      case 'last12months':
-        filterStartDate = startOfDay(subYears(today, 1));
-        break;
-      case 'allTime':
-      default:
-        filterStartDate = null; // No date filtering
-        break;
-    }
-
-    const assetsToDisplay = filterStartDate
-      ? assets.filter(asset => {
-          const purchaseDate = parseISO(asset.purchaseDate);
-          return isValid(purchaseDate) && purchaseDate >= filterStartDate!;
-        })
-      : assets;
-
-
-    const processedAssets = assetsToDisplay.map(asset => {
+    
+    // Processamento de TODOS os ativos para dados gerais e lista de recentes
+    const allProcessedAssets = assets.map(asset => {
       const category = getCategoryById(asset.categoryId);
       const modelName = getAssetModelNameById(asset.modelId);
       let finalDepreciatedValue = asset.previouslyDepreciatedValue || 0;
@@ -169,26 +139,38 @@ export default function DashboardPage() {
       return { ...asset, calculatedCurrentValue, finalDepreciatedValue, categoryName: category?.name || 'Desconhecida', modelName };
     });
 
+    // Determinar a lista de ativos para KPIs e gráficos com base no filtro de data
+    let filterStartDate: Date | null = null;
+    switch (selectedDateFilter) {
+      case 'last7days': filterStartDate = startOfDay(subDays(today, 7)); break;
+      case 'last30days': filterStartDate = startOfDay(subMonths(today, 1)); break;
+      case 'last3months': filterStartDate = startOfDay(subMonths(today, 3)); break;
+      case 'last6months': filterStartDate = startOfDay(subMonths(today, 6)); break;
+      case 'last12months': filterStartDate = startOfDay(subYears(today, 1)); break;
+      default: filterStartDate = null; break;
+    }
+
+    const assetsForKPIsAndCharts = filterStartDate
+      ? allProcessedAssets.filter(asset => {
+          const purchaseDate = parseISO(asset.purchaseDate);
+          return isValid(purchaseDate) && purchaseDate >= filterStartDate!;
+        })
+      : allProcessedAssets;
+
     let totalPurchaseValue = 0;
     let totalCurrentValue = 0;
     let totalDepreciation = 0;
 
-    processedAssets.forEach(asset => {
+    assetsForKPIsAndCharts.forEach(asset => {
       totalPurchaseValue += asset.purchaseValue;
       totalDepreciation += asset.finalDepreciatedValue;
       totalCurrentValue += asset.calculatedCurrentValue;
     });
 
-    const recentAssets = [...processedAssets]
-        .sort((a, b) => {
-            const dateA = parseISO(a.purchaseDate);
-            const dateB = parseISO(b.purchaseDate);
-            if (!isValid(dateA) && !isValid(dateB)) return 0;
-            if (!isValid(dateA)) return 1;
-            if (!isValid(dateB)) return -1;
-            return dateB.getTime() - dateA.getTime();
-        })
-        .slice(0, 5)
+    // Lista de ativos recentes (os últimos 5 adicionados)
+    const recentAssets = [...allProcessedAssets]
+        .slice(-5) // Pega os últimos 5 (mais recentemente adicionados)
+        .reverse() // Inverte para mostrar o mais novo primeiro na lista
         .map(asset => ({
             id: asset.id,
             name: asset.name,
@@ -198,17 +180,18 @@ export default function DashboardPage() {
             purchaseDate: formatDate(asset.purchaseDate),
         }));
 
+    // Destaques são baseados nos ativos filtrados para KPIs/Gráficos
     let mostValuable = { name: "N/A", value: 0 };
-    if (processedAssets.length > 0) {
-      const sortedByValue = [...processedAssets].sort((a, b) => b.calculatedCurrentValue - a.calculatedCurrentValue);
+    if (assetsForKPIsAndCharts.length > 0) {
+      const sortedByValue = [...assetsForKPIsAndCharts].sort((a, b) => b.calculatedCurrentValue - a.calculatedCurrentValue);
       if (sortedByValue.length > 0 && sortedByValue[0]) {
           mostValuable = { name: sortedByValue[0].name, value: sortedByValue[0].calculatedCurrentValue };
       }
     }
 
     let oldestAsset = { name: "N/A", acquiredDate: "N/A" };
-    if (processedAssets.length > 0) {
-      const sortedByDate = [...processedAssets].sort((a, b) => {
+    if (assetsForKPIsAndCharts.length > 0) {
+      const sortedByDate = [...assetsForKPIsAndCharts].sort((a, b) => {
         const dateA = parseISO(a.purchaseDate);
         const dateB = parseISO(b.purchaseDate);
         if (!isValid(dateA) && !isValid(dateB)) return 0;
@@ -221,8 +204,9 @@ export default function DashboardPage() {
       }
     }
 
+    // Valor por local baseado nos ativos filtrados para KPIs/Gráficos
     const valueByLocationMap = new Map<string, number>();
-    processedAssets.forEach(asset => {
+    assetsForKPIsAndCharts.forEach(asset => {
       if (asset.locationId) {
         const currentTotal = valueByLocationMap.get(asset.locationId) || 0;
         valueByLocationMap.set(asset.locationId, currentTotal + asset.calculatedCurrentValue);
@@ -230,21 +214,20 @@ export default function DashboardPage() {
     });
 
     const valueByLocationData: ValueByLocation[] = [];
-    valueByLocationMap.forEach((totalValue, locationId) => {
+    valueByLocationMap.forEach((totalVal, locationId) => {
       const location = getLocationById(locationId);
       if (location) {
-        valueByLocationData.push({ locationName: location.name, totalCurrentValue: totalValue });
+        valueByLocationData.push({ locationName: location.name, totalCurrentValue: totalVal });
       }
     });
      valueByLocationData.sort((a, b) => b.totalCurrentValue - a.totalCurrentValue);
 
-
     const newDashboardData = {
-      totalAssets: assetsToDisplay.length,
+      totalAssets: assetsForKPIsAndCharts.length, // Total de ativos considera o filtro de data
       totalPurchaseValue,
       totalCurrentValue,
       totalDepreciation,
-      recentAssets,
+      recentAssets, // Lista de recentes é global
       highlights: {
         mostValuable,
         oldestAsset,
@@ -254,10 +237,11 @@ export default function DashboardPage() {
     setDashboardData(newDashboardData);
 
 
+    // Dados para gráficos (pie e bar) são baseados nos ativos filtrados para KPIs/Gráficos
     const categoryCounts: { [categoryId: string]: { name: string; count: number } } = {};
     const categoryValues: { [categoryId: string]: { name: string; purchaseValue: number; currentValue: number; depreciatedValue: number } } = {};
 
-    processedAssets.forEach(asset => {
+    assetsForKPIsAndCharts.forEach(asset => {
       const categoryName = asset.categoryName || 'Desconhecida';
       if (categoryCounts[asset.categoryId]) {
         categoryCounts[asset.categoryId].count++;
@@ -405,7 +389,7 @@ export default function DashboardPage() {
                     labelLine={false}
                     outerRadius="75%"
                     label={({ value }) => {
-                        if (value < (dashboardData.totalAssets * 0.02) && dashboardData.totalAssets > 10) return null; // Oculta para fatias muito pequenas
+                        if (value < (dashboardData.totalAssets * 0.02) && dashboardData.totalAssets > 10) return null; 
                         return `${value}`;
                       }
                     }
@@ -417,13 +401,14 @@ export default function DashboardPage() {
                   <ChartLegend
                     content={(props) => {
                       const { payload } = props;
+                      const totalItemsInChart = chartData.pieChartData.reduce((sum, item) => sum + item.value, 0);
                       return (
                         <div className="flex items-center justify-center gap-x-4 gap-y-2 flex-wrap pt-3">
                           {payload?.map((entry: any, index: number) => {
                             const categoryName = entry.value;
                             const categoryCount = entry.payload?.value;
-                            const percentage = dashboardData.totalAssets > 0
-                              ? ((categoryCount / dashboardData.totalAssets) * 100).toFixed(1)
+                            const percentage = totalItemsInChart > 0
+                              ? ((categoryCount / totalItemsInChart) * 100).toFixed(1)
                               : "0.0";
                             return (
                               <div key={`legend-${index}`} className="flex items-center gap-1.5 text-xs">
@@ -547,8 +532,8 @@ export default function DashboardPage() {
           <CardTitle>Visão geral dos ativos recentes</CardTitle>
           <CardDescription>
             {dashboardData.recentAssets.length > 0
-              ? `Os últimos ${dashboardData.recentAssets.length} ativos ${selectedDateFilter === 'allTime' ? 'adicionados ou com movimentações' : 'do período selecionado'}.`
-              : `Nenhum ativo recente ${selectedDateFilter === 'allTime' ? '' : 'no período selecionado'}.`
+              ? `Os últimos ${dashboardData.recentAssets.length > 5 ? 5 : dashboardData.recentAssets.length} ativos adicionados.`
+              : `Nenhum ativo cadastrado.`
             }
           </CardDescription>
         </CardHeader>
@@ -579,7 +564,7 @@ export default function DashboardPage() {
               </table>
             </div>
           ) : (
-            <p className="text-muted-foreground text-center py-4">Nenhum ativo cadastrado {selectedDateFilter === 'allTime' ? 'ainda' : 'para o período selecionado'}.</p>
+            <p className="text-muted-foreground text-center py-4">Nenhum ativo cadastrado ainda.</p>
           )}
         </CardContent>
       </Card>
@@ -587,8 +572,4 @@ export default function DashboardPage() {
   );
 }
 
-    
-
-    
-
-    
+      
