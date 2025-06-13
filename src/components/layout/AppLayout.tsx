@@ -105,6 +105,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
     setOpenSubmenus(prev => ({ ...prev, [label]: !prev[label] }));
   };
 
+  if (pathname.startsWith('/admin')) {
+    return <>{children}</>; // AdminLayout will take over for admin routes
+  }
+
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar className="border-r border-sidebar-border" collapsible="none">
