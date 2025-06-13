@@ -5,11 +5,11 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle, Search, BarChart3, ShoppingCart, TrendingUp, TrendingDown, DollarSign, CalendarDays, Award, Clock, PieChart as PieChartIcon, BarChartBig, Loader2, Filter, MapPin } from "lucide-react";
+import { PlusCircle, Search, BarChart3, ShoppingCart, TrendingUp, TrendingDown, DollarSign, CalendarDays, Award, Clock, PieChart as PieChartIcon, BarChartBig, Loader2, Filter, MapPin, Shapes } from "lucide-react";
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useLocations } from '@/contexts/LocationContext';
-import { useAssetModels } from '@/contexts/AssetModelContext'; // Import useAssetModels
+import { useAssetModels } from '@/contexts/AssetModelContext'; 
 import { parseISO, format as formatDateFn, isValid, addDays, differenceInCalendarMonths, subDays, subMonths, subYears, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -45,6 +45,11 @@ interface ValueByLocation {
   totalCurrentValue: number;
 }
 
+interface ValueByModel {
+  modelName: string;
+  count: number;
+}
+
 interface DashboardDataType {
   totalAssets: number;
   totalPurchaseValue: number;
@@ -56,13 +61,14 @@ interface DashboardDataType {
     oldestAsset: { name: string; acquiredDate: string };
   };
   valueByLocation: ValueByLocation[];
+  valueByModel: ValueByModel[]; 
 }
 
 interface ChartDataType {
   pieChartData: Array<{ name: string; value: number; fill: string }>;
   barChartData: Array<{ category: string; valorCompra: number; valorDepreciado: number; valorAtual: number }>;
-  // pieChartConfig é inferido ou não usado se a legenda é totalmente customizada
   barChartConfig: ChartConfig;
+  modelBarChartConfig: ChartConfig; 
 }
 
 const dateFilterOptions = [
@@ -92,7 +98,6 @@ export default function DashboardPage() {
 
     const today = new Date();
     
-    // Processamento de TODOS os ativos para dados gerais e lista de recentes
     const allProcessedAssets = assets.map(asset => {
       const category = getCategoryById(asset.categoryId);
       const modelName = getAssetModelNameById(asset.modelId);
@@ -139,7 +144,6 @@ export default function DashboardPage() {
       return { ...asset, calculatedCurrentValue, finalDepreciatedValue, categoryName: category?.name || 'Desconhecida', modelName };
     });
 
-    // Determinar a lista de ativos para KPIs e gráficos com base no filtro de data
     let filterStartDate: Date | null = null;
     switch (selectedDateFilter) {
       case 'last7days': filterStartDate = startOfDay(subDays(today, 7)); break;
@@ -167,10 +171,9 @@ export default function DashboardPage() {
       totalCurrentValue += asset.calculatedCurrentValue;
     });
 
-    // Lista de ativos recentes (os últimos 5 adicionados)
     const recentAssets = [...allProcessedAssets]
-        .slice(-5) // Pega os últimos 5 (mais recentemente adicionados)
-        .reverse() // Inverte para mostrar o mais novo primeiro na lista
+        .slice(-5) 
+        .reverse() 
         .map(asset => ({
             id: asset.id,
             name: asset.name,
@@ -180,7 +183,6 @@ export default function DashboardPage() {
             purchaseDate: formatDate(asset.purchaseDate),
         }));
 
-    // Destaques são baseados nos ativos filtrados para KPIs/Gráficos
     let mostValuable = { name: "N/A", value: 0 };
     if (assetsForKPIsAndCharts.length > 0) {
       const sortedByValue = [...assetsForKPIsAndCharts].sort((a, b) => b.calculatedCurrentValue - a.calculatedCurrentValue);
@@ -204,7 +206,6 @@ export default function DashboardPage() {
       }
     }
 
-    // Valor por local baseado nos ativos filtrados para KPIs/Gráficos
     const valueByLocationMap = new Map<string, number>();
     assetsForKPIsAndCharts.forEach(asset => {
       if (asset.locationId) {
@@ -222,22 +223,34 @@ export default function DashboardPage() {
     });
      valueByLocationData.sort((a, b) => b.totalCurrentValue - a.totalCurrentValue);
 
+    const valueByModelMap = new Map<string, number>();
+    assetsForKPIsAndCharts.forEach(asset => {
+      const modelName = asset.modelName || "Não especificado";
+      const currentCount = valueByModelMap.get(modelName) || 0;
+      valueByModelMap.set(modelName, currentCount + 1);
+    });
+    const valueByModelData: ValueByModel[] = [];
+    valueByModelMap.forEach((count, modelName) => {
+      valueByModelData.push({ modelName, count });
+    });
+    valueByModelData.sort((a, b) => b.count - a.count);
+
+
     const newDashboardData = {
-      totalAssets: assetsForKPIsAndCharts.length, // Total de ativos considera o filtro de data
+      totalAssets: assetsForKPIsAndCharts.length,
       totalPurchaseValue,
       totalCurrentValue,
       totalDepreciation,
-      recentAssets, // Lista de recentes é global
+      recentAssets,
       highlights: {
         mostValuable,
         oldestAsset,
       },
       valueByLocation: valueByLocationData,
+      valueByModel: valueByModelData,
     };
     setDashboardData(newDashboardData);
 
-
-    // Dados para gráficos (pie e bar) são baseados nos ativos filtrados para KPIs/Gráficos
     const categoryCounts: { [categoryId: string]: { name: string; count: number } } = {};
     const categoryValues: { [categoryId: string]: { name: string; purchaseValue: number; currentValue: number; depreciatedValue: number } } = {};
 
@@ -284,7 +297,12 @@ export default function DashboardPage() {
       category: { label: "Categoria" },
     } as ChartConfig;
 
-    setChartData({ pieChartData, barChartData, barChartConfig });
+    const modelBarChartConfig = {
+      count: { label: "Quantidade", color: "hsl(var(--chart-4))" }, // Usando chart-4
+      modelName: { label: "Modelo" },
+    } as ChartConfig;
+
+    setChartData({ pieChartData, barChartData, barChartConfig, modelBarChartConfig });
     setIsLoading(false);
 
   }, [assets, getCategoryById, selectedDateFilter, getLocationById, locations, getAssetModelNameById]);
@@ -388,8 +406,8 @@ export default function DashboardPage() {
                     nameKey="name"
                     labelLine={false}
                     outerRadius="75%"
-                    label={({ value }) => {
-                        if (value < (dashboardData.totalAssets * 0.02) && dashboardData.totalAssets > 10) return null; 
+                    label={({ value, name }) => {
+                        if (value < (dashboardData.totalAssets * 0.02) && dashboardData.totalAssets > 10 && chartData.pieChartData.length > 5) return null;
                         return `${value}`;
                       }
                     }
@@ -468,8 +486,8 @@ export default function DashboardPage() {
       </div>
 
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-         <Card className="lg:col-span-2">
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+         <Card className="md:col-span-1 lg:col-span-1">
           <CardHeader>
             <CardTitle className="flex items-center">
                 <MapPin className="mr-2 h-5 w-5 text-blue-500" />
@@ -507,7 +525,37 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="md:col-span-1 lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+                <Shapes className="mr-2 h-5 w-5 text-purple-500" />
+                Contagem de ativos por modelo
+            </CardTitle>
+            <CardDescription>
+                Distribuição quantitativa por modelo {selectedDateFilter !== 'allTime' && '(no período selecionado)'}.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+             {dashboardData.valueByModel.length > 0 ? (
+                <ChartContainer config={chartData.modelBarChartConfig} className="mx-auto aspect-video max-h-[250px]">
+                    <BarChart data={dashboardData.valueByModel} layout="vertical" margin={{ right: 30 }}>
+                        <CartesianGrid horizontal={false} />
+                        <XAxis type="number" dataKey="count" allowDecimals={false} />
+                        <YAxis type="category" dataKey="modelName" width={80} interval={0} tick={{ fontSize: 10 }} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <ChartLegend content={<ChartLegendContent />} />
+                        <Bar dataKey="count" fill="var(--color-count)" radius={4} />
+                    </BarChart>
+                </ChartContainer>
+            ) : (
+                <p className="text-muted-foreground text-center py-4">
+                    Nenhum dado para exibir {selectedDateFilter !== 'allTime' && 'no período selecionado'}.
+                </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-2 lg:col-span-1"> {/* Ajustado para ocupar 2 colunas em md se for o último ou único na linha md */}
           <CardHeader>
             <CardTitle>Destaques</CardTitle>
             <CardDescription>Informações importantes sobre seus ativos {selectedDateFilter !== 'allTime' && '(no período selecionado)'}.</CardDescription>
@@ -530,9 +578,9 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Visão geral dos ativos recentes</CardTitle>
-          <CardDescription>
+           <CardDescription>
             {dashboardData.recentAssets.length > 0
-              ? `Os últimos ${dashboardData.recentAssets.length > 5 ? 5 : dashboardData.recentAssets.length} ativos adicionados.`
+              ? `Os ${dashboardData.recentAssets.length < 5 ? dashboardData.recentAssets.length : 5} ativos mais recentemente adicionados ao sistema.`
               : `Nenhum ativo cadastrado.`
             }
           </CardDescription>
