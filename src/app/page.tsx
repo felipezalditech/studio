@@ -61,7 +61,7 @@ interface DashboardDataType {
 interface ChartDataType {
   pieChartData: Array<{ name: string; value: number; fill: string }>;
   barChartData: Array<{ category: string; valorCompra: number; valorDepreciado: number; valorAtual: number }>;
-  pieChartConfig: ChartConfig;
+  // pieChartConfig é inferido ou não usado se a legenda é totalmente customizada
   barChartConfig: ChartConfig;
 }
 
@@ -239,7 +239,7 @@ export default function DashboardPage() {
      valueByLocationData.sort((a, b) => b.totalCurrentValue - a.totalCurrentValue);
 
 
-    setDashboardData({
+    const newDashboardData = {
       totalAssets: assetsToDisplay.length,
       totalPurchaseValue,
       totalCurrentValue,
@@ -250,7 +250,9 @@ export default function DashboardPage() {
         oldestAsset,
       },
       valueByLocation: valueByLocationData,
-    });
+    };
+    setDashboardData(newDashboardData);
+
 
     const categoryCounts: { [categoryId: string]: { name: string; count: number } } = {};
     const categoryValues: { [categoryId: string]: { name: string; purchaseValue: number; currentValue: number; depreciatedValue: number } } = {};
@@ -291,12 +293,6 @@ export default function DashboardPage() {
       valorAtual: cat.currentValue,
     }));
 
-    const pieChartConfig = pieChartData.reduce((acc, item) => {
-      acc[item.name] = { label: item.name, color: item.fill };
-      return acc;
-    }, {} as ChartConfig);
-    pieChartConfig["value"] = { label: "Contagem" };
-
     const barChartConfig = {
       valorCompra: { label: "Valor de compra", color: "hsl(var(--chart-2))" },
       valorDepreciado: { label: "Valor depreciado", color: "hsl(var(--chart-3))" },
@@ -304,7 +300,7 @@ export default function DashboardPage() {
       category: { label: "Categoria" },
     } as ChartConfig;
 
-    setChartData({ pieChartData, barChartData, pieChartConfig, barChartConfig });
+    setChartData({ pieChartData, barChartData, barChartConfig });
     setIsLoading(false);
 
   }, [assets, getCategoryById, selectedDateFilter, getLocationById, locations, getAssetModelNameById]);
@@ -399,7 +395,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {chartData.pieChartData.length > 0 ? (
-              <ChartContainer config={chartData.pieChartConfig} className="mx-auto aspect-square max-h-[300px]">
+              <ChartContainer config={{}} className="mx-auto aspect-square max-h-[300px]">
                 <PieChart>
                   <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="name" />} />
                   <Pie
@@ -408,16 +404,41 @@ export default function DashboardPage() {
                     nameKey="name"
                     labelLine={false}
                     outerRadius="75%"
-                    label={{
-                        formatter: (value: number) => `${value}`,
-                        fontSize: 10,
-                      }}
+                    label={({ value }) => {
+                        if (value < (dashboardData.totalAssets * 0.02) && dashboardData.totalAssets > 10) return null; // Oculta para fatias muito pequenas
+                        return `${value}`;
+                      }
+                    }
                   >
                      {chartData.pieChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
-                  <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+                  <ChartLegend
+                    content={(props) => {
+                      const { payload } = props;
+                      return (
+                        <div className="flex items-center justify-center gap-x-4 gap-y-2 flex-wrap pt-3">
+                          {payload?.map((entry: any, index: number) => {
+                            const categoryName = entry.value;
+                            const categoryCount = entry.payload?.value;
+                            const percentage = dashboardData.totalAssets > 0
+                              ? ((categoryCount / dashboardData.totalAssets) * 100).toFixed(1)
+                              : "0.0";
+                            return (
+                              <div key={`legend-${index}`} className="flex items-center gap-1.5 text-xs">
+                                <span
+                                  className="h-2 w-2 shrink-0 rounded-[2px]"
+                                  style={{ backgroundColor: entry.color }}
+                                />
+                                <span>{categoryName}: {percentage}%</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    }}
+                  />
                 </PieChart>
               </ChartContainer>
             ) : (
@@ -565,6 +586,8 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
 
     
 
