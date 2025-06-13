@@ -5,24 +5,22 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Users, FileText, BarChart3 } from 'lucide-react';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from 'next/navigation';
 
 export default function AdminDashboardPage() {
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
 
-  // Placeholder functions - in a real app, these would navigate or open modals
   const handleManageCompanies = () => {
-    // router.push('/admin/companies'); // Example navigation
-    alert("Gerenciar Empresas (funcionalidade futura)");
+    router.push('/admin/companies');
   };
 
   const handleManageLicenses = () => {
-    // router.push('/admin/licenses'); // Example navigation
+    // router.push('/admin/licenses');
     alert("Gerenciar Licenças (funcionalidade futura)");
   };
 
   const handleViewReports = () => {
-    // router.push('/admin/reports'); // Example navigation
+    // router.push('/admin/reports');
     alert("Visualizar Relatórios (funcionalidade futura)");
   };
 
