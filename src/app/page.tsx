@@ -402,7 +402,7 @@ export default function DashboardPage() {
               <ChartContainer config={chartData.pieChartConfig} className="mx-auto aspect-square max-h-[300px]">
                 <PieChart>
                   <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="name" />} />
-                  <Pie data={chartData.pieChartData} dataKey="value" nameKey="name" labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`} >
+                  <Pie data={chartData.pieChartData} dataKey="value" nameKey="name" labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`} >
                      {chartData.pieChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
@@ -555,3 +555,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
