@@ -402,7 +402,21 @@ export default function DashboardPage() {
               <ChartContainer config={chartData.pieChartConfig} className="mx-auto aspect-square max-h-[300px]">
                 <PieChart>
                   <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="name" />} />
-                  <Pie data={chartData.pieChartData} dataKey="value" nameKey="name" labelLine={false} label={({ percent }) => `${(percent * 100).toFixed(1)}%`} >
+                  <Pie 
+                    data={chartData.pieChartData} 
+                    dataKey="value" 
+                    nameKey="name" 
+                    labelLine={false}
+                    outerRadius="75%"
+                    label={{
+                        formatter: (_value: number, entry: any) => {
+                          const percentValue = entry.payload.percent;
+                          if (percentValue * 100 < 2) return null;
+                          return `${(percentValue * 100).toFixed(1)}%`;
+                        },
+                        fontSize: 10,
+                      }}
+                  >
                      {chartData.pieChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
