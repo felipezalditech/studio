@@ -78,7 +78,6 @@ async function getCroppedImg(
     return null;
   }
 
-  // Ensure pixelCrop dimensions are valid before proceeding
   if (!pixelCrop || pixelCrop.width <= 0 || pixelCrop.height <= 0) {
     console.error("getCroppedImg: Invalid pixelCrop dimensions received.", pixelCrop);
     return null;
@@ -119,20 +118,19 @@ async function getCroppedImg(
   let outputHeight = pixelCrop.height;
 
   if (outputOptions.maxWidth && outputOptions.maxHeight) {
-    // outputWidth and outputHeight are guaranteed to be > 0 here due to the check above
     const ratio = Math.min(outputOptions.maxWidth / outputWidth, outputOptions.maxHeight / outputHeight);
     if (ratio < 1) { 
         outputWidth *= ratio;
         outputHeight *= ratio;
     }
   } else if (outputOptions.maxWidth) {
-    if (outputWidth > outputOptions.maxWidth) { // outputWidth > 0
+    if (outputWidth > outputOptions.maxWidth) { 
         const ratio = outputOptions.maxWidth / outputWidth;
         outputHeight *= ratio;
         outputWidth = outputOptions.maxWidth;
     }
   } else if (outputOptions.maxHeight) {
-    if (outputHeight > outputOptions.maxHeight) { // outputHeight > 0
+    if (outputHeight > outputOptions.maxHeight) { 
         const ratio = outputOptions.maxHeight / outputHeight;
         outputWidth *= ratio;
         outputHeight = outputOptions.maxHeight;
@@ -146,8 +144,7 @@ async function getCroppedImg(
     console.warn("Output dimensions for cropped image are zero or negative after resize. Defaulting to 1x1.", {outputWidth, outputHeight, pixelCrop});
     outputWidth = 1;
     outputHeight = 1;
-}
-
+  }
 
   const finalCanvas = document.createElement('canvas');
   finalCanvas.width = outputWidth;
@@ -456,9 +453,18 @@ export default function AdminPersonalizationPage() {
                                 accept="image/*"
                                 ref={logoInputRef}
                                 onChange={(e) => handleFileSelectForCropping(e, 'logoUrl')}
-                                className="cursor-pointer flex-grow"
+                                className="hidden"
                               />
                             </FormControl>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => logoInputRef.current?.click()}
+                                className="flex-grow"
+                              >
+                                <UploadCloud className="mr-2 h-4 w-4" />
+                                {field.value ? "Alterar Logo" : "Selecionar Logo"}
+                            </Button>
                             {field.value && (
                               <Button
                                 type="button"
@@ -466,7 +472,6 @@ export default function AdminPersonalizationPage() {
                                 size="icon"
                                 onClick={() => {
                                   field.onChange('');
-                                  if (logoInputRef.current) logoInputRef.current.value = '';
                                 }}
                                 title="Remover logo atual"
                                 className="shrink-0"
@@ -517,9 +522,18 @@ export default function AdminPersonalizationPage() {
                                 accept="image/*"
                                 ref={bgImageInputRef}
                                 onChange={(e) => handleFileSelectForCropping(e, 'backgroundImageUrl')}
-                                className="cursor-pointer flex-grow"
+                                className="hidden"
                               />
                             </FormControl>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => bgImageInputRef.current?.click()}
+                                className="flex-grow"
+                              >
+                                <UploadCloud className="mr-2 h-4 w-4" />
+                                {field.value ? "Alterar Imagem" : "Selecionar Imagem"}
+                            </Button>
                             {field.value && (
                               <Button
                                 type="button"
@@ -527,7 +541,6 @@ export default function AdminPersonalizationPage() {
                                 size="icon"
                                 onClick={() => {
                                   field.onChange('');
-                                  if (bgImageInputRef.current) bgImageInputRef.current.value = '';
                                 }}
                                 title="Remover imagem de fundo selecionada"
                                 className="shrink-0"
