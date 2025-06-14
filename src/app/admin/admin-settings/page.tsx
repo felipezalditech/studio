@@ -137,7 +137,6 @@ async function getCroppedImg(
   
   if (outputWidth === 0 || outputHeight === 0) {
     console.warn("Output dimensions for cropped image are zero. Check crop area and resize options.");
-    // Fallback to a very small canvas to avoid errors with toDataURL on 0-dim canvas
     outputWidth = Math.max(1, outputWidth);
     outputHeight = Math.max(1, outputHeight);
 }
@@ -233,7 +232,7 @@ export default function AdminPersonalizationPage() {
     }
     try {
       const options = currentFieldToUpdate === 'logoUrl'
-        ? { type: 'image/png' as const, maxWidth: 480, maxHeight: Math.round((480 * 56) / 240) } // Approx 480x112
+        ? { type: 'image/png' as const, maxWidth: 480, maxHeight: Math.round((480 * 56) / 240) } 
         : { type: 'image/jpeg' as const, quality: 0.85, maxWidth: 1024, maxHeight: 1024 };
 
       const croppedImage = await getCroppedImg(
@@ -312,7 +311,7 @@ export default function AdminPersonalizationPage() {
   const previewRightPanelStyle: React.CSSProperties = {};
   if (watchedValues.backgroundImageUrl) {
     previewRightPanelStyle.backgroundImage = `url(${watchedValues.backgroundImageUrl})`;
-    previewRightPanelStyle.backgroundSize = 'cover'; // Alterado de contain para cover
+    previewRightPanelStyle.backgroundSize = 'cover';
     previewRightPanelStyle.backgroundPosition = 'center';
     previewRightPanelStyle.backgroundRepeat = 'no-repeat';
   } else {
@@ -448,7 +447,7 @@ export default function AdminPersonalizationPage() {
                             Imagem de fundo da tela de login
                           </FormLabel>
                           <FormDescUI className="pb-2">
-                            Se nenhuma imagem for selecionada, uma cor padrão será usada na coluna da direita.
+                            descreva o tamanho exato da imagem de fundo em pixel. de forma que ela não corte e nem perca qualidade
                           </FormDescUI>
                           <div className="flex items-center gap-2">
                             <FormControl>
@@ -656,11 +655,11 @@ export default function AdminPersonalizationPage() {
                           >
                             <div className="w-full max-w-[90%] space-y-2">
                               {watchedValues.logoUrl ? (
-                                <div className="mx-auto mb-5 mt-1 h-[14px] w-auto max-w-[50px] relative">
+                                <div className="mx-auto mb-2 mt-1 h-[14px] w-auto max-w-[50px] relative">
                                   <NextImage src={watchedValues.logoUrl} alt="Preview Logo" fill style={{objectFit:"contain"}} data-ai-hint="login logo dynamic preview"/>
                                 </div>
                               ) : (
-                                 <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-4 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
+                                 <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-1.5 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
                               )}
 
                               <p className="text-center text-[13px] font-bold mb-1.5" style={previewDescriptionStyle}>
