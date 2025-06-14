@@ -24,7 +24,7 @@ const loginScreenBrandingSchema = z.object({
   loginButtonColor: optionalHexColor,
   cardBackgroundColor: optionalHexColor,
   inputBackgroundColor: optionalHexColor,
-  inputBorderColor: optionalHexColor, // Novo campo
+  inputBorderColor: optionalHexColor, 
   labelTextColor: optionalHexColor,
   descriptionTextColor: optionalHexColor,
 });
@@ -44,7 +44,7 @@ export default function AdminPersonalizationPage() {
       loginButtonColor: loginScreenBranding.loginButtonColor || '#3F51B5',
       cardBackgroundColor: loginScreenBranding.cardBackgroundColor || '',
       inputBackgroundColor: loginScreenBranding.inputBackgroundColor || '',
-      inputBorderColor: loginScreenBranding.inputBorderColor || '', // Novo campo
+      inputBorderColor: loginScreenBranding.inputBorderColor || '', 
       labelTextColor: loginScreenBranding.labelTextColor || '',
       descriptionTextColor: loginScreenBranding.descriptionTextColor || '',
     },
@@ -59,7 +59,7 @@ export default function AdminPersonalizationPage() {
       loginButtonColor: loginScreenBranding.loginButtonColor || '#3F51B5',
       cardBackgroundColor: loginScreenBranding.cardBackgroundColor || '',
       inputBackgroundColor: loginScreenBranding.inputBackgroundColor || '',
-      inputBorderColor: loginScreenBranding.inputBorderColor || '', // Novo campo
+      inputBorderColor: loginScreenBranding.inputBorderColor || '', 
       labelTextColor: loginScreenBranding.labelTextColor || '',
       descriptionTextColor: loginScreenBranding.descriptionTextColor || '',
     });
@@ -73,7 +73,7 @@ export default function AdminPersonalizationPage() {
       loginButtonColor: data.loginButtonColor || '#3F51B5',
       cardBackgroundColor: data.cardBackgroundColor || '',
       inputBackgroundColor: data.inputBackgroundColor || '',
-      inputBorderColor: data.inputBorderColor || '', // Novo campo
+      inputBorderColor: data.inputBorderColor || '', 
       labelTextColor: data.labelTextColor || '',
       descriptionTextColor: data.descriptionTextColor || '',
     }));
@@ -152,7 +152,6 @@ export default function AdminPersonalizationPage() {
     previewInputStyle.borderWidth = '1px';
     previewInputStyle.borderStyle = 'solid';
   } else {
-    // Usa a cor de borda padrão do tema para a pré-visualização ou a cor de fundo do input se o fundo do card for diferente
     previewInputStyle.borderColor = 'hsl(var(--border))'; 
     previewInputStyle.borderWidth = '1px';
     previewInputStyle.borderStyle = 'solid';
@@ -364,7 +363,7 @@ export default function AdminPersonalizationPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center text-lg font-semibold">
-                          <Spline className="mr-2 h-5 w-5" /> {/* Ícone Spline como sugestão para borda */}
+                          <Spline className="mr-2 h-5 w-5" /> 
                           Cor da borda dos campos de entrada
                         </FormLabel>
                         <FormDescription className="pb-2">
@@ -391,7 +390,7 @@ export default function AdminPersonalizationPage() {
                           Cor do texto dos rótulos
                         </FormLabel>
                         <FormDescription className="pb-2">
-                          Para "Email" e "Senha". Deixe em branco para padrão.
+                          Para "E-mail" e "Senha". Deixe em branco para padrão.
                         </FormDescription>
                         <div className="flex items-center gap-2 max-w-md">
                           <FormControl>
@@ -460,7 +459,7 @@ export default function AdminPersonalizationPage() {
                             </p>
                             
                             <div className="mb-2">
-                                <label className="block text-[10px] font-medium mb-0.5" style={previewLabelStyle}>Email</label>
+                                <label className="block text-[10px] font-medium mb-0.5" style={previewLabelStyle}>E-mail</label>
                                 <div className="h-6 rounded-sm" style={previewInputStyle}></div>
                             </div>
                             
