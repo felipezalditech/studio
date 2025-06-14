@@ -55,7 +55,7 @@ export default function AdminPersonalizationPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Personalização do Sistema</h1>
+          <h1 className="text-3xl font-bold">Personalização do sistema</h1>
           <p className="text-muted-foreground">
             Customize a aparência da tela de login e outros elementos visuais.
           </p>
@@ -66,7 +66,7 @@ export default function AdminPersonalizationPage() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Palette className="mr-2 h-5 w-5 text-primary" />
-            Personalização da Tela de Login
+            Personalização da tela de login
           </CardTitle>
           <CardDescription>
             Ajuste o logo, imagem de fundo e cores dos botões da sua página de login.
@@ -82,7 +82,7 @@ export default function AdminPersonalizationPage() {
                   <FormItem>
                     <FormLabel className="flex items-center text-lg font-semibold">
                        <UploadCloud className="mr-2 h-5 w-5" />
-                      Logo na Tela de Login
+                      Logo na tela de login
                     </FormLabel>
                      <FormDescription className="pb-2">
                         Faça o upload do logo que será exibido na tela de login unificada.
@@ -132,13 +132,13 @@ export default function AdminPersonalizationPage() {
               
               <div className="space-y-4 mt-8">
                 <div>
-                  <h3 className="text-lg font-semibold">Imagem de Fundo da Tela de Login</h3>
+                  <h3 className="text-lg font-semibold">Imagem de fundo da tela de login</h3>
                   <p className="text-muted-foreground">
                     (Em desenvolvimento) Escolha uma imagem de fundo para a página de login.
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold">Cores do Botão de Login</h3>
+                  <h3 className="text-lg font-semibold">Cores do botão de login</h3>
                   <p className="text-muted-foreground">
                     (Em desenvolvimento) Personalize as cores do botão principal da tela de login.
                   </p>
@@ -146,7 +146,7 @@ export default function AdminPersonalizationPage() {
                  <div className="pt-6 flex justify-end">
                   <Button type="submit" disabled={form.formState.isSubmitting}>
                     <Save className="mr-2 h-4 w-4" />
-                    {form.formState.isSubmitting ? "Salvando..." : "Salvar Logo"}
+                    {form.formState.isSubmitting ? "Salvando..." : "Salvar logo"}
                   </Button>
                 </div>
               </div>
