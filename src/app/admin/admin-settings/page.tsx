@@ -409,11 +409,11 @@ export default function AdminPersonalizationPage() {
                         Pré-visualização da tela de login
                     </div>
                     <div 
-                        className="relative w-full aspect-[9/16] max-h-[700px] sm:max-h-[600px] border-2 border-border rounded-xl overflow-hidden shadow-lg"
+                        className="relative w-full aspect-video max-h-[450px] sm:max-h-[400px] border-2 border-border rounded-xl overflow-hidden shadow-lg"
                         style={previewPageStyle}
                     >
                         <div 
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-[300px] p-5 rounded-lg shadow-2xl backdrop-blur-sm bg-opacity-80" // Mantido para visibilidade do card sobre a imagem
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-[300px] p-5 rounded-lg shadow-2xl backdrop-blur-sm bg-opacity-80" 
                             style={previewCardStyle}
                         >
                             {watchedValues.logoUrl ? (
@@ -452,3 +452,4 @@ export default function AdminPersonalizationPage() {
     </div>
   );
 }
+
