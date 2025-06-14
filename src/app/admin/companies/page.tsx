@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { PlusCircle, Edit2, Trash2, MoreHorizontal, Search } from 'lucide-react';
+import { PlusCircle, Edit2, Trash2, MoreHorizontal, Search, Building2 } from 'lucide-react';
 import type { ClientCompany } from '@/types/admin'; // Supondo que você tenha este tipo definido
 import { Input } from '@/components/ui/input';
 // import { CompanyFormDialog } from '@/components/admin/companies/CompanyFormDialog'; // Será criado depois
