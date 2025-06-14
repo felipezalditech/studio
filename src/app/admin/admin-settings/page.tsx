@@ -37,7 +37,7 @@ type LoginScreenBrandingFormValues = z.infer<typeof loginScreenBrandingSchema>;
 
 const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
-    const image = new window.Image();
+    const image = new window.Image(); // Usar window.Image explicitamente
     image.addEventListener('load', () => resolve(image));
     image.addEventListener('error', (error) => reject(error));
     image.setAttribute('crossOrigin', 'anonymous');
@@ -64,6 +64,10 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string>
   if (!ctx) {
     throw new Error("Não foi possível obter o contexto 2D do canvas.");
   }
+
+  // Configura a qualidade do suavização da imagem para alta ao redimensionar
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
   canvas.width = LOGO_OUTPUT_WIDTH;
   canvas.height = LOGO_OUTPUT_HEIGHT;
