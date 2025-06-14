@@ -88,16 +88,14 @@ export default function AdminPersonalizationPage() {
       };
       reader.readAsDataURL(file);
     } else {
-      // If no file is selected (e.g., user cancels file dialog), clear the field
       fieldOnChange('');
     }
   };
 
   const getPreviewLoginButtonTextColor = (hexColor: string | undefined): string => {
-    if (!hexColor || !hexColor.startsWith('#')) return '#FFFFFF'; // Default to white for invalid or no color
+    if (!hexColor || !hexColor.startsWith('#')) return '#FFFFFF'; 
     const hex = hexColor.replace('#', '');
     
-    // Handle 3-digit hex
     let rStr, gStr, bStr;
     if (hex.length === 3) {
         rStr = hex[0] + hex[0];
@@ -108,18 +106,17 @@ export default function AdminPersonalizationPage() {
         gStr = hex.substring(2, 4);
         bStr = hex.substring(4, 6);
     } else {
-        return '#FFFFFF'; // Invalid hex length
+        return '#FFFFFF'; 
     }
 
     const r = parseInt(rStr, 16);
     const g = parseInt(gStr, 16);
     const b = parseInt(bStr, 16);
 
-    if (isNaN(r) || isNaN(g) || isNaN(b)) return '#FFFFFF'; // Parsing failed
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return '#FFFFFF'; 
 
-    // Calculate brightness (standard formula)
     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    return brightness > 125 ? '#000000' : '#FFFFFF'; // Return black for light backgrounds, white for dark
+    return brightness > 125 ? '#000000' : '#FFFFFF'; 
   };
 
 
@@ -130,21 +127,21 @@ export default function AdminPersonalizationPage() {
     previewPageStyle.backgroundPosition = 'center';
     previewPageStyle.backgroundRepeat = 'no-repeat';
   } else {
-    previewPageStyle.backgroundColor = 'hsl(var(--muted) / 0.4)'; // Fallback similar to login page
+    previewPageStyle.backgroundColor = 'hsl(var(--muted) / 0.4)'; 
   }
 
   const previewCardStyle: React.CSSProperties = {};
   if (watchedValues.cardBackgroundColor) {
     previewCardStyle.backgroundColor = watchedValues.cardBackgroundColor;
   } else {
-    previewCardStyle.backgroundColor = 'hsl(var(--card))'; // Fallback from theme
+    previewCardStyle.backgroundColor = 'hsl(var(--card))'; 
   }
 
   const previewInputStyle: React.CSSProperties = {};
   if (watchedValues.inputBackgroundColor) {
     previewInputStyle.backgroundColor = watchedValues.inputBackgroundColor;
   } else {
-     previewInputStyle.backgroundColor = 'hsl(var(--input))'; // Fallback from theme
+     previewInputStyle.backgroundColor = 'hsl(var(--input))'; 
   }
   
   const previewLabelStyle: React.CSSProperties = {};
@@ -162,7 +159,7 @@ export default function AdminPersonalizationPage() {
   }
 
   const previewLoginButtonStyle: React.CSSProperties = {
-    backgroundColor: watchedValues.loginButtonColor || '#3F51B5', // Default or theme primary
+    backgroundColor: watchedValues.loginButtonColor || '#3F51B5', 
     color: getPreviewLoginButtonTextColor(watchedValues.loginButtonColor || '#3F51B5'),
   };
 
@@ -192,7 +189,6 @@ export default function AdminPersonalizationPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Coluna de Formulário */}
                 <div className="space-y-8">
                   <FormField
                     control={form.control}
@@ -402,7 +398,6 @@ export default function AdminPersonalizationPage() {
                   </div>
                 </div>
 
-                {/* Coluna de Pré-visualização */}
                 <div className="mt-8 md:mt-0 md:sticky md:top-20 self-start">
                     <div className="flex items-center mb-2 text-lg font-semibold">
                         <Eye className="mr-2 h-5 w-5 text-primary" />
@@ -413,32 +408,32 @@ export default function AdminPersonalizationPage() {
                         style={previewPageStyle}
                     >
                         <div 
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-[300px] p-5 rounded-lg shadow-2xl backdrop-blur-sm bg-opacity-80" 
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-[280px] p-4 rounded-lg shadow-2xl backdrop-blur-sm bg-opacity-80" 
                             style={previewCardStyle}
                         >
                             {watchedValues.logoUrl ? (
-                                <div className="mx-auto mb-3 h-10 w-auto max-w-[120px] relative">
+                                <div className="mx-auto mb-2 h-8 w-auto max-w-[100px] relative">
                                     <Image src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
                                 </div>
                             ) : (
-                                <div className="h-10 w-24 bg-muted/70 rounded mx-auto mb-3 flex items-center justify-center text-xs" style={{color: previewDescriptionStyle.color || 'hsl(var(--muted-foreground))'}}>Logo Aqui</div>
+                                <div className="h-8 w-20 bg-muted/70 rounded mx-auto mb-2 flex items-center justify-center text-[9px]" style={{color: previewDescriptionStyle.color || 'hsl(var(--muted-foreground))'}}>Logo Aqui</div>
                             )}
                             
-                            <p className="text-center text-[10px] mb-4" style={previewDescriptionStyle}>
+                            <p className="text-center text-[10px] mb-3" style={previewDescriptionStyle}>
                                 Acesse sua conta Zaldi Imo
                             </p>
                             
-                            <div className="mb-2.5">
+                            <div className="mb-2">
                                 <label className="block text-[10px] font-medium mb-0.5" style={previewLabelStyle}>Email</label>
-                                <div className="h-7 rounded-sm" style={previewInputStyle}></div>
+                                <div className="h-6 rounded-sm" style={previewInputStyle}></div>
                             </div>
                             
-                            <div className="mb-3">
+                            <div className="mb-2">
                                 <label className="block text-[10px] font-medium mb-0.5" style={previewLabelStyle}>Senha</label>
-                                <div className="h-7 rounded-sm" style={previewInputStyle}></div>
+                                <div className="h-6 rounded-sm" style={previewInputStyle}></div>
                             </div>
                             
-                            <div className="h-8 rounded-md flex items-center justify-center text-xs font-medium" style={previewLoginButtonStyle}>
+                            <div className="h-7 rounded-md flex items-center justify-center text-[10px] font-medium" style={previewLoginButtonStyle}>
                                 Entrar
                             </div>
                         </div>
@@ -452,4 +447,3 @@ export default function AdminPersonalizationPage() {
     </div>
   );
 }
-
