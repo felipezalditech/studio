@@ -156,31 +156,49 @@ export default function UnifiedLoginPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                    <Label htmlFor="email" style={labelStyle}>E-mail</Label>
+                <div className="space-y-1">
+                  <div className="relative">
+                    <Label
+                      htmlFor="email"
+                      className="absolute left-3 top-2 text-xs font-medium pointer-events-none"
+                      style={labelStyle}
+                    >
+                      E-mail
+                    </Label>
                     <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    style={inputStyle}
+                      id="email"
+                      type="email"
+                      placeholder="Informe seu E-mail"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={isLoading}
+                      className="h-16 w-full rounded-md border bg-transparent px-3 pb-2 pt-7 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={inputStyle}
                     />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="password" style={labelStyle}>Senha</Label>
+                <div className="space-y-1">
+                  <div className="relative">
+                    <Label
+                      htmlFor="password"
+                      className="absolute left-3 top-2 text-xs font-medium pointer-events-none"
+                      style={labelStyle}
+                    >
+                      Senha
+                    </Label>
                     <Input
-                    id="password"
-                    type="password"
-                    placeholder="********"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    style={inputStyle}
+                      id="password"
+                      type="password"
+                      placeholder="Informe sua senha"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={isLoading}
+                      className="h-16 w-full rounded-md border bg-transparent px-3 pb-2 pt-7 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={inputStyle}
                     />
+                  </div>
                 </div>
                 <Button 
                     type="submit" 
@@ -217,4 +235,3 @@ export default function UnifiedLoginPage() {
     </div>
   );
 }
-

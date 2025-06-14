@@ -168,21 +168,13 @@ export default function AdminPersonalizationPage() {
     previewLeftPanelStyle.backgroundColor = 'hsl(var(--background))';
   }
 
-  const previewInputStyle: React.CSSProperties = {};
-  if (watchedValues.inputBackgroundColor) {
-    previewInputStyle.backgroundColor = watchedValues.inputBackgroundColor;
-  } else {
-     previewInputStyle.backgroundColor = 'hsl(var(--input))';
-  }
-  if (watchedValues.inputBorderColor) {
-    previewInputStyle.borderColor = watchedValues.inputBorderColor;
-    previewInputStyle.borderWidth = '1px';
-    previewInputStyle.borderStyle = 'solid';
-  } else {
-    previewInputStyle.borderColor = 'hsl(var(--border))'; 
-    previewInputStyle.borderWidth = '1px';
-    previewInputStyle.borderStyle = 'solid';
-  }
+  const previewInputStyle: React.CSSProperties = {
+    backgroundColor: watchedValues.inputBackgroundColor || 'hsl(var(--input))',
+    borderColor: watchedValues.inputBorderColor || 'hsl(var(--border))',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+  };
+
 
   const previewLabelStyle: React.CSSProperties = {};
   if (watchedValues.labelTextColor) {
@@ -496,7 +488,7 @@ export default function AdminPersonalizationPage() {
                                   <NextImage src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
                                 </div>
                               ) : (
-                                 <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-3 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
+                                 <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-2 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
                               )}
 
                               <p className="text-center text-[13px] font-bold mb-1.5" style={previewDescriptionStyle}>
@@ -504,14 +496,33 @@ export default function AdminPersonalizationPage() {
                               </p>
 
                               <div className="mb-1.5">
-                                <label className="block text-[8px] font-medium mb-0.5" style={previewLabelStyle}>E-mail</label>
-                                <div className="h-4 rounded-sm" style={previewInputStyle}></div>
+                                <div
+                                  className="h-7 rounded-sm px-1.5 py-0.5 flex flex-col justify-center border"
+                                  style={previewInputStyle}
+                                >
+                                  <span className="block text-[7px] font-medium leading-none" style={previewLabelStyle}>
+                                    E-mail
+                                  </span>
+                                  <span className="block text-[6px] leading-none" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                                    Informe seu E-mail
+                                  </span>
+                                </div>
                               </div>
 
                               <div className="mb-1.5">
-                                <label className="block text-[8px] font-medium mb-0.5" style={previewLabelStyle}>Senha</label>
-                                <div className="h-4 rounded-sm" style={previewInputStyle}></div>
+                                <div
+                                  className="h-7 rounded-sm px-1.5 py-0.5 flex flex-col justify-center border"
+                                  style={previewInputStyle}
+                                >
+                                  <span className="block text-[7px] font-medium leading-none" style={previewLabelStyle}>
+                                    Senha
+                                  </span>
+                                  <span className="block text-[6px] leading-none" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                                    Informe sua senha
+                                  </span>
+                                </div>
                               </div>
+
 
                               <div className="h-5 rounded-sm flex items-center justify-center text-[8px] font-medium" style={previewLoginButtonStyle}>
                                 Entrar
@@ -539,4 +550,3 @@ export default function AdminPersonalizationPage() {
     </>
   );
 }
-
