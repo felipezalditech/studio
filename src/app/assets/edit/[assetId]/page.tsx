@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef, use } from 'react'; // Importado 'use'
+import React, { useState, useEffect, useRef, use } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -56,9 +56,11 @@ export default function EditAssetPage() {
   const { categories } = useCategories();
   const { toast } = useToast();
   const router = useRouter();
+  
+  // Envolvendo useParams com React.use()
   const paramsFromHook = useParams();
-  const actualParams = use(paramsFromHook); // Aplicando React.use()
-  const assetId = actualParams.assetId as string; // Usando o resultado de use()
+  const actualParams = use(paramsFromHook); 
+  const assetId = actualParams?.assetId as string | undefined;
 
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -85,7 +87,13 @@ export default function EditAssetPage() {
   });
 
   useEffect(() => {
-    if (assetId && assets.length > 0) {
+    if (!assetId) {
+      setAssetNotFound(true);
+      setIsLoading(false);
+      return;
+    }
+
+    if (assets.length > 0) {
       const assetToEdit = getAssetById(assetId);
       if (assetToEdit) {
         form.reset({
@@ -104,11 +112,9 @@ export default function EditAssetPage() {
         setAssetNotFound(true);
         setIsLoading(false);
       }
-    } else if (assetId && assets.length === 0) {
+    } else {
+      // assets array might still be loading from localStorage
       setIsLoading(true);
-    } else if (!assetId) {
-      setIsLoading(false);
-      setAssetNotFound(true);
     }
   }, [assetId, form, getAssetById, assets]);
 
@@ -213,7 +219,7 @@ export default function EditAssetPage() {
     return <div className="flex justify-center items-center h-screen"><p>Carregando dados do ativo...</p></div>;
   }
 
-  if (assetNotFound) {
+  if (assetNotFound || !assetId) {
     return (
       <div className="space-y-6 text-center">
         <h1 className="text-3xl font-bold">Ativo não encontrado</h1>
@@ -607,3 +613,5 @@ export default function EditAssetPage() {
     </>
   );
 }
+
+    
