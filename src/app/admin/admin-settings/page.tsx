@@ -1,20 +1,24 @@
 
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import NextImage from 'next/image'; 
+import NextImage from 'next/image';
+import Cropper, { type Area, type Point } from 'react-easy-crop';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as FormDescUI } from "@/components/ui/form"; 
-import { Palette, UploadCloud, XCircle, Save, ImageIcon as ImageIconLucide, Brush, Square, Type, Columns2, Eye, Spline } from "lucide-react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as FormDescUI } from "@/components/ui/form";
+import { Palette, UploadCloud, XCircle, Save, ImageIcon as ImageIconLucide, Brush, Square, Type, Columns2, Eye, Spline, ImageUp, Scissors, CheckCircle2, AlertCircle, ZoomIn } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useLoginScreenBranding } from '@/hooks/useLoginScreenBranding';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Slider } from '@/components/ui/slider';
+
 
 const hexColorRegex = /^#([0-9A-Fa-f]{3}){1,2}$/;
 const optionalHexColor = z.string().regex(hexColorRegex, "Cor inválida. Use o formato hexadecimal (ex: #RRGGBB).").optional().or(z.literal(''));
@@ -23,7 +27,7 @@ const loginScreenBrandingSchema = z.object({
   logoUrl: z.string().optional(),
   backgroundImageUrl: z.string().optional(),
   loginButtonColor: optionalHexColor,
-  cardBackgroundColor: optionalHexColor, 
+  cardBackgroundColor: optionalHexColor,
   inputBackgroundColor: optionalHexColor,
   inputBorderColor: optionalHexColor,
   labelTextColor: optionalHexColor,
@@ -31,12 +35,22 @@ const loginScreenBrandingSchema = z.object({
 });
 type LoginScreenBrandingFormValues = z.infer<typeof loginScreenBrandingSchema>;
 
+const LOGO_OUTPUT_WIDTH = 240;
+const LOGO_OUTPUT_HEIGHT = 80;
+
 
 export default function AdminPersonalizationPage() {
   const [loginScreenBranding, setLoginScreenBranding] = useLoginScreenBranding();
   const { toast } = useToast();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bgImageInputRef = useRef<HTMLInputElement>(null);
+
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
+
 
   const form = useForm<LoginScreenBrandingFormValues>({
     resolver: zodResolver(loginScreenBrandingSchema),
@@ -82,7 +96,123 @@ export default function AdminPersonalizationPage() {
     toast({ title: "Sucesso!", description: "Personalização da tela de login atualizada." });
   };
 
-  const handleFileChange = (
+  const createImage = (url: string): Promise<HTMLImageElement> =>
+    new Promise((resolve, reject) => {
+      const image = new window.Image();
+      image.addEventListener('load', () => resolve(image));
+      image.addEventListener('error', (error) => reject(error));
+      image.setAttribute('crossOrigin', 'anonymous'); 
+      image.src = url;
+    });
+
+  const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<string | null> => {
+    if (!pixelCrop || typeof pixelCrop.width !== 'number' || typeof pixelCrop.height !== 'number' || typeof pixelCrop.x !== 'number' || typeof pixelCrop.y !== 'number') {
+      console.error('pixelCrop inválido:', pixelCrop);
+      throw new Error("Dados de corte inválidos recebidos.");
+    }
+    if (pixelCrop.width <= 0 || pixelCrop.height <= 0) {
+      console.error('Dimensões de corte inválidas:', pixelCrop);
+      throw new Error("A área de corte selecionada tem dimensões inválidas (largura ou altura zero ou negativa).");
+    }
+
+    const image = await createImage(imageSrc);
+    const canvas = document.createElement('canvas');
+    canvas.width = LOGO_OUTPUT_WIDTH;
+    canvas.height = LOGO_OUTPUT_HEIGHT;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      throw new Error("Não foi possível obter o contexto 2D do canvas.");
+    }
+    
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    try {
+      ctx.drawImage(
+        image,
+        pixelCrop.x,
+        pixelCrop.y,
+        pixelCrop.width,
+        pixelCrop.height,
+        0,
+        0,
+        LOGO_OUTPUT_WIDTH,
+        LOGO_OUTPUT_HEIGHT
+      );
+    } catch (e: any) {
+      console.error("Erro ao desenhar imagem no canvas:", e);
+      throw new Error(`Erro ao processar a imagem (drawImage): ${e.message}`);
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        resolve(dataUrl);
+      } catch (e: any) {
+        console.error("Erro ao converter canvas para Data URL:", e);
+        reject(new Error(`Erro ao gerar a imagem final (toDataURL): ${e.message}`);
+      }
+    });
+  };
+
+
+  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleLogoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageToCrop(reader.result as string);
+        setIsCropDialogOpen(true);
+      };
+      reader.readAsDataURL(file);
+    }
+     if (logoInputRef.current) {
+        logoInputRef.current.value = '';
+    }
+  };
+  
+  const handleConfirmCrop = async () => {
+    if (!imageToCrop || !croppedAreaPixels) {
+      toast({
+        title: "Erro no corte",
+        description: "Não foi possível cortar a imagem. Verifique se uma área foi selecionada.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      const croppedImageUrl = await getCroppedImg(imageToCrop, croppedAreaPixels);
+      if (croppedImageUrl) {
+        form.setValue('logoUrl', croppedImageUrl);
+      }
+      toast({
+        title: "Logo atualizada!",
+        description: "A nova logo foi cortada e definida.",
+        action: <CheckCircle2 className="text-green-500" />,
+      });
+    } catch (e: any) {
+      toast({
+        title: "Erro ao cortar imagem",
+        description: e.message || "Ocorreu um erro desconhecido.",
+        variant: "destructive",
+        action: <AlertCircle className="text-red-500" />,
+      });
+    } finally {
+      setIsCropDialogOpen(false);
+      setImageToCrop(null);
+      setCroppedAreaPixels(null);
+      setZoom(1);
+      setCrop({ x: 0, y: 0 });
+    }
+  };
+
+
+  const handleBackgroundImageFileChange = (
     event: React.ChangeEvent<HTMLInputElement>,
     fieldOnChange: (value: string) => void
   ) => {
@@ -96,7 +226,11 @@ export default function AdminPersonalizationPage() {
     } else {
       fieldOnChange('');
     }
+     if (bgImageInputRef.current) {
+        bgImageInputRef.current.value = '';
+    }
   };
+
 
   const getPreviewLoginButtonTextColor = (hexColor: string | undefined): string => {
     if (!hexColor || !hexColor.startsWith('#')) return '#FFFFFF';
@@ -137,10 +271,10 @@ export default function AdminPersonalizationPage() {
   }
 
   const previewLeftPanelStyle: React.CSSProperties = {};
-  if (watchedValues.cardBackgroundColor) { 
+  if (watchedValues.cardBackgroundColor) {
     previewLeftPanelStyle.backgroundColor = watchedValues.cardBackgroundColor;
   } else {
-    previewLeftPanelStyle.backgroundColor = 'hsl(var(--background))'; 
+    previewLeftPanelStyle.backgroundColor = 'hsl(var(--background))';
   }
 
   const previewInputStyle: React.CSSProperties = {};
@@ -154,7 +288,7 @@ export default function AdminPersonalizationPage() {
     previewInputStyle.borderWidth = '1px';
     previewInputStyle.borderStyle = 'solid';
   } else {
-    previewInputStyle.borderColor = 'hsl(var(--border))';
+    previewInputStyle.borderColor = 'hsl(var(--border))'; // Cor padrão da borda do ShadCN
     previewInputStyle.borderWidth = '1px';
     previewInputStyle.borderStyle = 'solid';
   }
@@ -212,19 +346,19 @@ export default function AdminPersonalizationPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center text-lg font-semibold">
-                            <UploadCloud className="mr-2 h-5 w-5" />
+                            <ImageUp className="mr-2 h-5 w-5" />
                             Logo na tela de login
                           </FormLabel>
                           <FormDescUI className="pb-2">
-                            A logo será exibida com altura máxima de 40 pixels na tela de login, mantendo a proporção original.
+                           A logo será exibida com altura máxima de 28 pixels na tela de login, mantendo a proporção original. O editor permite cortar e ajustar o zoom.
                           </FormDescUI>
                           <div className="flex items-center gap-2">
                             <FormControl>
-                              <Input
+                               <Input
                                 type="file"
                                 accept="image/*"
                                 ref={logoInputRef}
-                                onChange={(e) => handleFileChange(e, field.onChange)}
+                                onChange={handleLogoFileChange}
                                 className="cursor-pointer flex-grow"
                               />
                             </FormControl>
@@ -235,9 +369,10 @@ export default function AdminPersonalizationPage() {
                                 size="icon"
                                 onClick={() => {
                                   field.onChange('');
+                                  setImageToCrop(null);
                                   if (logoInputRef.current) logoInputRef.current.value = '';
                                 }}
-                                title="Remover logo"
+                                title="Remover logo atual"
                                 className="shrink-0"
                               >
                                 <XCircle className="h-5 w-5 text-muted-foreground hover:text-destructive" />
@@ -246,14 +381,14 @@ export default function AdminPersonalizationPage() {
                           </div>
                           {field.value && (
                             <div className="mt-4 space-y-2">
-                              <FormDescUI>Pré-visualização do logo selecionado:</FormDescUI>
-                              <div className="relative w-auto max-w-[240px] h-10 border rounded-md overflow-hidden group bg-muted/20 p-1">
+                              <FormDescUI>Logo atual:</FormDescUI>
+                               <div className="relative w-auto max-w-[240px] h-7 border rounded-md overflow-hidden group bg-muted/20 p-1">
                                 <NextImage
                                   src={field.value}
                                   alt="Pré-visualização do Logo"
                                   layout="fill"
                                   objectFit="contain"
-                                  data-ai-hint="company settings logo preview"
+                                  data-ai-hint="company settings logo current"
                                 />
                               </div>
                             </div>
@@ -281,7 +416,7 @@ export default function AdminPersonalizationPage() {
                                 type="file"
                                 accept="image/*"
                                 ref={bgImageInputRef}
-                                onChange={(e) => handleFileChange(e, field.onChange)}
+                                onChange={(e) => handleBackgroundImageFileChange(e, field.onChange)}
                                 className="cursor-pointer flex-grow"
                               />
                             </FormControl>
@@ -308,7 +443,7 @@ export default function AdminPersonalizationPage() {
 
                     <FormField
                       control={form.control}
-                      name="cardBackgroundColor" 
+                      name="cardBackgroundColor"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center text-lg font-semibold">
@@ -316,7 +451,7 @@ export default function AdminPersonalizationPage() {
                             Cor de fundo do painel de login
                           </FormLabel>
                           <FormDescUI className="pb-2">
-                            Deixe em branco para usar a cor padrão do tema.
+                            Deixe em branco para usar a cor padrão do tema (coluna da esquerda).
                           </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
@@ -461,17 +596,17 @@ export default function AdminPersonalizationPage() {
                       >
                         <div className="flex h-full w-full">
                           {/* Coluna Esquerda (Formulário Preview) */}
-                          <div 
+                          <div
                             className="w-2/5 flex flex-col items-center justify-center p-3"
-                            style={previewLeftPanelStyle} 
+                            style={previewLeftPanelStyle}
                           >
-                            <div className="w-full max-w-[90%] space-y-2"> 
+                            <div className="w-full max-w-[90%] space-y-2">
                               {watchedValues.logoUrl ? (
-                                <div className="mx-auto mb-1 mt-1 h-5 w-auto max-w-[70px] relative">
+                                <div className="mx-auto mb-1 mt-1 h-[14px] w-auto max-w-[50px] relative"> {/* Adjusted height and max-width */}
                                   <NextImage src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
                                 </div>
                               ) : (
-                                <div className="h-5 w-14 bg-muted/70 rounded mx-auto mb-1 mt-1 flex items-center justify-center text-[8px]" style={{color: previewDescriptionStyle.color || 'hsl(var(--muted-foreground))'}}>Logo Aqui</div>
+                                <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-1 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div> {/* Adjusted height */}
                               )}
 
                               <p className="text-center text-[8px] mb-2" style={previewDescriptionStyle}>
@@ -511,6 +646,63 @@ export default function AdminPersonalizationPage() {
           </CardContent>
         </Card>
       </div>
+      
+      {isCropDialogOpen && imageToCrop && (
+        <Dialog open={isCropDialogOpen} onOpenChange={(open) => {
+            if (!open) {
+                setIsCropDialogOpen(false);
+                setImageToCrop(null);
+                setCroppedAreaPixels(null);
+            }
+        }}>
+          <DialogContent className="max-w-xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center"><Scissors className="mr-2 h-5 w-5"/>Cortar Logo</DialogTitle>
+              <DialogDescription>
+                Ajuste a imagem para o formato 3:1 (largura:altura). A altura final será de 28px.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="relative w-full h-[300px] bg-muted/50 my-4">
+              <Cropper
+                image={imageToCrop}
+                crop={crop}
+                zoom={zoom}
+                aspect={LOGO_OUTPUT_WIDTH / LOGO_OUTPUT_HEIGHT} // 3:1
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+                restrictPosition={false}
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <ZoomIn className="h-5 w-5 text-muted-foreground" />
+              <Slider
+                min={0.2}
+                max={4}
+                step={0.01}
+                value={[zoom]}
+                onValueChange={(val) => setZoom(val[0])}
+                className="flex-1"
+              />
+            </div>
+            <DialogFooter className="mt-4">
+              <Button variant="outline" onClick={() => {
+                  setIsCropDialogOpen(false);
+                  setImageToCrop(null);
+                  setCroppedAreaPixels(null);
+              }}>
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmCrop}>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Confirmar Corte
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }
+
+    

@@ -142,15 +142,15 @@ export default function UnifiedLoginPage() {
                     <Image
                     src={currentLogoUrl}
                     alt="Logo Zaldi Imo"
-                    width={240} 
-                    height={80} 
+                    width={84} 
+                    height={28} 
                     priority
-                    className="max-h-[40px] w-auto"
+                    className="max-h-[28px] w-auto"
                     data-ai-hint="company login logo"
                     />
                 </div>
                 ) : (
-                <h1 className="text-2xl font-bold mt-4 mb-6">Zaldi Imo</h1>
+                <h1 className="text-2xl font-bold mb-6">Zaldi Imo</h1>
                 )}
                 <p className="text-muted-foreground" style={descriptionStyle}>Acesse sua conta Zaldi Imo.</p>
             </div>
