@@ -492,14 +492,14 @@ export default function AdminPersonalizationPage() {
                           >
                             <div className="w-full max-w-[90%] space-y-2">
                               {watchedValues.logoUrl ? (
-                                <div className="mx-auto mb-1.5 mt-1 h-[14px] w-auto max-w-[50px] relative">
+                                <div className="mx-auto mb-1 mt-1 h-[14px] w-auto max-w-[50px] relative">
                                   <NextImage src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
                                 </div>
                               ) : (
-                                 <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-1.5 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
+                                 <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-1 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
                               )}
 
-                              <p className="text-center text-[11px] mb-3" style={previewDescriptionStyle}>
+                              <p className="text-center text-[13px] font-bold mb-1.5" style={previewDescriptionStyle}>
                                 Seja bem vindo ao Zaldi Imo
                               </p>
 
