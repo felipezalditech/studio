@@ -233,7 +233,7 @@ export default function AdminPersonalizationPage() {
     try {
       const options = currentFieldToUpdate === 'logoUrl'
         ? { type: 'image/png' as const, maxWidth: 480, maxHeight: Math.round((480 * 56) / 240) } 
-        : { type: 'image/jpeg' as const, quality: 0.85, maxWidth: 1024, maxHeight: 1024 }; // Mantém 1024x1024 como limite superior para o resultado do corte 3:4
+        : { type: 'image/jpeg' as const, quality: 0.85, maxWidth: 1024, maxHeight: 1024 }; 
 
       const croppedImage = await getCroppedImg(
         imageToCrop,
@@ -261,7 +261,7 @@ export default function AdminPersonalizationPage() {
   }, [imageToCrop, croppedAreaPixels, currentFieldToUpdate, form, toast]);
 
 
-  const handleFileChangeForCropping = (event: React.ChangeEvent<HTMLInputElement>, fieldToUpdate: 'logoUrl' | 'backgroundImageUrl') => {
+  const handleFileSelectForCropping = (event: React.ChangeEvent<HTMLInputElement>, fieldToUpdate: 'logoUrl' | 'backgroundImageUrl') => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -276,6 +276,24 @@ export default function AdminPersonalizationPage() {
     }
     if (event.target) {
       event.target.value = '';
+    }
+  };
+
+  const handleImagePreviewClickForRecrop = (fieldToUpdate: 'logoUrl' | 'backgroundImageUrl') => {
+    const currentImageUri = form.getValues(fieldToUpdate);
+    if (currentImageUri) {
+      setImageToCrop(currentImageUri);
+      setCurrentFieldToUpdate(fieldToUpdate);
+      setIsCropperOpen(true);
+      setZoom(1);
+      setCrop({ x: 0, y: 0 });
+    } else {
+      // Optionally, trigger file input if no image exists
+      if (fieldToUpdate === 'logoUrl' && logoInputRef.current) {
+        logoInputRef.current.click();
+      } else if (fieldToUpdate === 'backgroundImageUrl' && bgImageInputRef.current) {
+        bgImageInputRef.current.click();
+      }
     }
   };
 
@@ -400,7 +418,7 @@ export default function AdminPersonalizationPage() {
                                 type="file"
                                 accept="image/*"
                                 ref={logoInputRef}
-                                onChange={(e) => handleFileChangeForCropping(e, 'logoUrl')}
+                                onChange={(e) => handleFileSelectForCropping(e, 'logoUrl')}
                                 className="cursor-pointer flex-grow"
                               />
                             </FormControl>
@@ -422,8 +440,12 @@ export default function AdminPersonalizationPage() {
                           </div>
                           {field.value && (
                             <div className="mt-4 space-y-2">
-                              <FormDescUI>Logo atual:</FormDescUI>
-                               <div className="relative w-auto max-w-[240px] h-7 border rounded-md overflow-hidden group bg-muted/20 p-1">
+                              <FormDescUI>Logo atual (clique para recortar):</FormDescUI>
+                               <div 
+                                className="relative w-auto max-w-[240px] h-7 border rounded-md overflow-hidden group bg-muted/20 p-1 cursor-pointer"
+                                onClick={() => handleImagePreviewClickForRecrop('logoUrl')}
+                                title="Clique para recortar o logo novamente"
+                                >
                                 <NextImage
                                   src={field.value}
                                   alt="Pré-visualização do Logo"
@@ -457,7 +479,7 @@ export default function AdminPersonalizationPage() {
                                 type="file"
                                 accept="image/*"
                                 ref={bgImageInputRef}
-                                onChange={(e) => handleFileChangeForCropping(e, 'backgroundImageUrl')}
+                                onChange={(e) => handleFileSelectForCropping(e, 'backgroundImageUrl')}
                                 className="cursor-pointer flex-grow"
                               />
                             </FormControl>
@@ -479,8 +501,12 @@ export default function AdminPersonalizationPage() {
                           </div>
                            {field.value && (
                             <div className="mt-4 space-y-2">
-                              <FormDescUI>Imagem de fundo atual:</FormDescUI>
-                               <div className="relative w-full max-w-xs h-32 border rounded-md overflow-hidden group bg-muted/20 p-1">
+                              <FormDescUI>Imagem de fundo atual (clique para recortar):</FormDescUI>
+                               <div 
+                                className="relative w-full max-w-xs h-32 border rounded-md overflow-hidden group bg-muted/20 p-1 cursor-pointer"
+                                onClick={() => handleImagePreviewClickForRecrop('backgroundImageUrl')}
+                                title="Clique para recortar a imagem de fundo novamente"
+                                >
                                 <NextImage
                                   src={field.value}
                                   alt="Pré-visualização da Imagem de Fundo"
@@ -765,3 +791,4 @@ export default function AdminPersonalizationPage() {
   );
 }
     
+
