@@ -213,7 +213,7 @@ export default function AdminPersonalizationPage() {
                           Logo na tela de login
                         </FormLabel>
                         <FormDescription className="pb-2">
-                          Faça o upload do logo que será exibido na tela de login.
+                          Altura máxima: 40 pixels. A largura será ajustada para manter a proporção.
                         </FormDescription>
                         <div className="flex items-center gap-2">
                           <FormControl>
@@ -482,4 +482,5 @@ export default function AdminPersonalizationPage() {
     </div>
   );
 }
+
 
