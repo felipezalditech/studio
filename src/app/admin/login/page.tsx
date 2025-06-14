@@ -138,7 +138,7 @@ export default function UnifiedLoginPage() {
         <div className="w-full max-w-md">
             <div className="text-center">
                 {currentLogoUrl ? (
-                <div className="mb-2 flex justify-center">
+                <div className="mb-4 flex justify-center">
                     <Image
                     src={currentLogoUrl}
                     alt="Logo Zaldi Imo"
@@ -150,12 +150,12 @@ export default function UnifiedLoginPage() {
                     />
                 </div>
                 ) : (
-                <h1 className="text-2xl font-bold mb-6">Zaldi Imo</h1>
+                <h1 className="text-2xl font-bold mb-6 mt-4">Zaldi Imo</h1>
                 )}
-                <p className="text-muted-foreground mb-2" style={descriptionStyle}>Seja bem vindo ao Zaldi Imo</p>
+                <p className="text-muted-foreground text-sm mb-8" style={descriptionStyle}>Seja bem vindo ao Zaldi Imo</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                     <Label htmlFor="email" style={labelStyle}>E-mail</Label>
                     <Input

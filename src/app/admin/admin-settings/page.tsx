@@ -6,18 +6,15 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import NextImage from 'next/image';
-import Cropper, { type Area, type Point } from 'react-easy-crop';
+
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as FormDescUI } from "@/components/ui/form";
-import { Palette, UploadCloud, XCircle, Save, ImageIcon as ImageIconLucide, Brush, Square, Type, Columns2, Eye, Spline, ImageUp, Scissors, CheckCircle2, AlertCircle, ZoomIn } from "lucide-react";
+import { Palette, UploadCloud, XCircle, Save, ImageIcon as ImageIconLucide, Brush, Square, Type, Columns2, Eye, Spline, ImageUp, CheckCircle2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useLoginScreenBranding } from '@/hooks/useLoginScreenBranding';
-import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Slider } from '@/components/ui/slider';
 
 
 const hexColorRegex = /^#([0-9A-Fa-f]{3}){1,2}$/;
@@ -34,9 +31,6 @@ const loginScreenBrandingSchema = z.object({
   descriptionTextColor: optionalHexColor,
 });
 type LoginScreenBrandingFormValues = z.infer<typeof loginScreenBrandingSchema>;
-
-const LOGO_OUTPUT_WIDTH = 240;
-const LOGO_OUTPUT_HEIGHT = 80;
 
 
 export default function AdminPersonalizationPage() {
@@ -461,7 +455,7 @@ export default function AdminPersonalizationPage() {
                             Cor do texto da descrição
                           </FormLabel>
                           <FormDescUI className="pb-2">
-                            Para "Acesse sua conta...". Deixe em branco para padrão.
+                            Para "Seja bem vindo...". Deixe em branco para padrão.
                           </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
@@ -498,14 +492,14 @@ export default function AdminPersonalizationPage() {
                           >
                             <div className="w-full max-w-[90%] space-y-2">
                               {watchedValues.logoUrl ? (
-                                <div className="mx-auto mb-1 mt-1 h-[14px] w-auto max-w-[50px] relative">
+                                <div className="mx-auto mb-1.5 mt-1 h-[14px] w-auto max-w-[50px] relative">
                                   <NextImage src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
                                 </div>
                               ) : (
-                                <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-1 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
+                                 <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-1.5 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
                               )}
 
-                              <p className="text-center text-[8px] mb-2" style={previewDescriptionStyle}>
+                              <p className="text-center text-[9px] mb-3" style={previewDescriptionStyle}>
                                 Seja bem vindo ao Zaldi Imo
                               </p>
 
