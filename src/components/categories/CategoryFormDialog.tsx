@@ -226,7 +226,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
               name="depreciationRateValue"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Valor da taxa de depreciação (%) {isRateRequired ? '*' : '(opcional)'}</FormLabel>
+                  <FormLabel>Taxa de depreciação (%) {isRateRequired ? '*' : '(opcional)'}</FormLabel>
                   <FormControl>
                     <Input type="number" step="0.01" placeholder="Ex: 20 (para 20%)" {...field} value={field.value ?? ''} />
                   </FormControl>
