@@ -38,6 +38,8 @@ interface DataTableProps<TData extends AssetWithCalculatedValues, TValue> {
   data: TData[]
   rowSelection: RowSelectionState
   onRowSelectionChange: React.Dispatch<React.SetStateAction<RowSelectionState>>
+  columnVisibility: VisibilityState
+  onColumnVisibilityChange: React.Dispatch<React.SetStateAction<VisibilityState>>
 }
 
 export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>({
@@ -45,10 +47,12 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
   data,
   rowSelection,
   onRowSelectionChange,
+  columnVisibility,
+  onColumnVisibilityChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  // columnVisibility é agora uma prop
 
   const table = useReactTable({
     data,
@@ -59,23 +63,41 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibilityChange: onColumnVisibilityChange, // Usar a prop
     onRowSelectionChange: onRowSelectionChange,
     state: {
       sorting,
       columnFilters,
-      columnVisibility,
+      columnVisibility, // Usar a prop
       rowSelection,
     },
     initialState: {
         pagination: {
             pageSize: 10,
         },
-        columnVisibility: {
-            model: true,
-        }
+        // columnVisibility inicial foi removido daqui, será controlado pela página
     }
   })
+
+  // Mapeamento de IDs de coluna para nomes de exibição amigáveis
+  const columnDisplayNames: Record<string, string> = {
+    select: "Seleção",
+    purchaseDate: "Data compra",
+    name: "Nome do ativo",
+    modelName: "Modelo",
+    assetTag: "Patrimônio",
+    invoiceNumber: "Nota fiscal",
+    serialNumber: "Nº de série",
+    categoryName: "Categoria",
+    supplierName: "Fornecedor",
+    locationName: "Local alocado",
+    purchaseValue: "Valor de compra",
+    previouslyDepreciatedValue: "Valor já depreciado (inicial)", // Novo
+    depreciatedValue: "Valor depreciado (total)",
+    calculatedCurrentValue: "Valor atual",
+    actions: "Ações",
+  };
+
 
   return (
     <div className="rounded-md border shadow-sm bg-card">
@@ -97,22 +119,7 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
                 (column) => column.getCanHide()
               )
               .map((column) => {
-                const columnDisplayName =
-                  column.id === "select" ? "Seleção" :
-                  column.id === "purchaseDate" ? "Data compra" :
-                  column.id === "name" ? "Nome do ativo" :
-                  column.id === "model" ? "Modelo" :
-                  column.id === "assetTag" ? "Patrimônio" :
-                  column.id === "invoiceNumber" ? "Nota fiscal" :
-                  column.id === "serialNumber" ? "Nº de série" :
-                  column.id === "categoryName" ? "Categoria" :
-                  column.id === "supplierName" ? "Fornecedor" :
-                  column.id === "locationName" ? "Local alocado" :
-                  column.id === "purchaseValue" ? "Valor de compra" :
-                  column.id === "depreciatedValue" ? "Valor depreciado" :
-                  column.id === "calculatedCurrentValue" ? "Valor atual" :
-                  column.id === "actions" ? "Ações" :
-                  column.id;
+                const displayName = columnDisplayNames[column.id] || column.id;
                 return (
                   <DropdownMenuCheckboxItem
                     key={column.id}
@@ -122,7 +129,7 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
                       column.toggleVisibility(!!value)
                     }
                   >
-                    {columnDisplayName}
+                    {displayName}
                   </DropdownMenuCheckboxItem>
                 )
               })}

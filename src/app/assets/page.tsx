@@ -4,7 +4,7 @@
 import React, { useMemo, useCallback, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { RowSelectionState } from '@tanstack/react-table';
+import type { RowSelectionState, VisibilityState } from '@tanstack/react-table'; // Adicionado VisibilityState
 import { AssetDataTable } from '@/components/assets/AssetDataTable';
 import { getColumns } from '@/components/assets/columns';
 import type { Asset } from '@/components/assets/types';
@@ -19,10 +19,11 @@ import { useAssets } from '@/contexts/AssetContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useLocations } from '@/contexts/LocationContext';
-import { useAssetModels } from '@/contexts/AssetModelContext'; // Import useAssetModels
+import { useAssetModels } from '@/contexts/AssetModelContext'; 
 import { AssetDetailsDialog } from '@/components/assets/AssetDetailsDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useBranding } from '@/contexts/BrandingContext';
+import useLocalStorage from '@/lib/hooks/use-local-storage'; // Importar o hook useLocalStorage
 
 const initialFilters: AssetFiltersState = {
   name: '',
@@ -30,7 +31,7 @@ const initialFilters: AssetFiltersState = {
   invoiceNumber: '',
   categoryId: '',
   locationId: '',
-  modelId: '', // Alterado de model para modelId
+  modelId: '', 
   purchaseDateFrom: undefined,
   purchaseDateTo: undefined,
 };
@@ -64,6 +65,29 @@ export default function AssetsPage() {
 
   const [assetToDelete, setAssetToDelete] = useState<AssetWithCalculatedValues | null>(null);
   const [isConfirmDeleteAssetDialogOpen, setIsConfirmDeleteAssetDialogOpen] = useState(false);
+
+  // Usar useLocalStorage para columnVisibility
+  const [columnVisibility, setColumnVisibility] = useLocalStorage<VisibilityState>(
+    'assetTableColumnVisibility', 
+    { // Valor inicial: define quais colunas começam visíveis se não houver nada salvo
+      'select': true, // Coluna de seleção é geralmente sempre visível
+      'purchaseDate': true,
+      'name': true,
+      'modelName': true,
+      'assetTag': true,
+      'categoryName': true,
+      'calculatedCurrentValue': true,
+      'actions': true,
+      // Outras colunas começam ocultas por padrão, mas podem ser ativadas pelo usuário
+      'invoiceNumber': false,
+      'serialNumber': false,
+      'supplierName': false,
+      'locationName': false,
+      'purchaseValue': false,
+      'previouslyDepreciatedValue': false,
+      'depreciatedValue': false,
+    }
+  );
 
   const supplierNameMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -139,7 +163,7 @@ export default function AssetsPage() {
             (asset.serialNumber && asset.serialNumber.toLowerCase().includes(searchTerm))
           : true;
 
-        const modelMatch = filters.modelId ? asset.modelId === filters.modelId : true; // Alterado para usar modelId
+        const modelMatch = filters.modelId ? asset.modelId === filters.modelId : true; 
 
         const supplierMatch = filters.supplier ? asset.supplier === filters.supplier : true;
         const invoiceMatch = asset.invoiceNumber.toLowerCase().includes(filters.invoiceNumber.toLowerCase());
@@ -337,6 +361,8 @@ export default function AssetsPage() {
             data={assetsWithCalculatedValues}
             rowSelection={rowSelection}
             onRowSelectionChange={setRowSelection}
+            columnVisibility={columnVisibility} // Passar o estado de visibilidade
+            onColumnVisibilityChange={setColumnVisibility} // Passar a função para atualizar
           />
         </CardContent>
         {(assetsWithCalculatedValues.length > 0 || hasSelectedItems) && (
