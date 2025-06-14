@@ -10,12 +10,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Palette, UploadCloud, XCircle, Save } from "lucide-react";
+import { Palette, UploadCloud, XCircle, Save, Image as ImageIcon } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useLoginScreenBranding, type LoginScreenBrandingConfig } from '@/hooks/useLoginScreenBranding';
 
 const loginScreenBrandingSchema = z.object({
   logoUrl: z.string().optional(),
+  backgroundImageUrl: z.string().optional(),
 });
 type LoginScreenBrandingFormValues = z.infer<typeof loginScreenBrandingSchema>;
 
@@ -23,24 +24,36 @@ export default function AdminPersonalizationPage() {
   const [loginScreenBranding, setLoginScreenBranding] = useLoginScreenBranding();
   const { toast } = useToast();
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const bgImageInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<LoginScreenBrandingFormValues>({
     resolver: zodResolver(loginScreenBrandingSchema),
     defaultValues: {
       logoUrl: loginScreenBranding.logoUrl || '',
+      backgroundImageUrl: loginScreenBranding.backgroundImageUrl || '',
     },
   });
 
   useEffect(() => {
-    form.reset({ logoUrl: loginScreenBranding.logoUrl || '' });
+    form.reset({
+      logoUrl: loginScreenBranding.logoUrl || '',
+      backgroundImageUrl: loginScreenBranding.backgroundImageUrl || '',
+    });
   }, [loginScreenBranding, form]);
 
   const onSubmit = (data: LoginScreenBrandingFormValues) => {
-    setLoginScreenBranding((prev) => ({ ...prev, logoUrl: data.logoUrl || '' }));
-    toast({ title: "Sucesso!", description: "Logo da tela de login atualizada." });
+    setLoginScreenBranding((prev) => ({
+      ...prev,
+      logoUrl: data.logoUrl || '',
+      backgroundImageUrl: data.backgroundImageUrl || '',
+    }));
+    toast({ title: "Sucesso!", description: "Personalização da tela de login atualizada." });
   };
 
-  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string) => void) => {
+  const handleFileChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    fieldOnChange: (value: string) => void
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -74,7 +87,7 @@ export default function AdminPersonalizationPage() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
               <FormField
                 control={form.control}
                 name="logoUrl"
@@ -92,7 +105,7 @@ export default function AdminPersonalizationPage() {
                         type="file"
                         accept="image/*"
                         ref={logoInputRef}
-                        onChange={(e) => handleLogoChange(e, field.onChange)}
+                        onChange={(e) => handleFileChange(e, field.onChange)}
                         className="cursor-pointer max-w-md"
                       />
                     </FormControl>
@@ -129,14 +142,63 @@ export default function AdminPersonalizationPage() {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="backgroundImageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center text-lg font-semibold">
+                       <ImageIcon className="mr-2 h-5 w-5" />
+                      Imagem de fundo da tela de login
+                    </FormLabel>
+                     <FormDescription className="pb-2">
+                        Faça o upload da imagem de fundo para a tela de login. Se nenhuma imagem for selecionada, uma cor padrão será usada.
+                      </FormDescription>
+                    <FormControl>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        ref={bgImageInputRef}
+                        onChange={(e) => handleFileChange(e, field.onChange)}
+                        className="cursor-pointer max-w-md"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    {field.value && (
+                      <div className="mt-4 space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground">Pré-visualização da imagem de fundo:</p>
+                        <div className="relative w-full max-w-md h-64 border rounded-md overflow-hidden group bg-muted/20">
+                           <Image
+                            src={field.value}
+                            alt="Pré-visualização da Imagem de Fundo da Tela de Login"
+                            layout="fill"
+                            objectFit="cover"
+                            data-ai-hint="login screen background preview"
+                           />
+                           <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              onClick={() => {
+                                field.onChange('');
+                                if (bgImageInputRef.current) {
+                                  bgImageInputRef.current.value = '';
+                                }
+                              }}
+                              className="absolute top-2 right-2 h-8 w-8 opacity-70 group-hover:opacity-100"
+                              title="Remover imagem de fundo"
+                            >
+                              <XCircle className="h-5 w-5" />
+                            </Button>
+                        </div>
+                      </div>
+                    )}
+                  </FormItem>
+                )}
+              />
               
               <div className="space-y-4 mt-8">
-                <div>
-                  <h3 className="text-lg font-semibold">Imagem de fundo da tela de login</h3>
-                  <p className="text-muted-foreground">
-                    (Em desenvolvimento) Escolha uma imagem de fundo para a página de login.
-                  </p>
-                </div>
                 <div>
                   <h3 className="text-lg font-semibold">Cores do botão de login</h3>
                   <p className="text-muted-foreground">

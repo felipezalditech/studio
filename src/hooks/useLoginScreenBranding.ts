@@ -5,12 +5,12 @@ import useLocalStorage from '@/lib/hooks/use-local-storage';
 
 export interface LoginScreenBrandingConfig {
   logoUrl: string;
-  // companyName?: string; // Poderia ser adicionado futuramente
+  backgroundImageUrl: string; 
 }
 
 const defaultLoginScreenBrandingConfig: LoginScreenBrandingConfig = {
   logoUrl: '',
-  // companyName: 'Zaldi Imo',
+  backgroundImageUrl: '', 
 };
 
 export function useLoginScreenBranding(): [LoginScreenBrandingConfig, Dispatch<SetStateAction<LoginScreenBrandingConfig>>] {
