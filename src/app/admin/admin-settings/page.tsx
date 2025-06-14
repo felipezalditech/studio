@@ -45,13 +45,6 @@ export default function AdminPersonalizationPage() {
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bgImageInputRef = useRef<HTMLInputElement>(null);
 
-  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
-  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-  const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
-
-
   const form = useForm<LoginScreenBrandingFormValues>({
     resolver: zodResolver(loginScreenBrandingSchema),
     defaultValues: {
@@ -96,78 +89,12 @@ export default function AdminPersonalizationPage() {
     toast({ title: "Sucesso!", description: "Personalização da tela de login atualizada." });
   };
 
-  const createImage = (url: string): Promise<HTMLImageElement> =>
-    new Promise((resolve, reject) => {
-      const image = new window.Image();
-      image.addEventListener('load', () => resolve(image));
-      image.addEventListener('error', (error) => reject(error));
-      image.setAttribute('crossOrigin', 'anonymous'); 
-      image.src = url;
-    });
-
-  const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<string | null> => {
-    if (!pixelCrop || typeof pixelCrop.width !== 'number' || typeof pixelCrop.height !== 'number' || typeof pixelCrop.x !== 'number' || typeof pixelCrop.y !== 'number') {
-      console.error('pixelCrop inválido:', pixelCrop);
-      throw new Error("Dados de corte inválidos recebidos.");
-    }
-    if (pixelCrop.width <= 0 || pixelCrop.height <= 0) {
-      console.error('Dimensões de corte inválidas:', pixelCrop);
-      throw new Error("A área de corte selecionada tem dimensões inválidas (largura ou altura zero ou negativa).");
-    }
-
-    const image = await createImage(imageSrc);
-    const canvas = document.createElement('canvas');
-    canvas.width = LOGO_OUTPUT_WIDTH;
-    canvas.height = LOGO_OUTPUT_HEIGHT;
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) {
-      throw new Error("Não foi possível obter o contexto 2D do canvas.");
-    }
-    
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-
-    try {
-      ctx.drawImage(
-        image,
-        pixelCrop.x,
-        pixelCrop.y,
-        pixelCrop.width,
-        pixelCrop.height,
-        0,
-        0,
-        LOGO_OUTPUT_WIDTH,
-        LOGO_OUTPUT_HEIGHT
-      );
-    } catch (e: any) {
-      console.error("Erro ao desenhar imagem no canvas:", e);
-      throw new Error(`Erro ao processar a imagem (drawImage): ${e.message}`);
-    }
-
-    return new Promise((resolve, reject) => {
-      try {
-        const dataUrl = canvas.toDataURL('image/png');
-        resolve(dataUrl);
-      } catch (e: any) {
-        console.error("Erro ao converter canvas para Data URL:", e);
-        reject(new Error(`Erro ao gerar a imagem final (toDataURL): ${e.message}`))
-      }
-    });
-  };
-
-
-  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
-
   const handleLogoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
-        // For direct use without cropping:
         form.setValue('logoUrl', result);
         toast({
           title: "Logo atualizada!",
@@ -182,42 +109,6 @@ export default function AdminPersonalizationPage() {
     }
   };
   
-  const handleConfirmCrop = async () => {
-    if (!imageToCrop || !croppedAreaPixels) {
-      toast({
-        title: "Erro no corte",
-        description: "Não foi possível cortar a imagem. Verifique se uma área foi selecionada.",
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      const croppedImageUrl = await getCroppedImg(imageToCrop, croppedAreaPixels);
-      if (croppedImageUrl) {
-        form.setValue('logoUrl', croppedImageUrl);
-      }
-      toast({
-        title: "Logo atualizada!",
-        description: "A nova logo foi cortada e definida.",
-        action: <CheckCircle2 className="text-green-500" />,
-      });
-    } catch (e: any) {
-      toast({
-        title: "Erro ao cortar imagem",
-        description: e.message || "Ocorreu um erro desconhecido.",
-        variant: "destructive",
-        action: <AlertCircle className="text-red-500" />,
-      });
-    } finally {
-      setIsCropDialogOpen(false);
-      setImageToCrop(null);
-      setCroppedAreaPixels(null);
-      setZoom(1);
-      setCrop({ x: 0, y: 0 });
-    }
-  };
-
-
   const handleBackgroundImageFileChange = (
     event: React.ChangeEvent<HTMLInputElement>,
     fieldOnChange: (value: string) => void
@@ -294,7 +185,7 @@ export default function AdminPersonalizationPage() {
     previewInputStyle.borderWidth = '1px';
     previewInputStyle.borderStyle = 'solid';
   } else {
-    previewInputStyle.borderColor = 'hsl(var(--border))'; // Cor padrão da borda do ShadCN
+    previewInputStyle.borderColor = 'hsl(var(--border))'; 
     previewInputStyle.borderWidth = '1px';
     previewInputStyle.borderStyle = 'solid';
   }
@@ -364,7 +255,7 @@ export default function AdminPersonalizationPage() {
                                 type="file"
                                 accept="image/*"
                                 ref={logoInputRef}
-                                onChange={handleLogoFileChange} // Direct usage, no cropping
+                                onChange={handleLogoFileChange}
                                 className="cursor-pointer flex-grow"
                               />
                             </FormControl>
@@ -607,7 +498,7 @@ export default function AdminPersonalizationPage() {
                           >
                             <div className="w-full max-w-[90%] space-y-2">
                               {watchedValues.logoUrl ? (
-                                <div className="mx-auto mb-1 mt-1 h-[14px] w-auto max-w-[50px] relative"> {/* Adjusted height and max-width */}
+                                <div className="mx-auto mb-1 mt-1 h-[14px] w-auto max-w-[50px] relative">
                                   <NextImage src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
                                 </div>
                               ) : (
@@ -615,7 +506,7 @@ export default function AdminPersonalizationPage() {
                               )}
 
                               <p className="text-center text-[8px] mb-2" style={previewDescriptionStyle}>
-                                Acesse sua conta Zaldi Imo
+                                Seja bem vindo ao Zaldi Imo
                               </p>
 
                               <div className="mb-1.5">
@@ -651,65 +542,6 @@ export default function AdminPersonalizationPage() {
           </CardContent>
         </Card>
       </div>
-      
-      {isCropDialogOpen && imageToCrop && (
-        <Dialog open={isCropDialogOpen} onOpenChange={(open) => {
-            if (!open) {
-                setIsCropDialogOpen(false);
-                setImageToCrop(null);
-                setCroppedAreaPixels(null);
-            }
-        }}>
-          <DialogContent className="max-w-xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center"><Scissors className="mr-2 h-5 w-5"/>Cortar Logo</DialogTitle>
-              <DialogDescription>
-                Ajuste a imagem para o formato 3:1 (largura:altura). A altura final será de 28px.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="relative w-full h-[300px] bg-muted/50 my-4">
-              <Cropper
-                image={imageToCrop}
-                crop={crop}
-                zoom={zoom}
-                aspect={LOGO_OUTPUT_WIDTH / LOGO_OUTPUT_HEIGHT} // 3:1
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={onCropComplete}
-                restrictPosition={false}
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <ZoomIn className="h-5 w-5 text-muted-foreground" />
-              <Slider
-                min={0.2}
-                max={4}
-                step={0.01}
-                value={[zoom]}
-                onValueChange={(val) => setZoom(val[0])}
-                className="flex-1"
-              />
-            </div>
-            <DialogFooter className="mt-4">
-              <Button variant="outline" onClick={() => {
-                  setIsCropDialogOpen(false);
-                  setImageToCrop(null);
-                  setCroppedAreaPixels(null);
-              }}>
-                Cancelar
-              </Button>
-              <Button onClick={handleConfirmCrop}>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Confirmar Corte
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
     </>
   );
 }
-
-    
-
-    

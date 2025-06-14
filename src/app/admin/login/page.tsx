@@ -152,7 +152,7 @@ export default function UnifiedLoginPage() {
                 ) : (
                 <h1 className="text-2xl font-bold mb-6">Zaldi Imo</h1>
                 )}
-                <p className="text-muted-foreground" style={descriptionStyle}>Acesse sua conta Zaldi Imo.</p>
+                <p className="text-muted-foreground mb-2" style={descriptionStyle}>Seja bem vindo ao Zaldi Imo</p>
             </div>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-6">
