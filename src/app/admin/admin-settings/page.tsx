@@ -151,7 +151,7 @@ export default function AdminPersonalizationPage() {
         resolve(dataUrl);
       } catch (e: any) {
         console.error("Erro ao converter canvas para Data URL:", e);
-        reject(new Error(`Erro ao gerar a imagem final (toDataURL): ${e.message}`);
+        reject(new Error(`Erro ao gerar a imagem final (toDataURL): ${e.message}`))
       }
     });
   };
@@ -166,8 +166,14 @@ export default function AdminPersonalizationPage() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImageToCrop(reader.result as string);
-        setIsCropDialogOpen(true);
+        const result = reader.result as string;
+        // For direct use without cropping:
+        form.setValue('logoUrl', result);
+        toast({
+          title: "Logo atualizada!",
+          description: "A nova logo foi definida.",
+          action: <CheckCircle2 className="text-green-500" />,
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -349,8 +355,8 @@ export default function AdminPersonalizationPage() {
                             <ImageUp className="mr-2 h-5 w-5" />
                             Logo na tela de login
                           </FormLabel>
-                          <FormDescUI className="pb-2">
-                           A logo será exibida com altura máxima de 28 pixels na tela de login, mantendo a proporção original. O editor permite cortar e ajustar o zoom.
+                           <FormDescUI className="pb-2">
+                            A logo será exibida com altura máxima de 28 pixels na tela de login, mantendo a proporção original.
                           </FormDescUI>
                           <div className="flex items-center gap-2">
                             <FormControl>
@@ -358,7 +364,7 @@ export default function AdminPersonalizationPage() {
                                 type="file"
                                 accept="image/*"
                                 ref={logoInputRef}
-                                onChange={handleLogoFileChange}
+                                onChange={handleLogoFileChange} // Direct usage, no cropping
                                 className="cursor-pointer flex-grow"
                               />
                             </FormControl>
@@ -369,7 +375,6 @@ export default function AdminPersonalizationPage() {
                                 size="icon"
                                 onClick={() => {
                                   field.onChange('');
-                                  setImageToCrop(null);
                                   if (logoInputRef.current) logoInputRef.current.value = '';
                                 }}
                                 title="Remover logo atual"
@@ -606,7 +611,7 @@ export default function AdminPersonalizationPage() {
                                   <NextImage src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
                                 </div>
                               ) : (
-                                <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-1 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div> {/* Adjusted height */}
+                                <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-1 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
                               )}
 
                               <p className="text-center text-[8px] mb-2" style={previewDescriptionStyle}>
@@ -704,5 +709,7 @@ export default function AdminPersonalizationPage() {
     </>
   );
 }
+
+    
 
     
