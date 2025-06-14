@@ -8,12 +8,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MapPin, PlusCircle, Edit2, Trash2, MoreHorizontal } from "lucide-react";
 import { useLocations, type Location } from '@/contexts/LocationContext';
+import { useAssets } from '@/contexts/AssetContext'; // Importar useAssets
 import { LocationFormDialog } from '@/components/locations/LocationFormDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ManageLocationsPage() {
   const { locations, deleteLocation: deleteLocationFromContext } = useLocations();
+  const { assets } = useAssets(); // Obter lista de ativos
   const { toast } = useToast();
 
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false);
@@ -31,11 +33,27 @@ export default function ManageLocationsPage() {
     setIsConfirmDeleteDialogOpen(true);
   };
 
+  const isLocationInUse = (locationIdToCheck: string): boolean => {
+    return assets.some(asset => asset.locationId === locationIdToCheck);
+  };
+
   const confirmDelete = () => {
     if (!itemToDeleteId) return;
-    deleteLocationFromContext(itemToDeleteId);
-    toast({ title: "Sucesso!", description: "Local excluído." });
+
+    if (isLocationInUse(itemToDeleteId)) {
+      const locationDetails = locations.find(l => l.id === itemToDeleteId);
+      const locationName = locationDetails?.name || "Este local";
+      toast({
+        title: "Exclusão não permitida",
+        description: `O local "${locationName}" está vinculado a um ou mais ativos e não pode ser excluído.`,
+        variant: "destructive",
+      });
+    } else {
+      deleteLocationFromContext(itemToDeleteId);
+      toast({ title: "Sucesso!", description: "Local excluído." });
+    }
     setItemToDeleteId(null);
+    setIsConfirmDeleteDialogOpen(false);
   };
 
   return (
@@ -126,3 +144,4 @@ export default function ManageLocationsPage() {
     </div>
   );
 }
+

@@ -8,12 +8,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Layers, PlusCircle, Edit2, Trash2, MoreHorizontal } from "lucide-react";
 import { useCategories, type AssetCategory } from '@/contexts/CategoryContext';
+import { useAssets } from '@/contexts/AssetContext'; // Importar useAssets
 import { CategoryFormDialog, type CategoryFormValues } from '@/components/categories/CategoryFormDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ManageCategoriesPage() {
   const { categories, addCategory, updateCategory, deleteCategory } = useCategories();
+  const { assets } = useAssets(); // Obter lista de ativos
   const { toast } = useToast();
 
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
@@ -51,11 +53,27 @@ export default function ManageCategoriesPage() {
     setIsConfirmDeleteDialogOpen(true);
   };
 
+  const isCategoryInUse = (categoryIdToCheck: string): boolean => {
+    return assets.some(asset => asset.categoryId === categoryIdToCheck);
+  };
+
   const confirmDelete = () => {
     if (!itemToDeleteId) return;
-    deleteCategory(itemToDeleteId);
-    toast({ title: "Sucesso!", description: "Categoria excluída." });
+
+    if (isCategoryInUse(itemToDeleteId)) {
+      const categoryDetails = categories.find(c => c.id === itemToDeleteId);
+      const categoryName = categoryDetails?.name || "Esta categoria";
+      toast({
+        title: "Exclusão não permitida",
+        description: `A categoria "${categoryName}" está vinculada a um ou mais ativos e não pode ser excluída.`,
+        variant: "destructive",
+      });
+    } else {
+      deleteCategory(itemToDeleteId);
+      toast({ title: "Sucesso!", description: "Categoria excluída." });
+    }
     setItemToDeleteId(null);
+    setIsConfirmDeleteDialogOpen(false);
   };
 
   const getDepreciationMethodLabel = (method: AssetCategory['depreciationMethod']) => {
@@ -166,3 +184,4 @@ export default function ManageCategoriesPage() {
     </div>
   );
 }
+
