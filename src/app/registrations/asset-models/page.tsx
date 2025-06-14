@@ -8,12 +8,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Shapes, PlusCircle, Edit2, Trash2, MoreHorizontal } from "lucide-react";
 import { useAssetModels, type AssetModel } from '@/contexts/AssetModelContext';
+import { useAssets } from '@/contexts/AssetContext'; // Importar useAssets
 import { AssetModelFormDialog } from '@/components/asset-models/AssetModelFormDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ManageAssetModelsPage() {
   const { assetModels, deleteAssetModel } = useAssetModels();
+  const { assets } = useAssets(); // Obter lista de ativos
   const { toast } = useToast();
 
   const [isAssetModelDialogOpen, setIsAssetModelDialogOpen] = useState(false);
@@ -31,11 +33,27 @@ export default function ManageAssetModelsPage() {
     setIsConfirmDeleteDialogOpen(true);
   };
 
+  const isModelInUse = (modelIdToCheck: string): boolean => {
+    return assets.some(asset => asset.modelId === modelIdToCheck);
+  };
+
   const confirmDelete = () => {
     if (!itemToDeleteId) return;
-    deleteAssetModel(itemToDeleteId);
-    toast({ title: "Sucesso!", description: "Modelo de ativo excluído." });
+
+    if (isModelInUse(itemToDeleteId)) {
+      const modelDetails = assetModels.find(m => m.id === itemToDeleteId);
+      const modelName = modelDetails?.name || "Este modelo";
+      toast({
+        title: "Exclusão não permitida",
+        description: `${modelName} está vinculado a um ou mais ativos e não pode ser excluído.`,
+        variant: "destructive",
+      });
+    } else {
+      deleteAssetModel(itemToDeleteId);
+      toast({ title: "Sucesso!", description: "Modelo de ativo excluído." });
+    }
     setItemToDeleteId(null);
+    setIsConfirmDeleteDialogOpen(false); // Fechar o diálogo em ambos os casos
   };
 
   return (
@@ -138,3 +156,4 @@ export default function ManageAssetModelsPage() {
     </div>
   );
 }
+
