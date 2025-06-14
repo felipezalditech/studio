@@ -5,14 +5,14 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import NextImage from 'next/image'; // Renomeado para NextImage para evitar conflito com window.Image
+import NextImage from 'next/image'; 
 import Cropper, { type Area } from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as FormDescUI } from "@/components/ui/form"; // Renomeado FormDescription para FormDescUI
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as FormDescUI } from "@/components/ui/form"; 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription as DialogDesc } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { Palette, UploadCloud, XCircle, Save, ImageIcon as ImageIconLucide, Brush, Square, Type, Columns2, Eye, Spline, Crop, ZoomIn, ZoomOut } from "lucide-react";
@@ -27,7 +27,7 @@ const loginScreenBrandingSchema = z.object({
   logoUrl: z.string().optional(),
   backgroundImageUrl: z.string().optional(),
   loginButtonColor: optionalHexColor,
-  cardBackgroundColor: optionalHexColor,
+  cardBackgroundColor: optionalHexColor, // This will now be the left panel background
   inputBackgroundColor: optionalHexColor,
   inputBorderColor: optionalHexColor,
   labelTextColor: optionalHexColor,
@@ -37,7 +37,7 @@ type LoginScreenBrandingFormValues = z.infer<typeof loginScreenBrandingSchema>;
 
 const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
-    const image = new window.Image(); // Usar window.Image explicitamente
+    const image = new window.Image(); 
     image.addEventListener('load', () => resolve(image));
     image.addEventListener('error', (error) => reject(error));
     image.setAttribute('crossOrigin', 'anonymous');
@@ -65,7 +65,6 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string>
     throw new Error("Não foi possível obter o contexto 2D do canvas.");
   }
 
-  // Configura a qualidade do suavização da imagem para alta ao redimensionar
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
@@ -263,11 +262,11 @@ export default function AdminPersonalizationPage() {
     previewRightPanelStyle.backgroundColor = 'hsl(var(--muted) / 0.4)';
   }
 
-  const previewCardStyle: React.CSSProperties = {};
-  if (watchedValues.cardBackgroundColor) {
-    previewCardStyle.backgroundColor = watchedValues.cardBackgroundColor;
+  const previewLeftPanelStyle: React.CSSProperties = {};
+  if (watchedValues.cardBackgroundColor) { // Now applies to the left panel
+    previewLeftPanelStyle.backgroundColor = watchedValues.cardBackgroundColor;
   } else {
-    previewCardStyle.backgroundColor = 'hsl(var(--card))';
+    previewLeftPanelStyle.backgroundColor = 'hsl(var(--background))'; // Default background
   }
 
   const previewInputStyle: React.CSSProperties = {};
@@ -387,7 +386,7 @@ export default function AdminPersonalizationPage() {
                             Imagem de fundo da tela de login
                           </FormLabel>
                           <FormDescUI className="pb-2">
-                            Se nenhuma imagem for selecionada, uma cor padrão será usada.
+                            Se nenhuma imagem for selecionada, uma cor padrão será usada na coluna da direita.
                           </FormDescUI>
                           <div className="flex items-center gap-2">
                             <FormControl>
@@ -422,6 +421,29 @@ export default function AdminPersonalizationPage() {
 
                     <FormField
                       control={form.control}
+                      name="cardBackgroundColor" // Now left panel background
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center text-lg font-semibold">
+                            <Square className="mr-2 h-5 w-5" />
+                            Cor de fundo do painel de login
+                          </FormLabel>
+                          <FormDescUI className="pb-2">
+                            Deixe em branco para usar a cor padrão do tema.
+                          </FormDescUI>
+                          <div className="flex items-center gap-2 max-w-md">
+                            <FormControl>
+                              <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
+                            </FormControl>
+                            <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
                       name="loginButtonColor"
                       render={({ field }) => (
                         <FormItem>
@@ -437,29 +459,6 @@ export default function AdminPersonalizationPage() {
                               <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border" />
                             </FormControl>
                             <span className="text-sm text-muted-foreground">{field.value || '#3F51B5 (Padrão)'}</span>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="cardBackgroundColor"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center text-lg font-semibold">
-                            <Square className="mr-2 h-5 w-5" />
-                            Cor de fundo do card de login
-                          </FormLabel>
-                          <FormDescUI className="pb-2">
-                            Deixe em branco para usar a cor padrão do tema.
-                          </FormDescUI>
-                          <div className="flex items-center gap-2 max-w-md">
-                            <FormControl>
-                              <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
-                            </FormControl>
-                            <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -564,6 +563,7 @@ export default function AdminPersonalizationPage() {
                     </div>
                   </div>
 
+                  {/* Preview Section */}
                   <div className="mt-8 md:mt-0 md:sticky md:top-20 self-start">
                       <div className="flex items-center mb-2 text-lg font-semibold">
                           <Eye className="mr-2 h-5 w-5 text-primary" />
@@ -574,11 +574,11 @@ export default function AdminPersonalizationPage() {
                       >
                         <div className="flex h-full w-full">
                           {/* Coluna Esquerda (Formulário Preview) */}
-                          <div className="w-2/5 flex flex-col items-center justify-center p-3 bg-background dark:bg-muted/10">
-                            <div 
-                              className="w-full max-w-[90%] p-3 rounded-md shadow-lg" 
-                              style={previewCardStyle}
-                            >
+                          <div 
+                            className="w-2/5 flex flex-col items-center justify-center p-3"
+                            style={previewLeftPanelStyle} // Apply background to the panel itself
+                          >
+                            <div className="w-full max-w-[90%] space-y-2"> {/* Simplified container for form elements */}
                               {watchedValues.logoUrl ? (
                                 <div className="mx-auto mb-1 mt-1 h-5 w-auto max-w-[70px] relative">
                                   <NextImage src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
