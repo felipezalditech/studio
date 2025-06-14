@@ -233,7 +233,7 @@ export default function AdminPersonalizationPage() {
     try {
       const options = currentFieldToUpdate === 'logoUrl'
         ? { type: 'image/png' as const, maxWidth: 480, maxHeight: Math.round((480 * 56) / 240) } 
-        : { type: 'image/jpeg' as const, quality: 0.85, maxWidth: 1024, maxHeight: 1024 }; 
+        : { type: 'image/jpeg' as const, quality: 0.85, maxWidth: 1200, maxHeight: 1600 }; 
 
       const croppedImage = await getCroppedImg(
         imageToCrop,
@@ -471,7 +471,7 @@ export default function AdminPersonalizationPage() {
                             Imagem de fundo da tela de login
                           </FormLabel>
                           <FormDescUI className="pb-2">
-                           A imagem de fundo será cortada para uma proporção de 3:4 (retrato) e redimensionada (máx. ~768x1024px). Para melhores resultados com `background-size: cover`, escolha uma imagem que fique bem nessa proporção.
+                           A imagem de fundo será cortada para uma proporção de 3:4 (retrato) e redimensionada (máx. ~1200x1600px). Para melhores resultados com `background-size: cover`, escolha uma imagem que fique bem nessa proporção.
                           </FormDescUI>
                           <div className="flex items-center gap-2">
                             <FormControl>
