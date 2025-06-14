@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation'; // Import useRouter
 import type { ReactNode } from 'react';
 import React, { useState } from 'react';
 import {
@@ -98,11 +98,18 @@ const getInitials = (name: string) => {
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter(); // Initialize useRouter
   const { brandingConfig } = useBranding();
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
 
   const toggleSubmenu = (label: string) => {
     setOpenSubmenus(prev => ({ ...prev, [label]: !prev[label] }));
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('userLoggedIn');
+    localStorage.removeItem('adminLoggedIn'); // Ensure both are cleared
+    router.push('/admin/login'); // Redirect to the unified login page
   };
 
   if (pathname.startsWith('/admin')) {
@@ -235,7 +242,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => console.log('Sair clicado')}>
+                <DropdownMenuItem onClick={handleLogout}> {/* Updated onClick handler */}
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
                 </DropdownMenuItem>
