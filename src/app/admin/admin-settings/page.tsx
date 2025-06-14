@@ -10,13 +10,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Palette, UploadCloud, XCircle, Save, Image as ImageIcon } from "lucide-react";
+import { Palette, UploadCloud, XCircle, Save, Image as ImageIcon, Brush } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useLoginScreenBranding, type LoginScreenBrandingConfig } from '@/hooks/useLoginScreenBranding';
+
+const hexColorRegex = /^#([0-9A-Fa-f]{3}){1,2}$/;
 
 const loginScreenBrandingSchema = z.object({
   logoUrl: z.string().optional(),
   backgroundImageUrl: z.string().optional(),
+  loginButtonColor: z.string().regex(hexColorRegex, "Cor inválida. Use o formato hexadecimal (ex: #RRGGBB).").optional(),
 });
 type LoginScreenBrandingFormValues = z.infer<typeof loginScreenBrandingSchema>;
 
@@ -31,6 +34,7 @@ export default function AdminPersonalizationPage() {
     defaultValues: {
       logoUrl: loginScreenBranding.logoUrl || '',
       backgroundImageUrl: loginScreenBranding.backgroundImageUrl || '',
+      loginButtonColor: loginScreenBranding.loginButtonColor || '#3F51B5',
     },
   });
 
@@ -38,6 +42,7 @@ export default function AdminPersonalizationPage() {
     form.reset({
       logoUrl: loginScreenBranding.logoUrl || '',
       backgroundImageUrl: loginScreenBranding.backgroundImageUrl || '',
+      loginButtonColor: loginScreenBranding.loginButtonColor || '#3F51B5',
     });
   }, [loginScreenBranding, form]);
 
@@ -46,6 +51,7 @@ export default function AdminPersonalizationPage() {
       ...prev,
       logoUrl: data.logoUrl || '',
       backgroundImageUrl: data.backgroundImageUrl || '',
+      loginButtonColor: data.loginButtonColor || '#3F51B5',
     }));
     toast({ title: "Sucesso!", description: "Personalização da tela de login atualizada." });
   };
@@ -198,19 +204,43 @@ export default function AdminPersonalizationPage() {
                 )}
               />
               
-              <div className="space-y-4 mt-8">
-                <div>
-                  <h3 className="text-lg font-semibold">Cores do botão de login</h3>
-                  <p className="text-muted-foreground">
-                    (Em desenvolvimento) Personalize as cores do botão principal da tela de login.
-                  </p>
-                </div>
-                 <div className="pt-6 flex justify-end">
-                  <Button type="submit" disabled={form.formState.isSubmitting}>
-                    <Save className="mr-2 h-4 w-4" />
-                    {form.formState.isSubmitting ? "Salvando..." : "Salvar"}
-                  </Button>
-                </div>
+              <FormField
+                control={form.control}
+                name="loginButtonColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center text-lg font-semibold">
+                      <Brush className="mr-2 h-5 w-5" />
+                      Cor do botão de login
+                    </FormLabel>
+                    <FormDescription className="pb-2">
+                      Escolha a cor de fundo para o botão principal da tela de login.
+                    </FormDescription>
+                    <div className="flex items-center gap-4 max-w-md">
+                      <FormControl>
+                        <Input
+                          type="color"
+                          {...field}
+                          className="w-20 h-10 p-1 cursor-pointer"
+                        />
+                      </FormControl>
+                      <div className="w-24 h-10 rounded-md border flex items-center justify-center" style={{ backgroundColor: field.value }}>
+                        <span className="text-xs" style={{ color: field.value && parseInt(field.value.substring(1,3), 16) * 0.299 + parseInt(field.value.substring(3,5), 16) * 0.587 + parseInt(field.value.substring(5,7), 16) * 0.114 > 186 ? '#000000' : '#FFFFFF' }}>
+                          Cor
+                        </span>
+                      </div>
+                       <span className="text-sm text-muted-foreground">{field.value}</span>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="pt-6 flex justify-end">
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  <Save className="mr-2 h-4 w-4" />
+                  {form.formState.isSubmitting ? "Salvando..." : "Salvar"}
+                </Button>
               </div>
             </form>
           </Form>
