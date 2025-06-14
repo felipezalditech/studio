@@ -79,7 +79,7 @@ export default function UnifiedLoginPage() {
   const rightPanelStyle: React.CSSProperties = {};
   if (currentBackgroundImageUrl) {
     rightPanelStyle.backgroundImage = `url(${currentBackgroundImageUrl})`;
-    rightPanelStyle.backgroundSize = 'cover'; // Alterado de contain para cover
+    rightPanelStyle.backgroundSize = 'cover';
     rightPanelStyle.backgroundPosition = 'center';
     rightPanelStyle.backgroundRepeat = 'no-repeat';
   } else {
@@ -132,7 +132,7 @@ export default function UnifiedLoginPage() {
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* Left Column: Form */}
       <div 
-        className="w-full md:w-1/2 lg:w-[45%] xl:w-2/5 flex flex-col items-center justify-start px-6 sm:px-10 pt-8 sm:pt-12 pb-6 sm:pb-10"
+        className="w-full md:w-1/2 lg:w-[45%] xl:w-2/5 flex flex-col items-center justify-start px-6 sm:px-10 pt-16 sm:pt-24 pb-6 sm:pb-10"
         style={leftPanelStyle}
       >
         <div className="w-full max-w-md">
@@ -152,7 +152,7 @@ export default function UnifiedLoginPage() {
                 ) : (
                 <h1 className="text-2xl font-bold mb-4 mt-4">Zaldi Imo</h1>
                 )}
-                <p className="text-center text-2xl font-bold mb-8" style={descriptionStyle}>Bem vindo ao Zaldi Imo</p>
+                <p className="text-2xl font-bold mb-8 text-[18px]" style={descriptionStyle}>Bem vindo ao Zaldi Imo</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
