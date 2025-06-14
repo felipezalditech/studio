@@ -7,7 +7,7 @@ import type {
   SortingState,
   VisibilityState,
   ColumnFiltersState,
-  RowSelectionState, // Importar RowSelectionState
+  RowSelectionState,
 } from "@tanstack/react-table";
 import {
   flexRender,
@@ -16,8 +16,8 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-  getFacetedRowModel, // Necessário para algumas funcionalidades de filtro/seleção
-  getFacetedUniqueValues, // Necessário para algumas funcionalidades de filtro/seleção
+  getFacetedRowModel,
+  getFacetedUniqueValues,
 } from "@tanstack/react-table";
 
 import { Button } from '@/components/ui/button';
@@ -25,8 +25,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, ChevronDown, Edit2, Trash2, MoreHorizontal } from 'lucide-react';
+import { PlusCircle, ChevronDown, Edit2, Trash2 } from 'lucide-react';
 import { useSuppliers, type Supplier } from '@/contexts/SupplierContext';
+import { useAssets } from '@/contexts/AssetContext'; // Importar useAssets
 import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
@@ -37,18 +38,19 @@ import useLocalStorage from '@/lib/hooks/use-local-storage';
 
 export default function SuppliersPage() {
   const { suppliers, deleteSupplier } = useSuppliers();
+  const { assets } = useAssets(); // Obter lista de ativos
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
   const [supplierToDeleteId, setSupplierToDeleteId] = useState<string | null>(null);
-  const [isConfirmDeleteMultipleDialogOpen, setIsConfirmDeleteMultipleDialogOpen] = useState(false); // Novo estado
+  const [isConfirmDeleteMultipleDialogOpen, setIsConfirmDeleteMultipleDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useLocalStorage<VisibilityState>('supplierTableColumnVisibility', {});
   const [globalFilter, setGlobalFilter] = React.useState('');
-  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({}); // Novo estado para seleção
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
 
   const handleOpenDialog = (supplier: Supplier | null = null) => {
     setEditingSupplier(supplier);
@@ -60,13 +62,28 @@ export default function SuppliersPage() {
     setIsConfirmDeleteDialogOpen(true);
   };
 
+  const isSupplierInUse = (supplierIdToCheck: string): boolean => {
+    return assets.some(asset => asset.supplier === supplierIdToCheck);
+  };
+
   const confirmDeleteSupplier = () => {
     if (supplierToDeleteId) {
-      deleteSupplier(supplierToDeleteId);
-      toast({ title: "Sucesso!", description: "Fornecedor excluído." });
+      if (isSupplierInUse(supplierToDeleteId)) {
+        const supplierDetails = suppliers.find(s => s.id === supplierToDeleteId);
+        const supplierName = supplierDetails?.nomeFantasia || supplierDetails?.razaoSocial || "Este fornecedor";
+        toast({
+          title: "Exclusão não permitida",
+          description: `${supplierName} está vinculado a um ou mais ativos e não pode ser excluído.`,
+          variant: "destructive",
+        });
+      } else {
+        deleteSupplier(supplierToDeleteId);
+        toast({ title: "Sucesso!", description: "Fornecedor excluído." });
+      }
       setSupplierToDeleteId(null);
-      setRowSelection({}); // Limpar seleção após exclusão
+      setRowSelection({});
     }
+    setIsConfirmDeleteDialogOpen(false);
   };
 
   const handleDeleteMultipleRequest = () => {
@@ -79,18 +96,40 @@ export default function SuppliersPage() {
 
   const confirmDeleteMultipleSuppliers = () => {
     const selectedSupplierIds = table.getFilteredSelectedRowModel().rows.map(row => row.original.id);
-    if (selectedSupplierIds.length > 0) {
-      selectedSupplierIds.forEach(id => deleteSupplier(id));
-      toast({ title: "Sucesso!", description: `${selectedSupplierIds.length} fornecedor(es) excluído(s).` });
-      setRowSelection({}); // Limpar seleção
+    const suppliersToDelete: string[] = [];
+    const suppliersInUseDetails: { id: string, name: string }[] = [];
+
+    selectedSupplierIds.forEach(id => {
+      if (isSupplierInUse(id)) {
+        const supplierDetails = suppliers.find(s => s.id === id);
+        suppliersInUseDetails.push({ id, name: supplierDetails?.nomeFantasia || supplierDetails?.razaoSocial || id });
+      } else {
+        suppliersToDelete.push(id);
+      }
+    });
+
+    if (suppliersToDelete.length > 0) {
+      suppliersToDelete.forEach(id => deleteSupplier(id));
+      toast({ title: "Sucesso!", description: `${suppliersToDelete.length} fornecedor(es) excluído(s).` });
     }
+
+    if (suppliersInUseDetails.length > 0) {
+      const namesOfSuppliersInUse = suppliersInUseDetails.map(s => s.name).join(', ');
+      toast({
+        title: `Alguns fornecedores não foram excluídos (${suppliersInUseDetails.length})`,
+        description: `Os seguintes fornecedores não puderam ser excluídos por estarem vinculados a ativos: ${namesOfSuppliersInUse}.`,
+        variant: "destructive",
+        duration: 9000,
+      });
+    }
+    setRowSelection({});
     setIsConfirmDeleteMultipleDialogOpen(false);
   };
 
   const columns = useMemo(
     () => getSupplierColumns(handleOpenDialog, handleDeleteSupplierRequest),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [] 
+    [assets] // Adicionar assets como dependência para forçar a recriação das colunas se os ativos mudarem
   );
 
   const table = useReactTable({
@@ -101,10 +140,10 @@ export default function SuppliersPage() {
       columnFilters,
       columnVisibility,
       globalFilter,
-      rowSelection, // Adicionar estado de seleção
+      rowSelection,
     },
-    enableRowSelection: true, // Habilitar seleção de linha
-    onRowSelectionChange: setRowSelection, // Handler para mudança de seleção
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
@@ -113,8 +152,8 @@ export default function SuppliersPage() {
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getFacetedRowModel: getFacetedRowModel(), // Adicionar para funcionalidades de filtro
-    getFacetedUniqueValues: getFacetedUniqueValues(), // Adicionar para funcionalidades de filtro
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
     initialState: {
       pagination: {
         pageSize: 10,
@@ -325,8 +364,9 @@ export default function SuppliersPage() {
         onOpenChange={setIsConfirmDeleteMultipleDialogOpen}
         onConfirm={confirmDeleteMultipleSuppliers}
         title="Confirmar exclusão múltipla"
-        description={`Tem certeza que deseja excluir os ${selectedRowsCount} fornecedores selecionados? Esta ação não pode ser desfeita.`}
+        description={`Tem certeza que deseja excluir os ${selectedRowsCount} fornecedores selecionados? Esta ação não pode ser desfeita e os fornecedores vinculados a ativos não serão excluídos.`}
       />
     </div>
   );
 }
+
