@@ -23,12 +23,21 @@ export default function UnifiedLoginPage() {
   const [currentLogoUrl, setCurrentLogoUrl] = useState<string>('');
   const [currentBackgroundImageUrl, setCurrentBackgroundImageUrl] = useState<string>('');
   const [currentLoginButtonColor, setCurrentLoginButtonColor] = useState<string | undefined>(undefined);
+  const [currentCardBackgroundColor, setCurrentCardBackgroundColor] = useState<string | undefined>(undefined);
+  const [currentInputBackgroundColor, setCurrentInputBackgroundColor] = useState<string | undefined>(undefined);
+  const [currentLabelTextColor, setCurrentLabelTextColor] = useState<string | undefined>(undefined);
+  const [currentDescriptionTextColor, setCurrentDescriptionTextColor] = useState<string | undefined>(undefined);
+
 
   useEffect(() => {
     // Garante que estas operações que dependem do localStorage só rodem no cliente
     setCurrentLogoUrl(loginScreenBranding.logoUrl);
     setCurrentBackgroundImageUrl(loginScreenBranding.backgroundImageUrl);
     setCurrentLoginButtonColor(loginScreenBranding.loginButtonColor);
+    setCurrentCardBackgroundColor(loginScreenBranding.cardBackgroundColor);
+    setCurrentInputBackgroundColor(loginScreenBranding.inputBackgroundColor);
+    setCurrentLabelTextColor(loginScreenBranding.labelTextColor);
+    setCurrentDescriptionTextColor(loginScreenBranding.descriptionTextColor);
   }, [loginScreenBranding]);
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -63,26 +72,48 @@ export default function UnifiedLoginPage() {
     }, 1000);
   };
 
-  const pageStyle = currentBackgroundImageUrl
-  ? {
-      backgroundImage: `url(${currentBackgroundImageUrl})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
-    }
-  : {};
+  const pageStyle: React.CSSProperties = {};
+  if (currentBackgroundImageUrl) {
+    pageStyle.backgroundImage = `url(${currentBackgroundImageUrl})`;
+    pageStyle.backgroundSize = 'cover';
+    pageStyle.backgroundPosition = 'center';
+    pageStyle.backgroundRepeat = 'no-repeat';
+  }
+
+  const cardStyle: React.CSSProperties = {};
+  if (currentCardBackgroundColor) {
+    cardStyle.backgroundColor = currentCardBackgroundColor;
+  }
+
+  const inputStyle: React.CSSProperties = {};
+  if (currentInputBackgroundColor) {
+    inputStyle.backgroundColor = currentInputBackgroundColor;
+    // Potencialmente adicionar cor do texto aqui se o fundo for muito escuro/claro
+  }
+  
+  const labelStyle: React.CSSProperties = {};
+  if (currentLabelTextColor) {
+    labelStyle.color = currentLabelTextColor;
+  }
+
+  const descriptionStyle: React.CSSProperties = {};
+  if (currentDescriptionTextColor) {
+    descriptionStyle.color = currentDescriptionTextColor;
+  }
 
   const loginButtonStyle: React.CSSProperties = {};
   if (currentLoginButtonColor) {
     loginButtonStyle.backgroundColor = currentLoginButtonColor;
-    // Pequena lógica para tentar ajustar a cor do texto para melhor contraste
-    // Isso é rudimentar, uma solução melhor usaria bibliotecas ou cálculos mais precisos
     const hex = currentLoginButtonColor.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    loginButtonStyle.color = brightness > 125 ? '#000000' : '#FFFFFF';
+    if (hex.length === 6) {
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        loginButtonStyle.color = brightness > 125 ? '#000000' : '#FFFFFF';
+    } else {
+        loginButtonStyle.color = '#FFFFFF'; // Fallback para texto branco
+    }
   }
 
 
@@ -94,7 +125,10 @@ export default function UnifiedLoginPage() {
       )}
       style={pageStyle}
     >
-      <Card className="w-full max-w-md shadow-xl bg-card/90 backdrop-blur-sm">
+      <Card 
+        className="w-full max-w-md shadow-xl bg-card/90 backdrop-blur-sm"
+        style={cardStyle}
+      >
         <CardHeader className="text-center">
           {currentLogoUrl ? (
             <div className="mb-4 flex justify-center">
@@ -111,12 +145,12 @@ export default function UnifiedLoginPage() {
           ) : (
             <CardTitle className="text-2xl font-bold">Zaldi Imo</CardTitle>
           )}
-          <CardDescription>Acesse sua conta Zaldi Imo.</CardDescription>
+          <CardDescription style={descriptionStyle}>Acesse sua conta Zaldi Imo.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" style={labelStyle}>Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -125,10 +159,11 @@ export default function UnifiedLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
+                style={inputStyle}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password" style={labelStyle}>Senha</Label>
               <Input
                 id="password"
                 type="password"
@@ -137,6 +172,7 @@ export default function UnifiedLoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                style={inputStyle}
               />
             </div>
           </CardContent>
@@ -159,4 +195,3 @@ export default function UnifiedLoginPage() {
     </div>
   );
 }
-

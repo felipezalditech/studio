@@ -10,16 +10,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Palette, UploadCloud, XCircle, Save, Image as ImageIcon, Brush } from "lucide-react";
+import { Palette, UploadCloud, XCircle, Save, Image as ImageIcon, Brush, Square, Type, Columns } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useLoginScreenBranding, type LoginScreenBrandingConfig } from '@/hooks/useLoginScreenBranding';
 
 const hexColorRegex = /^#([0-9A-Fa-f]{3}){1,2}$/;
+const optionalHexColor = z.string().regex(hexColorRegex, "Cor inválida. Use o formato hexadecimal (ex: #RRGGBB).").optional().or(z.literal(''));
+
 
 const loginScreenBrandingSchema = z.object({
   logoUrl: z.string().optional(),
   backgroundImageUrl: z.string().optional(),
-  loginButtonColor: z.string().regex(hexColorRegex, "Cor inválida. Use o formato hexadecimal (ex: #RRGGBB).").optional(),
+  loginButtonColor: optionalHexColor,
+  cardBackgroundColor: optionalHexColor,
+  inputBackgroundColor: optionalHexColor,
+  labelTextColor: optionalHexColor,
+  descriptionTextColor: optionalHexColor,
 });
 type LoginScreenBrandingFormValues = z.infer<typeof loginScreenBrandingSchema>;
 
@@ -35,6 +41,10 @@ export default function AdminPersonalizationPage() {
       logoUrl: loginScreenBranding.logoUrl || '',
       backgroundImageUrl: loginScreenBranding.backgroundImageUrl || '',
       loginButtonColor: loginScreenBranding.loginButtonColor || '#3F51B5',
+      cardBackgroundColor: loginScreenBranding.cardBackgroundColor || '',
+      inputBackgroundColor: loginScreenBranding.inputBackgroundColor || '',
+      labelTextColor: loginScreenBranding.labelTextColor || '',
+      descriptionTextColor: loginScreenBranding.descriptionTextColor || '',
     },
   });
 
@@ -43,6 +53,10 @@ export default function AdminPersonalizationPage() {
       logoUrl: loginScreenBranding.logoUrl || '',
       backgroundImageUrl: loginScreenBranding.backgroundImageUrl || '',
       loginButtonColor: loginScreenBranding.loginButtonColor || '#3F51B5',
+      cardBackgroundColor: loginScreenBranding.cardBackgroundColor || '',
+      inputBackgroundColor: loginScreenBranding.inputBackgroundColor || '',
+      labelTextColor: loginScreenBranding.labelTextColor || '',
+      descriptionTextColor: loginScreenBranding.descriptionTextColor || '',
     });
   }, [loginScreenBranding, form]);
 
@@ -52,6 +66,10 @@ export default function AdminPersonalizationPage() {
       logoUrl: data.logoUrl || '',
       backgroundImageUrl: data.backgroundImageUrl || '',
       loginButtonColor: data.loginButtonColor || '#3F51B5',
+      cardBackgroundColor: data.cardBackgroundColor || '',
+      inputBackgroundColor: data.inputBackgroundColor || '',
+      labelTextColor: data.labelTextColor || '',
+      descriptionTextColor: data.descriptionTextColor || '',
     }));
     toast({ title: "Sucesso!", description: "Personalização da tela de login atualizada." });
   };
@@ -69,6 +87,16 @@ export default function AdminPersonalizationPage() {
       reader.readAsDataURL(file);
     }
   };
+
+  const getBrightness = (hexColor: string): number => {
+    if (!hexColor || !hexColorRegex.test(hexColor)) return 128; // Default to mid-brightness
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000;
+  };
+
 
   return (
     <div className="space-y-6">
@@ -224,12 +252,148 @@ export default function AdminPersonalizationPage() {
                           className="w-20 h-10 p-1 cursor-pointer"
                         />
                       </FormControl>
-                      <div className="w-24 h-10 rounded-md border flex items-center justify-center" style={{ backgroundColor: field.value }}>
-                        <span className="text-xs" style={{ color: field.value && parseInt(field.value.substring(1,3), 16) * 0.299 + parseInt(field.value.substring(3,5), 16) * 0.587 + parseInt(field.value.substring(5,7), 16) * 0.114 > 186 ? '#000000' : '#FFFFFF' }}>
-                          Cor
-                        </span>
+                      <div 
+                        className="w-24 h-10 rounded-md border flex items-center justify-center" 
+                        style={{ 
+                          backgroundColor: field.value || 'transparent',
+                          color: field.value && getBrightness(field.value) > 125 ? '#000000' : '#FFFFFF'
+                        }}
+                      >
+                        <span className="text-xs">Cor</span>
                       </div>
-                       <span className="text-sm text-muted-foreground">{field.value}</span>
+                       <span className="text-sm text-muted-foreground">{field.value || 'Padrão'}</span>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="cardBackgroundColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center text-lg font-semibold">
+                      <Square className="mr-2 h-5 w-5" />
+                      Cor de fundo do card de login
+                    </FormLabel>
+                    <FormDescription className="pb-2">
+                      Escolha a cor de fundo para o card (caixa) de login. Deixe em branco para usar a cor padrão do tema.
+                    </FormDescription>
+                    <div className="flex items-center gap-4 max-w-md">
+                      <FormControl>
+                        <Input
+                          type="color"
+                          {...field}
+                          className="w-20 h-10 p-1 cursor-pointer"
+                        />
+                      </FormControl>
+                      <div 
+                        className="w-24 h-10 rounded-md border" 
+                        style={{ backgroundColor: field.value || 'transparent' }}
+                      ></div>
+                       <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+               <FormField
+                control={form.control}
+                name="inputBackgroundColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center text-lg font-semibold">
+                      <Columns className="mr-2 h-5 w-5" /> {/* Usando ícone alternativo */}
+                      Cor de fundo dos campos de entrada
+                    </FormLabel>
+                    <FormDescription className="pb-2">
+                      Escolha a cor de fundo para os campos de email e senha. Deixe em branco para usar a cor padrão do tema.
+                    </FormDescription>
+                    <div className="flex items-center gap-4 max-w-md">
+                      <FormControl>
+                        <Input
+                          type="color"
+                          {...field}
+                          className="w-20 h-10 p-1 cursor-pointer"
+                        />
+                      </FormControl>
+                       <div 
+                        className="w-24 h-10 rounded-md border" 
+                        style={{ backgroundColor: field.value || 'transparent' }}
+                      ></div>
+                       <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="labelTextColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center text-lg font-semibold">
+                      <Type className="mr-2 h-5 w-5" />
+                      Cor do texto dos rótulos
+                    </FormLabel>
+                    <FormDescription className="pb-2">
+                      Escolha a cor do texto para os rótulos "Email" e "Senha". Deixe em branco para usar a cor padrão do tema.
+                    </FormDescription>
+                    <div className="flex items-center gap-4 max-w-md">
+                      <FormControl>
+                        <Input
+                          type="color"
+                          {...field}
+                          className="w-20 h-10 p-1 cursor-pointer"
+                        />
+                      </FormControl>
+                       <div 
+                        className="w-24 h-10 rounded-md border flex items-center justify-center" 
+                        style={{ backgroundColor: field.value || 'transparent', color: field.value && getBrightness(field.value) > 125 ? '#000000' : '#FFFFFF' }}
+                      >
+                         <span className="text-xs" style={{ color: field.value && getBrightness(field.value) > 125 ? '#000000' : '#FFFFFF' }}>
+                            Aa
+                          </span>
+                      </div>
+                       <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+               <FormField
+                control={form.control}
+                name="descriptionTextColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center text-lg font-semibold">
+                      <Type className="mr-2 h-5 w-5" /> {/* Ícone repetido, mas ok por enquanto */}
+                      Cor do texto da descrição
+                    </FormLabel>
+                    <FormDescription className="pb-2">
+                      Escolha a cor do texto para a descrição "Acesse sua conta Zaldi Imo". Deixe em branco para usar a cor padrão do tema.
+                    </FormDescription>
+                    <div className="flex items-center gap-4 max-w-md">
+                      <FormControl>
+                        <Input
+                          type="color"
+                          {...field}
+                          className="w-20 h-10 p-1 cursor-pointer"
+                        />
+                      </FormControl>
+                       <div 
+                        className="w-24 h-10 rounded-md border flex items-center justify-center" 
+                        style={{ backgroundColor: field.value || 'transparent' }}
+                      >
+                         <span className="text-xs" style={{ color: field.value && getBrightness(field.value) > 125 ? '#000000' : '#FFFFFF' }}>
+                            Aa
+                          </span>
+                      </div>
+                       <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
                     </div>
                     <FormMessage />
                   </FormItem>

@@ -5,14 +5,22 @@ import useLocalStorage from '@/lib/hooks/use-local-storage';
 
 export interface LoginScreenBrandingConfig {
   logoUrl: string;
-  backgroundImageUrl: string; 
-  loginButtonColor?: string; // Cor de fundo do botão de login
+  backgroundImageUrl: string;
+  loginButtonColor?: string;
+  cardBackgroundColor?: string;
+  inputBackgroundColor?: string;
+  labelTextColor?: string;
+  descriptionTextColor?: string;
 }
 
 const defaultLoginScreenBrandingConfig: LoginScreenBrandingConfig = {
   logoUrl: '',
-  backgroundImageUrl: '', 
-  loginButtonColor: '#3F51B5', // Cor primária padrão (indigo-500 / hsl(231 48% 48%))
+  backgroundImageUrl: '',
+  loginButtonColor: '#3F51B5', // Cor primária padrão
+  cardBackgroundColor: '',
+  inputBackgroundColor: '',
+  labelTextColor: '',
+  descriptionTextColor: '',
 };
 
 export function useLoginScreenBranding(): [LoginScreenBrandingConfig, Dispatch<SetStateAction<LoginScreenBrandingConfig>>] {
@@ -22,4 +30,3 @@ export function useLoginScreenBranding(): [LoginScreenBrandingConfig, Dispatch<S
   );
   return [config, setConfig];
 }
-
