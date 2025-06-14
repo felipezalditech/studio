@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { LogOut, ShieldCheck, LayoutDashboard, Building, KeyRound, BarChart3, Settings as SettingsIcon, PanelLeft } from 'lucide-react';
+import { LogOut, ShieldCheck, LayoutDashboard, Building, KeyRound, BarChart3, Settings as SettingsIcon, PanelLeft, Palette } from 'lucide-react';
 import { ThemeToggleButton } from '@/components/theme/ThemeToggleButton';
 import {
   SidebarProvider,
@@ -17,15 +17,45 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarTrigger,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
-const adminMenuItems = [
+interface BaseAdminMenuItem {
+  label: string;
+  icon: React.ElementType;
+}
+
+interface RegularAdminMenuItem extends BaseAdminMenuItem {
+  href: string;
+  isSubmenuParent?: false;
+  subItems?: never;
+}
+
+interface SubmenuParentAdminItem extends BaseAdminMenuItem {
+  href?: string; // Link opcional para o item pai
+  isSubmenuParent: true;
+  subItems: RegularAdminMenuItem[];
+}
+
+type AdminMenuItemType = RegularAdminMenuItem | SubmenuParentAdminItem;
+
+
+const adminMenuItems: AdminMenuItemType[] = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/companies', label: 'Empresas', icon: Building },
   { href: '/admin/licenses', label: 'Licenças', icon: KeyRound },
   { href: '/admin/admin-reports', label: 'Relatórios', icon: BarChart3 },
-  { href: '/admin/admin-settings', label: 'Configurações', icon: SettingsIcon },
+  {
+    label: 'Configurações',
+    icon: SettingsIcon,
+    isSubmenuParent: true,
+    subItems: [
+      { href: '/admin/admin-settings', label: 'Personalização', icon: Palette },
+    ],
+  },
 ];
 
 export default function AdminLayout({
@@ -37,6 +67,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setIsClient(true);
@@ -49,18 +80,23 @@ export default function AdminLayout({
 
   const handleLogout = () => {
     localStorage.removeItem('adminLoggedIn');
+    localStorage.removeItem('userLoggedIn');
     setIsAdminLoggedIn(false);
     router.replace('/admin/login');
   };
 
+  const toggleSubmenu = (label: string) => {
+    setOpenSubmenus(prev => ({ ...prev, [label]: !prev[label] }));
+  };
+
   if (!isClient) {
-    return null; 
+    return null;
   }
 
   if (!isAdminLoggedIn && pathname !== '/admin/login') {
     return null;
   }
-  
+
   if (pathname === '/admin/login') {
     return <>{children}</>;
   }
@@ -79,22 +115,77 @@ export default function AdminLayout({
         <SidebarContent className="p-2">
           <SidebarMenu>
             {adminMenuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <SidebarMenuItem key={item.label}>
-                  <Link href={item.href} legacyBehavior passHref>
-                    <SidebarMenuButton
-                      asChild={false}
-                      isActive={pathname === item.href || (item.href !== "/admin/dashboard" && pathname.startsWith(item.href))}
-                      className="w-full justify-start"
-                      tooltip={{ children: item.label, side: 'right', align: 'center' }}
-                    >
-                      <Icon className="h-5 w-5 flex-shrink-0" />
-                      <span className="truncate">{item.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              );
+              const ParentIcon = item.icon;
+              if (item.isSubmenuParent && item.subItems) {
+                const isParentActive = item.subItems.some(subItem => pathname.startsWith(subItem.href));
+                const isSubmenuOpen = openSubmenus[item.label] || false;
+                return (
+                  <SidebarMenuItem key={item.label}>
+                    {item.href ? (
+                       <Link href={item.href} legacyBehavior passHref>
+                        <SidebarMenuButton
+                          asChild={false}
+                          isActive={isSubmenuOpen || isParentActive || (item.href && pathname.startsWith(item.href))}
+                          className="w-full justify-start"
+                          tooltip={{ children: item.label, side: 'right', align: 'center' }}
+                          onClick={() => toggleSubmenu(item.label)}
+                        >
+                          <ParentIcon className="h-5 w-5 flex-shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                        </SidebarMenuButton>
+                       </Link>
+                    ) : (
+                      <SidebarMenuButton
+                        asChild={false}
+                        isActive={isSubmenuOpen || isParentActive}
+                        className="w-full justify-start"
+                        tooltip={{ children: item.label, side: 'right', align: 'center' }}
+                        onClick={() => toggleSubmenu(item.label)}
+                      >
+                        <ParentIcon className="h-5 w-5 flex-shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </SidebarMenuButton>
+                    )}
+                    {isSubmenuOpen && (
+                      <SidebarMenuSub>
+                        {item.subItems.map((subItem) => {
+                          const SubIcon = subItem.icon;
+                          return (
+                            <SidebarMenuSubItem key={subItem.href}>
+                              <Link href={subItem.href} legacyBehavior passHref>
+                                <SidebarMenuSubButton
+                                  asChild={false}
+                                  isActive={pathname.startsWith(subItem.href)}
+                                >
+                                  <SubIcon className="h-5 w-5 flex-shrink-0" />
+                                  <span className="truncate">{subItem.label}</span>
+                                </SidebarMenuSubButton>
+                              </Link>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    )}
+                  </SidebarMenuItem>
+                );
+              } else if ('href' in item) {
+                return (
+                  <SidebarMenuItem key={item.label}>
+                    <Link href={item.href} legacyBehavior passHref>
+                      <SidebarMenuButton
+                        asChild={false}
+                        isActive={pathname === item.href || (item.href !== "/admin/dashboard" && pathname.startsWith(item.href))}
+                        className="w-full justify-start"
+                        tooltip={{ children: item.label, side: 'right', align: 'center' }}
+                      >
+                        <ParentIcon className="h-5 w-5 flex-shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+                );
+              }
+              return null;
             })}
           </SidebarMenu>
         </SidebarContent>
