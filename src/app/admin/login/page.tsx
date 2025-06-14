@@ -141,7 +141,7 @@ export default function UnifiedLoginPage() {
       >
         <CardHeader className="text-center">
           {currentLogoUrl ? (
-            <div className="mt-2 mb-4 flex justify-center">
+            <div className="mt-4 mb-4 flex justify-center">
               <Image
                 src={currentLogoUrl}
                 alt="Logo Zaldi Imo"
