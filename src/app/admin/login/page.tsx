@@ -73,12 +73,12 @@ export default function UnifiedLoginPage() {
     }, 1000);
   };
 
-  const pageStyle: React.CSSProperties = {};
+  const rightPanelStyle: React.CSSProperties = {};
   if (currentBackgroundImageUrl) {
-    pageStyle.backgroundImage = `url(${currentBackgroundImageUrl})`;
-    pageStyle.backgroundSize = 'cover';
-    pageStyle.backgroundPosition = 'center';
-    pageStyle.backgroundRepeat = 'no-repeat';
+    rightPanelStyle.backgroundImage = `url(${currentBackgroundImageUrl})`;
+    rightPanelStyle.backgroundSize = 'cover';
+    rightPanelStyle.backgroundPosition = 'center';
+    rightPanelStyle.backgroundRepeat = 'no-repeat';
   }
 
   const cardStyle: React.CSSProperties = {};
@@ -128,81 +128,95 @@ export default function UnifiedLoginPage() {
 
 
   return (
-    <div
-      className={cn(
-        "flex min-h-screen flex-col items-center justify-center p-4",
-        !currentBackgroundImageUrl && "bg-muted/40" 
-      )}
-      style={pageStyle}
-    >
-      <Card 
-        className="w-full max-w-md shadow-xl bg-card/90 backdrop-blur-sm"
-        style={cardStyle}
+    <div className="flex min-h-screen flex-col md:flex-row bg-background">
+      {/* Left Column: Form */}
+      <div className="w-full md:w-1/2 lg:w-[45%] xl:w-2/5 flex flex-col items-center justify-center p-6 sm:p-10">
+        <Card 
+          className="w-full max-w-md shadow-xl bg-card/90 backdrop-blur-sm"
+          style={cardStyle}
+        >
+          <CardHeader className="text-center">
+            {currentLogoUrl ? (
+              <div className="mt-4 mb-4 flex justify-center">
+                <Image
+                  src={currentLogoUrl}
+                  alt="Logo Zaldi Imo"
+                  width={120} 
+                  height={40} 
+                  priority
+                  className="max-h-[40px] w-auto"
+                  data-ai-hint="company login logo"
+                />
+              </div>
+            ) : (
+              <CardTitle className="text-2xl font-bold">Zaldi Imo</CardTitle>
+            )}
+            <CardDescription style={descriptionStyle}>Acesse sua conta Zaldi Imo.</CardDescription>
+          </CardHeader>
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email" style={labelStyle}>E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  style={inputStyle}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" style={labelStyle}>Senha</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="********"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  style={inputStyle}
+                />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading}
+                style={loginButtonStyle}
+              >
+                {isLoading ? 'Entrando...' : 'Entrar'}
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+        <p className="mt-8 text-xs text-center text-muted-foreground">
+          Administrador: admin@zaldi.com / password<br/>
+          Cliente (teste): cliente@empresa.com / cliente123
+        </p>
+      </div>
+
+      {/* Right Column: Visual Area */}
+      <div
+        className="hidden md:flex md:w-1/2 lg:w-[55%] xl:w-3/5 items-center justify-center relative overflow-hidden"
+        style={rightPanelStyle}
       >
-        <CardHeader className="text-center">
-          {currentLogoUrl ? (
-            <div className="mt-4 mb-4 flex justify-center">
-              <Image
-                src={currentLogoUrl}
-                alt="Logo Zaldi Imo"
-                width={120} 
-                height={40} 
-                priority
-                className="max-h-[40px] w-auto"
-                data-ai-hint="company login logo"
-              />
-            </div>
-          ) : (
-            <CardTitle className="text-2xl font-bold">Zaldi Imo</CardTitle>
-          )}
-          <CardDescription style={descriptionStyle}>Acesse sua conta Zaldi Imo.</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email" style={labelStyle}>E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-                style={inputStyle}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" style={labelStyle}>Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="********"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-                style={inputStyle}
-              />
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading}
-              style={loginButtonStyle}
-            >
-              {isLoading ? 'Entrando...' : 'Entrar'}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
-       <p className="mt-4 text-xs text-white/80 dark:text-muted-foreground text-center bg-black/30 dark:bg-transparent p-1 rounded">
-        Administrador: admin@zaldi.com / password<br/>
-        Cliente (teste): cliente@empresa.com / cliente123
-      </p>
+        {!currentBackgroundImageUrl && (
+          <Image
+            src="https://placehold.co/1000x1200.png" 
+            alt="Painel de login"
+            layout="fill"
+            objectFit="cover"
+            priority
+            data-ai-hint="abstract background"
+          />
+        )}
+        {/* Você pode adicionar sobreposições ou outros elementos aqui, se necessário */}
+      </div>
     </div>
   );
 }
-
