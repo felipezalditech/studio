@@ -145,10 +145,10 @@ export default function UnifiedLoginPage() {
               <Image
                 src={currentLogoUrl}
                 alt="Logo Zaldi Imo"
-                width={180} 
-                height={60} 
+                width={120} 
+                height={40} 
                 priority
-                className="max-h-[60px] w-auto"
+                className="max-h-[40px] w-auto"
                 data-ai-hint="login screen logo"
               />
             </div>
@@ -205,4 +205,3 @@ export default function UnifiedLoginPage() {
     </div>
   );
 }
-
