@@ -575,7 +575,7 @@ export default function AdminPersonalizationPage() {
                           >
                               {watchedValues.logoUrl ? (
                                   <div className="mx-auto mb-2 h-8 w-auto max-w-[100px] relative">
-                                      <Image src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview" />
+                                      <Image src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
                                   </div>
                               ) : (
                                   <div className="h-8 w-20 bg-muted/70 rounded mx-auto mb-2 flex items-center justify-center text-[9px]" style={{color: previewDescriptionStyle.color || 'hsl(var(--muted-foreground))'}}>Logo Aqui</div>
@@ -614,6 +614,8 @@ export default function AdminPersonalizationPage() {
             setIsCropDialogOpen(false);
             setImageSrcForCropper(null); 
             setCroppedAreaPixels(null);
+            setZoom(1);
+            setCrop({ x: 0, y: 0 });
           } else {
             setIsCropDialogOpen(true);
           }
@@ -645,8 +647,8 @@ export default function AdminPersonalizationPage() {
               <div className="flex items-center gap-2">
                 <ZoomOut className="h-5 w-5 text-muted-foreground" />
                 <Slider
-                  min={1}
-                  max={3}
+                  min={0.2}
+                  max={4}
                   step={0.01}
                   value={[zoom]}
                   onValueChange={(value) => setZoom(value[0])}
@@ -660,6 +662,8 @@ export default function AdminPersonalizationPage() {
                 setIsCropDialogOpen(false);
                 setImageSrcForCropper(null);
                 setCroppedAreaPixels(null);
+                setZoom(1);
+                setCrop({ x: 0, y: 0 });
               }}>
                 Cancelar
               </Button>
@@ -674,3 +678,4 @@ export default function AdminPersonalizationPage() {
     </>
   );
 }
+
