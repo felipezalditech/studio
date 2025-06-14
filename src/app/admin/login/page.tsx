@@ -65,7 +65,7 @@ export default function UnifiedLoginPage() {
       } else {
         toast({
           title: 'Erro de login',
-          description: 'Email ou senha inválidos.',
+          description: 'E-mail ou senha inválidos.',
           variant: 'destructive',
         });
       }
@@ -149,7 +149,7 @@ export default function UnifiedLoginPage() {
                 height={40} 
                 priority
                 className="max-h-[40px] w-auto"
-                data-ai-hint="login screen logo"
+                data-ai-hint="company login logo"
               />
             </div>
           ) : (
