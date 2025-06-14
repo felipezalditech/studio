@@ -132,13 +132,13 @@ export default function UnifiedLoginPage() {
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* Left Column: Form */}
       <div 
-        className="w-full md:w-1/2 lg:w-[45%] xl:w-2/5 flex flex-col items-center justify-center p-6 sm:p-10"
+        className="w-full md:w-1/2 lg:w-[45%] xl:w-2/5 flex flex-col items-center justify-center px-6 sm:px-10 pt-4 sm:pt-8 pb-6 sm:pb-10"
         style={leftPanelStyle}
       >
         <div className="w-full max-w-md">
             <div className="text-center">
                 {currentLogoUrl ? (
-                <div className="mb-4 flex justify-center">
+                <div className="mb-6 flex justify-center">
                     <Image
                     src={currentLogoUrl}
                     alt="Logo Zaldi Imo"
@@ -152,7 +152,7 @@ export default function UnifiedLoginPage() {
                 ) : (
                 <h1 className="text-2xl font-bold mb-4 mt-4">Zaldi Imo</h1>
                 )}
-                <p className="text-center text-2xl font-bold mb-8" style={descriptionStyle}>Seja bem vindo ao Zaldi Imo</p>
+                <p className="text-center text-2xl font-bold mb-8" style={descriptionStyle}>Bem vindo ao Zaldi Imo</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
