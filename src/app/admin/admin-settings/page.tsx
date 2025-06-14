@@ -44,8 +44,8 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
     image.src = url;
   });
 
-const LOGO_OUTPUT_WIDTH = 360; // 3x the display width of 120px
-const LOGO_OUTPUT_HEIGHT = 120; // 3x the display height of 40px (maintaining 3:1 aspect ratio)
+const LOGO_OUTPUT_WIDTH = 120; 
+const LOGO_OUTPUT_HEIGHT = 40; 
 
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string> {
   if (!pixelCrop || typeof pixelCrop.width !== 'number' || typeof pixelCrop.height !== 'number' || typeof pixelCrop.x !== 'number' || typeof pixelCrop.y !== 'number') {
@@ -679,3 +679,4 @@ export default function AdminPersonalizationPage() {
     </>
   );
 }
+
