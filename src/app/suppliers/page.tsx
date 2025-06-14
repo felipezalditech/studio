@@ -22,13 +22,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, ChevronDown, Edit2, Trash2, MoreHorizontal } from 'lucide-react'; // Import MoreHorizontal
+import { PlusCircle, ChevronDown, Edit2, Trash2, MoreHorizontal } from 'lucide-react';
 import { useSuppliers, type Supplier } from '@/contexts/SupplierContext';
 import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
-import { getSupplierColumns } from '@/components/suppliers/columns'; // Importar a definição das colunas
+import { getSupplierColumns } from '@/components/suppliers/columns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import useLocalStorage from '@/lib/hooks/use-local-storage'; // Importar o hook useLocalStorage
 
 
 export default function SuppliersPage() {
@@ -41,7 +42,8 @@ export default function SuppliersPage() {
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  // Usar useLocalStorage para columnVisibility
+  const [columnVisibility, setColumnVisibility] = useLocalStorage<VisibilityState>('supplierTableColumnVisibility', {});
   const [globalFilter, setGlobalFilter] = React.useState('');
 
   const handleOpenDialog = (supplier: Supplier | null = null) => {
@@ -64,7 +66,9 @@ export default function SuppliersPage() {
 
   const columns = useMemo(
     () => getSupplierColumns(handleOpenDialog, handleDeleteSupplierRequest),
-    [] // Dependencies: handleOpenDialog and handleDeleteSupplierRequest might change if they depend on state/props from this component
+    // As dependências podem precisar ser ajustadas se handleOpenDialog/handleDeleteSupplierRequest mudarem
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [] 
   );
 
   const table = useReactTable({
@@ -78,7 +82,7 @@ export default function SuppliersPage() {
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibilityChange: setColumnVisibility, // setColumnVisibility é fornecido por useLocalStorage
     onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
