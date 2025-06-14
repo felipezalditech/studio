@@ -233,7 +233,7 @@ export default function AdminPersonalizationPage() {
     try {
       const options = currentFieldToUpdate === 'logoUrl'
         ? { type: 'image/png' as const, maxWidth: 480, maxHeight: Math.round((480 * 56) / 240) } 
-        : { type: 'image/jpeg' as const, quality: 0.85, maxWidth: 1024, maxHeight: 1024 };
+        : { type: 'image/jpeg' as const, quality: 0.85, maxWidth: 1024, maxHeight: 1024 }; // Mantém 1024x1024 como limite superior para o resultado do corte 3:4
 
       const croppedImage = await getCroppedImg(
         imageToCrop,
@@ -449,7 +449,7 @@ export default function AdminPersonalizationPage() {
                             Imagem de fundo da tela de login
                           </FormLabel>
                           <FormDescUI className="pb-2">
-                           Para melhor ajuste com `background-size: cover`, recomendamos uma imagem com cerca de 1200px de largura por 1400px de altura (ou 1200x1200px). Imagens com alta resolução e proporção próxima a retrato ou quadrada tendem a ter menos cortes visíveis e mantêm boa qualidade.
+                           A imagem de fundo será cortada para uma proporção de 3:4 (retrato) e redimensionada (máx. ~768x1024px). Para melhores resultados com `background-size: cover`, escolha uma imagem que fique bem nessa proporção.
                           </FormDescUI>
                           <div className="flex items-center gap-2">
                             <FormControl>
@@ -735,7 +735,7 @@ export default function AdminPersonalizationPage() {
                 image={imageToCrop}
                 crop={crop}
                 zoom={zoom}
-                aspect={currentFieldToUpdate === 'logoUrl' ? (240/56) : (4/3)}
+                aspect={currentFieldToUpdate === 'logoUrl' ? (240/56) : (3/4)}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
