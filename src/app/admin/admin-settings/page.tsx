@@ -67,7 +67,8 @@ async function getCroppedImg(
   imageSrc: string,
   pixelCrop: Area,
   rotation = 0,
-  flip = { horizontal: false, vertical: false }
+  flip = { horizontal: false, vertical: false },
+  outputOptions: { type?: 'image/jpeg' | 'image/png'; quality?: number; maxWidth?: number; maxHeight?: number } = {}
 ): Promise<string | null> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
@@ -79,24 +80,19 @@ async function getCroppedImg(
 
   const rotRad = getRadianAngle(rotation);
 
-  // calcula o tamanho da bounding box da imagem rotacionada
   const { width: bBoxWidth, height: bBoxHeight } = rotateSize(
     image.width,
     image.height,
     rotation
   );
 
-  // define o tamanho do canvas para acomodar a imagem rotacionada
   canvas.width = bBoxWidth;
   canvas.height = bBoxHeight;
 
-  // translada e rotaciona o contexto para desenhar a imagem no centro
   ctx.translate(bBoxWidth / 2, bBoxHeight / 2);
   ctx.rotate(rotRad);
   ctx.scale(flip.horizontal ? -1 : 1, flip.vertical ? -1 : 1);
   ctx.translate(-image.width / 2, -image.height / 2);
-
-  // desenha a imagem rotacionada
   ctx.drawImage(image, 0, 0);
 
   const data = ctx.getImageData(
@@ -106,24 +102,60 @@ async function getCroppedImg(
     pixelCrop.height
   );
 
-  // define o tamanho do canvas final para o tamanho do corte
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+  const tempCropCanvas = document.createElement('canvas');
+  tempCropCanvas.width = pixelCrop.width;
+  tempCropCanvas.height = pixelCrop.height;
+  const tempCropCtx = tempCropCanvas.getContext('2d');
+  if (!tempCropCtx) return null;
+  tempCropCtx.putImageData(data, 0, 0);
 
-  // cola os dados da imagem cortada no canvas final
-  ctx.putImageData(data, 0, 0);
+  let outputWidth = pixelCrop.width;
+  let outputHeight = pixelCrop.height;
 
-  // Como base64 ou blob para uso futuro
+  if (outputOptions.maxWidth && outputOptions.maxHeight) {
+    const ratio = Math.min(outputOptions.maxWidth / outputWidth, outputOptions.maxHeight / outputHeight);
+    if (ratio < 1) { 
+        outputWidth *= ratio;
+        outputHeight *= ratio;
+    }
+  } else if (outputOptions.maxWidth) {
+    if (outputWidth > outputOptions.maxWidth) {
+        const ratio = outputOptions.maxWidth / outputWidth;
+        outputWidth = outputOptions.maxWidth;
+        outputHeight *= ratio;
+    }
+  } else if (outputOptions.maxHeight) {
+    if (outputHeight > outputOptions.maxHeight) {
+        const ratio = outputOptions.maxHeight / outputHeight;
+        outputHeight = outputOptions.maxHeight;
+        outputWidth *= ratio;
+    }
+  }
+
+  outputWidth = Math.round(outputWidth);
+  outputHeight = Math.round(outputHeight);
+  
+  if (outputWidth === 0 || outputHeight === 0) {
+    console.warn("Output dimensions for cropped image are zero. Check crop area and resize options.");
+    // Fallback to a very small canvas to avoid errors with toDataURL on 0-dim canvas
+    outputWidth = Math.max(1, outputWidth);
+    outputHeight = Math.max(1, outputHeight);
+}
+
+
+  const finalCanvas = document.createElement('canvas');
+  finalCanvas.width = outputWidth;
+  finalCanvas.height = outputHeight;
+  const finalCtx = finalCanvas.getContext('2d');
+  if (!finalCtx) return null;
+
+  finalCtx.drawImage(tempCropCanvas, 0, 0, pixelCrop.width, pixelCrop.height, 0, 0, outputWidth, outputHeight);
+  
   return new Promise((resolve, reject) => {
-    canvas.toBlob((file) => {
-      if (file) {
-        resolve(URL.createObjectURL(file));
-      } else {
-        reject(new Error('Falha ao criar blob da imagem cortada.'));
-      }
-    }, 'image/png'); // ou image/jpeg
     try {
-        const dataUrl = canvas.toDataURL('image/png'); // ou image/jpeg
+        const outputType = outputOptions.type || 'image/jpeg';
+        const outputQuality = outputOptions.quality || 0.85;
+        const dataUrl = finalCanvas.toDataURL(outputType, outputType === 'image/jpeg' ? outputQuality : undefined);
         resolve(dataUrl);
       } catch (e: any) {
         console.error("Erro ao converter canvas para Data URL:", e);
@@ -200,7 +232,18 @@ export default function AdminPersonalizationPage() {
       return;
     }
     try {
-      const croppedImage = await getCroppedImg(imageToCrop, croppedAreaPixels);
+      const options = currentFieldToUpdate === 'logoUrl'
+        ? { type: 'image/png' as const, maxWidth: 480, maxHeight: Math.round((480 * 56) / 240) } // Approx 480x112
+        : { type: 'image/jpeg' as const, quality: 0.85, maxWidth: 1024, maxHeight: 1024 };
+
+      const croppedImage = await getCroppedImg(
+        imageToCrop,
+        croppedAreaPixels,
+        0, 
+        { horizontal: false, vertical: false },
+        options
+      );
+
       if (croppedImage) {
         form.setValue(currentFieldToUpdate, croppedImage);
         toast({
@@ -232,7 +275,6 @@ export default function AdminPersonalizationPage() {
       };
       reader.readAsDataURL(file);
     }
-    // Limpa o valor do input para permitir selecionar o mesmo arquivo novamente
     if (event.target) {
       event.target.value = '';
     }
@@ -270,7 +312,7 @@ export default function AdminPersonalizationPage() {
   const previewRightPanelStyle: React.CSSProperties = {};
   if (watchedValues.backgroundImageUrl) {
     previewRightPanelStyle.backgroundImage = `url(${watchedValues.backgroundImageUrl})`;
-    previewRightPanelStyle.backgroundSize = 'contain'; // Alterado de cover para contain
+    previewRightPanelStyle.backgroundSize = 'contain';
     previewRightPanelStyle.backgroundPosition = 'center';
     previewRightPanelStyle.backgroundRepeat = 'no-repeat';
   } else {
@@ -614,7 +656,7 @@ export default function AdminPersonalizationPage() {
                           >
                             <div className="w-full max-w-[90%] space-y-2">
                               {watchedValues.logoUrl ? (
-                                <div className="mx-auto mb-4 mt-1 h-[14px] w-auto max-w-[50px] relative">
+                                <div className="mx-auto mb-2 mt-1 h-[14px] w-auto max-w-[50px] relative">
                                   <NextImage src={watchedValues.logoUrl} alt="Preview Logo" fill style={{objectFit:"contain"}} data-ai-hint="login logo dynamic preview"/>
                                 </div>
                               ) : (
@@ -689,7 +731,7 @@ export default function AdminPersonalizationPage() {
                 image={imageToCrop}
                 crop={crop}
                 zoom={zoom}
-                aspect={currentFieldToUpdate === 'logoUrl' ? (240/56) : (4/3)} // Ex: 16/9 para bg, 1/1 para logo
+                aspect={currentFieldToUpdate === 'logoUrl' ? (240/56) : (4/3)}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
