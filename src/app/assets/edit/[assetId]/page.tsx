@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, use } from 'react'; // Importado 'use'
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -32,7 +32,7 @@ const MAX_PHOTOS = 10;
 
 const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
-  modelId: z.string().optional(), // Alterado de model para modelId
+  modelId: z.string().optional(), 
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
   categoryId: z.string().min(1, "Categoria é obrigatória."),
   supplier: z.string().min(1, "Fornecedor é obrigatório."),
@@ -56,8 +56,9 @@ export default function EditAssetPage() {
   const { categories } = useCategories();
   const { toast } = useToast();
   const router = useRouter();
-  const params = useParams();
-  const assetId = params.assetId as string;
+  const paramsFromHook = useParams();
+  const actualParams = use(paramsFromHook); // Aplicando React.use()
+  const assetId = actualParams.assetId as string; // Usando o resultado de use()
 
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -68,7 +69,7 @@ export default function EditAssetPage() {
     resolver: zodResolver(assetFormSchema),
     defaultValues: {
       name: '',
-      modelId: undefined, // Alterado de model para modelId
+      modelId: undefined,
       assetTag: '',
       categoryId: '',
       supplier: '',
@@ -89,7 +90,7 @@ export default function EditAssetPage() {
       if (assetToEdit) {
         form.reset({
           ...assetToEdit,
-          modelId: assetToEdit.modelId || undefined, // Alterado de model para modelId
+          modelId: assetToEdit.modelId || undefined,
           purchaseDate: assetToEdit.purchaseDate ? parseISO(assetToEdit.purchaseDate) : undefined,
           previouslyDepreciatedValue: assetToEdit.previouslyDepreciatedValue || undefined,
           locationId: assetToEdit.locationId || undefined,
@@ -128,7 +129,7 @@ export default function EditAssetPage() {
     const assetDataToUpdate: Asset = {
       id: assetId,
       ...data,
-      modelId: data.modelId || undefined, // Garantir que modelId seja usado
+      modelId: data.modelId || undefined, 
       purchaseDate: format(data.purchaseDate, 'yyyy-MM-dd'),
       currentValue: initialCurrentValue,
       imageDateUris: data.imageDateUris || [],
@@ -258,7 +259,7 @@ export default function EditAssetPage() {
                   />
                   <FormField
                     control={form.control}
-                    name="modelId" // Alterado de model para modelId
+                    name="modelId" 
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
@@ -534,7 +535,7 @@ export default function EditAssetPage() {
                         <div className="flex items-center">
                           <FormLabel className="flex items-center">
                             <UploadCloud className="mr-2 h-5 w-5" />
-                            Fotos do ativo (Máx. {MAX_PHOTOS})
+                            Fotos do ativo (Máx. ${MAX_PHOTOS})
                           </FormLabel>
                           <TooltipProvider>
                             <Tooltip>
@@ -542,7 +543,7 @@ export default function EditAssetPage() {
                                 <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até {MAX_PHOTOS} fotos.</p>
+                                <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até ${MAX_PHOTOS} fotos.</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -559,7 +560,7 @@ export default function EditAssetPage() {
                           />
                         </FormControl>
                         <FormDescription>
-                          Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/{MAX_PHOTOS}.
+                          Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/${MAX_PHOTOS}.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -567,7 +568,7 @@ export default function EditAssetPage() {
                   />
                   {imagePreviews.length > 0 && (
                     <div className="mt-4 space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Pré-visualização ({imagePreviews.length}/{MAX_PHOTOS}):</p>
+                      <p className="text-sm font-medium text-muted-foreground">Pré-visualização ({imagePreviews.length}/${MAX_PHOTOS}):</p>
                       <div className="flex flex-wrap gap-4 p-2 border rounded-md">
                         {imagePreviews.map((previewUrl, index) => (
                           <div key={index} className="relative w-32 h-32 border rounded-md overflow-hidden group">
