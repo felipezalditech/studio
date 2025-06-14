@@ -87,26 +87,41 @@ export default function AdminPersonalizationPage() {
         fieldOnChange(reader.result as string);
       };
       reader.readAsDataURL(file);
+    } else {
+      // If no file is selected (e.g., user cancels file dialog), clear the field
+      fieldOnChange('');
     }
   };
 
   const getPreviewLoginButtonTextColor = (hexColor: string | undefined): string => {
-    if (!hexColor || !hexColor.startsWith('#')) return '#FFFFFF';
+    if (!hexColor || !hexColor.startsWith('#')) return '#FFFFFF'; // Default to white for invalid or no color
     const hex = hexColor.replace('#', '');
-    if (hex.length !== 6 && hex.length !== 3) return '#FFFFFF';
-    let r, g, b;
+    
+    // Handle 3-digit hex
+    let rStr, gStr, bStr;
     if (hex.length === 3) {
-      r = parseInt(hex[0] + hex[0], 16);
-      g = parseInt(hex[1] + hex[1], 16);
-      b = parseInt(hex[2] + hex[2], 16);
+        rStr = hex[0] + hex[0];
+        gStr = hex[1] + hex[1];
+        bStr = hex[2] + hex[2];
+    } else if (hex.length === 6) {
+        rStr = hex.substring(0, 2);
+        gStr = hex.substring(2, 4);
+        bStr = hex.substring(4, 6);
     } else {
-      r = parseInt(hex.substring(0, 2), 16);
-      g = parseInt(hex.substring(2, 4), 16);
-      b = parseInt(hex.substring(4, 6), 16);
+        return '#FFFFFF'; // Invalid hex length
     }
+
+    const r = parseInt(rStr, 16);
+    const g = parseInt(gStr, 16);
+    const b = parseInt(bStr, 16);
+
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return '#FFFFFF'; // Parsing failed
+
+    // Calculate brightness (standard formula)
     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    return brightness > 125 ? '#000000' : '#FFFFFF';
+    return brightness > 125 ? '#000000' : '#FFFFFF'; // Return black for light backgrounds, white for dark
   };
+
 
   const previewPageStyle: React.CSSProperties = {};
   if (watchedValues.backgroundImageUrl) {
@@ -147,9 +162,10 @@ export default function AdminPersonalizationPage() {
   }
 
   const previewLoginButtonStyle: React.CSSProperties = {
+    backgroundColor: watchedValues.loginButtonColor || '#3F51B5', // Default or theme primary
     color: getPreviewLoginButtonTextColor(watchedValues.loginButtonColor || '#3F51B5'),
-    backgroundColor: watchedValues.loginButtonColor || '#3F51B5',
   };
+
 
   return (
     <div className="space-y-6">
@@ -190,43 +206,33 @@ export default function AdminPersonalizationPage() {
                         <FormDescription className="pb-2">
                           Faça o upload do logo que será exibido na tela de login.
                         </FormDescription>
-                        <FormControl>
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            ref={logoInputRef}
-                            onChange={(e) => handleFileChange(e, field.onChange)}
-                            className="cursor-pointer max-w-md"
-                          />
-                        </FormControl>
+                        <div className="flex items-center gap-2">
+                          <FormControl>
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              ref={logoInputRef}
+                              onChange={(e) => handleFileChange(e, field.onChange)}
+                              className="cursor-pointer flex-grow"
+                            />
+                          </FormControl>
+                          {field.value && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                field.onChange('');
+                                if (logoInputRef.current) logoInputRef.current.value = '';
+                              }}
+                              title="Remover logo selecionado"
+                              className="shrink-0"
+                            >
+                              <XCircle className="h-5 w-5 text-muted-foreground hover:text-destructive" />
+                            </Button>
+                          )}
+                        </div>
                         <FormMessage />
-                        {field.value && (
-                          <div className="mt-4 space-y-2">
-                            <p className="text-sm font-medium text-muted-foreground">Pré-visualização do logo:</p>
-                            <div className="relative w-32 h-32 border rounded-md overflow-hidden group bg-muted/20">
-                              <Image
-                                src={field.value}
-                                alt="Pré-visualização do Logo"
-                                layout="fill"
-                                objectFit="contain"
-                                data-ai-hint="login logo preview"
-                              />
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                onClick={() => {
-                                  field.onChange('');
-                                  if (logoInputRef.current) logoInputRef.current.value = '';
-                                }}
-                                className="absolute top-1 right-1 h-6 w-6 opacity-70 group-hover:opacity-100"
-                                title="Remover logo"
-                              >
-                                <XCircle className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        )}
                       </FormItem>
                     )}
                   />
@@ -243,43 +249,33 @@ export default function AdminPersonalizationPage() {
                         <FormDescription className="pb-2">
                           Se nenhuma imagem for selecionada, uma cor padrão será usada.
                         </FormDescription>
-                        <FormControl>
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            ref={bgImageInputRef}
-                            onChange={(e) => handleFileChange(e, field.onChange)}
-                            className="cursor-pointer max-w-md"
-                          />
-                        </FormControl>
+                        <div className="flex items-center gap-2">
+                          <FormControl>
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              ref={bgImageInputRef}
+                              onChange={(e) => handleFileChange(e, field.onChange)}
+                              className="cursor-pointer flex-grow"
+                            />
+                          </FormControl>
+                          {field.value && (
+                             <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                field.onChange('');
+                                if (bgImageInputRef.current) bgImageInputRef.current.value = '';
+                              }}
+                              title="Remover imagem de fundo selecionada"
+                              className="shrink-0"
+                            >
+                              <XCircle className="h-5 w-5 text-muted-foreground hover:text-destructive" />
+                            </Button>
+                          )}
+                        </div>
                         <FormMessage />
-                        {field.value && (
-                          <div className="mt-4 space-y-2">
-                            <p className="text-sm font-medium text-muted-foreground">Pré-visualização da imagem de fundo:</p>
-                            <div className="relative w-full max-w-md h-48 border rounded-md overflow-hidden group bg-muted/20">
-                              <Image
-                                src={field.value}
-                                alt="Pré-visualização da Imagem de Fundo"
-                                layout="fill"
-                                objectFit="cover"
-                                data-ai-hint="login background preview"
-                              />
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                onClick={() => {
-                                  field.onChange('');
-                                  if (bgImageInputRef.current) bgImageInputRef.current.value = '';
-                                }}
-                                className="absolute top-1 right-1 h-6 w-6 opacity-70 group-hover:opacity-100"
-                                title="Remover imagem de fundo"
-                              >
-                                <XCircle className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        )}
                       </FormItem>
                     )}
                   />
@@ -417,7 +413,7 @@ export default function AdminPersonalizationPage() {
                         style={previewPageStyle}
                     >
                         <div 
-                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-[300px] p-5 rounded-lg shadow-2xl backdrop-blur-sm bg-opacity-80"
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-[300px] p-5 rounded-lg shadow-2xl backdrop-blur-sm bg-opacity-80" // Mantido para visibilidade do card sobre a imagem
                             style={previewCardStyle}
                         >
                             {watchedValues.logoUrl ? (
@@ -456,6 +452,3 @@ export default function AdminPersonalizationPage() {
     </div>
   );
 }
-
-
-    
