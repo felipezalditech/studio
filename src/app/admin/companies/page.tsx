@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { PlusCircle, Edit2, Trash2, MoreHorizontal, Search, Building2 } from 'lucide-react';
-import type { ClientCompany } from '@/types/admin'; // Supondo que você tenha este tipo definido
+import type { ClientCompany } from '@/types/admin'; 
 import { Input } from '@/components/ui/input';
 // import { CompanyFormDialog } from '@/components/admin/companies/CompanyFormDialog'; // Será criado depois
 // import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'; // Já existe
@@ -15,8 +15,9 @@ import { useToast } from '@/hooks/use-toast';
 
 // Mock data inicial - em um sistema real, isso viria de um backend/localStorage persistente
 const initialCompanies: ClientCompany[] = [
-  // { id: 'comp-001', name: 'Empresa Alpha LTDA', cnpj: '11.222.333/0001-44', contactName: 'Carlos Silva', contactEmail: 'carlos@alpha.com', contactPhone: '(11) 99999-0001', status: 'active', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  // { id: 'comp-002', name: 'Soluções Beta S/A', cnpj: '44.555.666/0001-77', contactName: 'Ana Costa', contactEmail: 'ana@beta.com', contactPhone: '(21) 88888-0002', status: 'pending_payment', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: 'comp-001', name: 'Empresa Alpha LTDA', cnpj: '11.222.333/0001-44', contactName: 'Carlos Silva', contactEmail: 'carlos@alpha.com', contactPhone: '(11) 99999-0001', status: 'active', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: 'comp-002', name: 'Soluções Beta S/A', cnpj: '44.555.666/0001-77', contactName: 'Ana Costa', contactEmail: 'ana@beta.com', contactPhone: '(21) 88888-0002', status: 'pending_payment', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: 'comp-003', name: 'Gama Serviços & Consultoria', cnpj: '77.888.999/0001-00', contactName: 'Pedro Almeida', contactEmail: 'pedro@gama.com', contactPhone: '(31) 77777-0003', status: 'trial', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
 ];
 
 
@@ -50,11 +51,21 @@ export default function ManageCompaniesPage() {
     setIsConfirmDeleteDialogOpen(false);
   };
 
-  const filteredCompanies = companies.filter(company =>
-    company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (company.cnpj && company.cnpj.includes(searchTerm)) ||
-    company.contactEmail.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCompanies = companies.filter(company => {
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    const numbersOnlySearchTerm = searchTerm.replace(/\D/g, '');
+
+    const nameMatch = company.name.toLowerCase().includes(lowerSearchTerm);
+    
+    const cnpjMatch = company.cnpj && numbersOnlySearchTerm.length > 0 && company.cnpj.replace(/\D/g, '').includes(numbersOnlySearchTerm);
+    
+    const contactEmailMatch = company.contactEmail.toLowerCase().includes(lowerSearchTerm);
+    
+    const contactNameMatch = company.contactName && company.contactName.toLowerCase().includes(lowerSearchTerm);
+    
+    if (searchTerm === "") return true; // Se a busca estiver vazia, mostrar todas as empresas
+    return nameMatch || !!cnpjMatch || contactEmailMatch || !!contactNameMatch;
+  });
 
   const getStatusLabel = (status: ClientCompany['status']) => {
     const map = {
@@ -88,7 +99,7 @@ export default function ManageCompaniesPage() {
            <div className="mt-4 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome, CNPJ ou email..."
+              placeholder="Buscar por nome, CNPJ, contato ou e-mail..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 w-full max-w-md"
@@ -96,18 +107,24 @@ export default function ManageCompaniesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {filteredCompanies.length === 0 ? (
-            <div className="text-center py-10">
+          {filteredCompanies.length === 0 && searchTerm ? (
+             <div className="text-center py-10">
               <Building2 className="mx-auto h-12 w-12 text-muted-foreground" />
               <p className="mt-4 text-lg font-semibold">Nenhuma empresa encontrada</p>
               <p className="text-muted-foreground">
-                {searchTerm ? `Nenhuma empresa corresponde à sua busca "${searchTerm}".` : "Cadastre a primeira empresa cliente para começar."}
+                Nenhuma empresa corresponde à sua busca "{searchTerm}".
               </p>
-              {!searchTerm && (
-                <Button onClick={() => handleOpenFormDialog()} className="mt-4">
-                  <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Empresa
-                </Button>
-              )}
+            </div>
+          ) : filteredCompanies.length === 0 && !searchTerm ? (
+             <div className="text-center py-10">
+              <Building2 className="mx-auto h-12 w-12 text-muted-foreground" />
+              <p className="mt-4 text-lg font-semibold">Nenhuma empresa cadastrada</p>
+              <p className="text-muted-foreground">
+                Cadastre a primeira empresa cliente para começar.
+              </p>
+              <Button onClick={() => handleOpenFormDialog()} className="mt-4">
+                <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Empresa
+              </Button>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -116,6 +133,7 @@ export default function ManageCompaniesPage() {
                   <TableRow>
                     <TableHead className="min-w-[200px]">Nome da Empresa</TableHead>
                     <TableHead className="min-w-[150px]">CNPJ</TableHead>
+                    <TableHead className="min-w-[180px]">Contato Responsável</TableHead>
                     <TableHead className="min-w-[180px]">Email de Contato</TableHead>
                     <TableHead className="min-w-[120px]">Telefone</TableHead>
                     <TableHead className="min-w-[100px]">Status Licença</TableHead>
@@ -127,6 +145,7 @@ export default function ManageCompaniesPage() {
                     <TableRow key={company.id}>
                       <TableCell className="font-medium">{company.name}</TableCell>
                       <TableCell>{company.cnpj || 'N/A'}</TableCell>
+                      <TableCell>{company.contactName || 'N/A'}</TableCell>
                       <TableCell>{company.contactEmail}</TableCell>
                       <TableCell>{company.contactPhone || 'N/A'}</TableCell>
                       <TableCell>
@@ -199,3 +218,5 @@ export default function ManageCompaniesPage() {
     </div>
   );
 }
+
+    
