@@ -1,16 +1,35 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import type {
+  ColumnDef,
+  SortingState,
+  VisibilityState,
+  ColumnFiltersState,
+} from "@tanstack/react-table";
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Edit2, Trash2 } from 'lucide-react';
-import { useSuppliers, type Supplier, type SituacaoICMS } from '@/contexts/SupplierContext';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { PlusCircle, ChevronDown, Edit2, Trash2, MoreHorizontal } from 'lucide-react'; // Import MoreHorizontal
+import { useSuppliers, type Supplier } from '@/contexts/SupplierContext';
 import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
+import { getSupplierColumns } from '@/components/suppliers/columns'; // Importar a definição das colunas
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 export default function SuppliersPage() {
   const { suppliers, deleteSupplier } = useSuppliers();
@@ -19,6 +38,11 @@ export default function SuppliersPage() {
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
   const [supplierToDeleteId, setSupplierToDeleteId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [globalFilter, setGlobalFilter] = React.useState('');
 
   const handleOpenDialog = (supplier: Supplier | null = null) => {
     setEditingSupplier(supplier);
@@ -38,25 +62,51 @@ export default function SuppliersPage() {
     }
   };
 
-  const getDocument = (supplier: Supplier) => {
-    if (supplier.type === 'juridica') {
-      return supplier.cnpj || 'N/A';
-    }
-    return supplier.cpf || 'N/A';
+  const columns = useMemo(
+    () => getSupplierColumns(handleOpenDialog, handleDeleteSupplierRequest),
+    [] // Dependencies: handleOpenDialog and handleDeleteSupplierRequest might change if they depend on state/props from this component
+  );
+
+  const table = useReactTable({
+    data: suppliers,
+    columns,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      globalFilter,
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
+  });
+
+  const getColumnDisplayName = (columnId: string): string => {
+    const nameMap: Record<string, string> = {
+      type: "Tipo",
+      nomeFantasia: "Nome Fantasia / Nome",
+      razaoSocial: "Razão Social / Nome Completo",
+      document: "CNPJ/CPF",
+      situacaoIcms: "Situação ICMS",
+      inscricaoEstadual: "Inscrição Estadual",
+      responsavelNome: "Responsável",
+      emailFaturamento: "E-mail Faturamento",
+      endereco: "Endereço",
+      actions: "Ações",
+    };
+    return nameMap[columnId] || columnId;
   };
 
-  const getSupplierTypeLabel = (type: 'fisica' | 'juridica') => {
-    return type === 'fisica' ? 'Física' : 'Jurídica';
-  };
-
-  const getSituacaoIcmsLabel = (situacao: SituacaoICMS) => {
-    switch (situacao) {
-      case 'contribuinte': return 'Contribuinte';
-      case 'nao_contribuinte': return 'Não Contribuinte';
-      case 'isento': return 'Isento';
-      default: return 'N/A';
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -74,6 +124,40 @@ export default function SuppliersPage() {
         <CardHeader>
           <CardTitle>Lista de fornecedores</CardTitle>
           <CardDescription>Fornecedores cadastrados no sistema.</CardDescription>
+          <div className="flex items-center justify-between pt-4">
+            <Input
+              placeholder="Buscar em todos os campos..."
+              value={globalFilter ?? ''}
+              onChange={(event) => setGlobalFilter(event.target.value)}
+              className="max-w-sm"
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="ml-auto">
+                  Colunas <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => {
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value) =>
+                          column.toggleVisibility(!!value)
+                        }
+                      >
+                        {getColumnDisplayName(column.id)}
+                      </DropdownMenuCheckboxItem>
+                    )
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </CardHeader>
         <CardContent>
           {suppliers.length === 0 ? (
@@ -82,58 +166,92 @@ export default function SuppliersPage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[180px]">Nome fantasia / Nome</TableHead>
-                    <TableHead className="min-w-[180px]">Razão social / Nome completo</TableHead>
-                    <TableHead className="min-w-[80px]">Tipo</TableHead>
-                    <TableHead className="min-w-[140px]">CNPJ/CPF</TableHead>
-                    <TableHead className="min-w-[120px]">Situação ICMS</TableHead>
-                    <TableHead className="min-w-[150px]">Responsável</TableHead>
-                    <TableHead className="min-w-[180px]">E-mail Faturamento</TableHead>
-                    <TableHead className="min-w-[120px]">Cidade/UF</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {suppliers.map((supplier) => (
-                    <TableRow key={supplier.id}>
-                      <TableCell>{supplier.nomeFantasia || (supplier.type === 'fisica' ? supplier.razaoSocial : 'N/A')}</TableCell>
-                      <TableCell>{supplier.razaoSocial}</TableCell>
-                      <TableCell>{getSupplierTypeLabel(supplier.type)}</TableCell>
-                      <TableCell>{getDocument(supplier)}</TableCell>
-                      <TableCell>{getSituacaoIcmsLabel(supplier.situacaoIcms)}</TableCell>
-                      <TableCell>{supplier.responsavelNome}</TableCell>
-                      <TableCell>{supplier.emailFaturamento}</TableCell>
-                      <TableCell>{supplier.endereco.cidade} / {supplier.endereco.estado}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Abrir menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleOpenDialog(supplier)}>
-                              <Edit2 className="mr-2 h-4 w-4" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDeleteSupplierRequest(supplier.id)}
-                              className="text-red-600 hover:!text-red-600 focus:text-red-600 focus:!bg-red-100 dark:focus:!bg-red-700/50"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          <TableHead key={header.id} className="whitespace-nowrap">
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                          </TableHead>
+                        )
+                      })}
                     </TableRow>
                   ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id} className="whitespace-nowrap">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={columns.length} className="h-24 text-center">
+                        Nenhum resultado encontrado para a busca.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
           )}
+           <div className="flex items-center justify-between space-x-2 p-4">
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium text-muted-foreground">Linhas por página:</p>
+                <Select
+                  value={`${table.getState().pagination.pageSize}`}
+                  onValueChange={(value) => {
+                    table.setPageSize(Number(value))
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue placeholder={table.getState().pagination.pageSize} />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {[10, 20, 30, 50, 100].map((pageSize) => (
+                      <SelectItem key={pageSize} value={`${pageSize}`}>
+                        {pageSize}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-2">
+                  <span className="text-sm text-muted-foreground">
+                    Página {table.getState().pagination.pageIndex + 1} de{" "}
+                    {table.getPageCount()}
+                  </span>
+                  <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => table.previousPage()}
+                      disabled={!table.getCanPreviousPage()}
+                    >
+                      Anterior
+                  </Button>
+                  <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => table.nextPage()}
+                      disabled={!table.getCanNextPage()}
+                    >
+                      Próximo
+                  </Button>
+              </div>
+            </div>
         </CardContent>
       </Card>
 
