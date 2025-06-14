@@ -2,14 +2,14 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Palette } from "lucide-react"; // Alterado de Settings para Palette
+import { Palette } from "lucide-react"; 
 
-export default function AdminPersonalizationPage() { // Nome da função alterado
+export default function AdminPersonalizationPage() { 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Personalização do Sistema</h1> {/* Título alterado */}
+          <h1 className="text-3xl font-bold">Personalização do Sistema</h1> 
           <p className="text-muted-foreground">
             Customize a aparência da tela de login e outros elementos visuais.
           </p>
@@ -19,11 +19,11 @@ export default function AdminPersonalizationPage() { // Nome da função alterad
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Palette className="mr-2 h-5 w-5 text-primary" /> {/* Ícone alterado */}
-            Configurações de Aparência
+            <Palette className="mr-2 h-5 w-5 text-primary" /> 
+            Personalização da Tela de Login
           </CardTitle>
           <CardDescription>
-            Modifique os elementos visuais da tela de login para alinhar com sua marca.
+            Ajuste o logo, imagem de fundo e cores dos botões da sua página de login.
           </CardDescription>
         </CardHeader>
         <CardContent>
