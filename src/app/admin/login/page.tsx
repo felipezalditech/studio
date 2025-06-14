@@ -150,9 +150,9 @@ export default function UnifiedLoginPage() {
                     />
                 </div>
                 ) : (
-                <h1 className="text-2xl font-bold mb-6 mt-4">Zaldi Imo</h1>
+                <h1 className="text-2xl font-bold mb-2 mt-4">Zaldi Imo</h1>
                 )}
-                <p className="text-muted-foreground text-base mb-8" style={descriptionStyle}>Seja bem vindo ao Zaldi Imo</p>
+                <p className="text-muted-foreground text-[18px] mb-8" style={descriptionStyle}>Seja bem vindo ao Zaldi Imo</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -217,3 +217,4 @@ export default function UnifiedLoginPage() {
     </div>
   );
 }
+

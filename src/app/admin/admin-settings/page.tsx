@@ -499,7 +499,7 @@ export default function AdminPersonalizationPage() {
                                  <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-1.5 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
                               )}
 
-                              <p className="text-center text-[10px] mb-3" style={previewDescriptionStyle}>
+                              <p className="text-center text-[11px] mb-3" style={previewDescriptionStyle}>
                                 Seja bem vindo ao Zaldi Imo
                               </p>
 
@@ -539,3 +539,4 @@ export default function AdminPersonalizationPage() {
     </>
   );
 }
+
