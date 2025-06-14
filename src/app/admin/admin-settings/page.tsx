@@ -399,6 +399,20 @@ export default function AdminPersonalizationPage() {
               Customize a aparência da tela de login e outros elementos visuais.
             </p>
           </div>
+          <div className="flex space-x-2">
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Cancelar
+            </Button>
+            <Button 
+              type="submit" 
+              form="personalizationForm"
+              disabled={form.formState.isSubmitting}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {form.formState.isSubmitting ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -413,7 +427,7 @@ export default function AdminPersonalizationPage() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)}>
+              <form onSubmit={form.handleSubmit(onSubmit)} id="personalizationForm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-8">
                     <FormField
@@ -674,16 +688,6 @@ export default function AdminPersonalizationPage() {
                         </FormItem>
                       )}
                     />
-                    <div className="pt-6 flex justify-end space-x-2">
-                      <Button type="button" variant="outline" onClick={handleCancel}>
-                        <RotateCcw className="mr-2 h-4 w-4" />
-                        Cancelar
-                      </Button>
-                      <Button type="submit" disabled={form.formState.isSubmitting}>
-                        <Save className="mr-2 h-4 w-4" />
-                        {form.formState.isSubmitting ? "Salvando..." : "Salvar"}
-                      </Button>
-                    </div>
                   </div>
 
                   {/* Preview Section */}
