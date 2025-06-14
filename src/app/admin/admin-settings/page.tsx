@@ -78,6 +78,12 @@ async function getCroppedImg(
     return null;
   }
 
+  // Ensure pixelCrop dimensions are valid before proceeding
+  if (!pixelCrop || pixelCrop.width <= 0 || pixelCrop.height <= 0) {
+    console.error("getCroppedImg: Invalid pixelCrop dimensions received.", pixelCrop);
+    return null;
+  }
+
   const rotRad = getRadianAngle(rotation);
 
   const { width: bBoxWidth, height: bBoxHeight } = rotateSize(
@@ -113,32 +119,33 @@ async function getCroppedImg(
   let outputHeight = pixelCrop.height;
 
   if (outputOptions.maxWidth && outputOptions.maxHeight) {
+    // outputWidth and outputHeight are guaranteed to be > 0 here due to the check above
     const ratio = Math.min(outputOptions.maxWidth / outputWidth, outputOptions.maxHeight / outputHeight);
     if (ratio < 1) { 
         outputWidth *= ratio;
         outputHeight *= ratio;
     }
   } else if (outputOptions.maxWidth) {
-    if (outputWidth > outputOptions.maxWidth) {
+    if (outputWidth > outputOptions.maxWidth) { // outputWidth > 0
         const ratio = outputOptions.maxWidth / outputWidth;
-        outputWidth = outputOptions.maxWidth;
         outputHeight *= ratio;
+        outputWidth = outputOptions.maxWidth;
     }
   } else if (outputOptions.maxHeight) {
-    if (outputHeight > outputOptions.maxHeight) {
+    if (outputHeight > outputOptions.maxHeight) { // outputHeight > 0
         const ratio = outputOptions.maxHeight / outputHeight;
-        outputHeight = outputOptions.maxHeight;
         outputWidth *= ratio;
+        outputHeight = outputOptions.maxHeight;
     }
   }
 
   outputWidth = Math.round(outputWidth);
   outputHeight = Math.round(outputHeight);
   
-  if (outputWidth === 0 || outputHeight === 0) {
-    console.warn("Output dimensions for cropped image are zero. Check crop area and resize options.");
-    outputWidth = Math.max(1, outputWidth);
-    outputHeight = Math.max(1, outputHeight);
+  if (outputWidth <= 0 || outputHeight <= 0) {
+    console.warn("Output dimensions for cropped image are zero or negative after resize. Defaulting to 1x1.", {outputWidth, outputHeight, pixelCrop});
+    outputWidth = 1;
+    outputHeight = 1;
 }
 
 
@@ -816,4 +823,3 @@ export default function AdminPersonalizationPage() {
   );
 }
     
-
