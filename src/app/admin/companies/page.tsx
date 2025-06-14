@@ -7,17 +7,62 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { PlusCircle, Edit2, Trash2, MoreHorizontal, Search, Building2 } from 'lucide-react';
-import type { ClientCompany } from '@/types/admin'; 
+import type { ClientCompany, EnderecoEmpresa, SituacaoICMSEmpresa } from '@/types/admin'; 
 import { Input } from '@/components/ui/input';
-// import { CompanyFormDialog } from '@/components/admin/companies/CompanyFormDialog'; // Será criado depois
-// import { ConfirmationDialog } from '@/components/common/ConfirmationDialog'; // Já existe
+import { CompanyFormDialog } from '@/components/admin/companies/CompanyFormDialog';
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock data inicial - em um sistema real, isso viria de um backend/localStorage persistente
+const now = new Date().toISOString();
+const defaultAddress: EnderecoEmpresa = { cep: '00000-000', estado: 'SP', cidade: 'São Paulo', bairro: 'Centro', rua: 'Rua Padrão', numero: '123', complemento: ''};
+
 const initialCompanies: ClientCompany[] = [
-  { id: 'comp-001', name: 'Empresa Alpha LTDA', cnpj: '11.222.333/0001-44', contactName: 'Carlos Silva', contactEmail: 'carlos@alpha.com', contactPhone: '(11) 99999-0001', status: 'active', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'comp-002', name: 'Soluções Beta S/A', cnpj: '44.555.666/0001-77', contactName: 'Ana Costa', contactEmail: 'ana@beta.com', contactPhone: '(21) 88888-0002', status: 'pending_payment', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'comp-003', name: 'Gama Serviços & Consultoria', cnpj: '77.888.999/0001-00', contactName: 'Pedro Almeida', contactEmail: 'pedro@gama.com', contactPhone: '(31) 77777-0003', status: 'trial', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { 
+    id: 'comp-001', 
+    type: 'juridica',
+    razaoSocial: 'Empresa Alpha Soluções Tecnológicas LTDA',
+    nomeFantasia: 'AlphaTec', 
+    cnpj: '11.222.333/0001-44', 
+    situacaoIcms: 'contribuinte',
+    inscricaoEstadual: '123.456.789.112',
+    responsavelNome: 'Carlos Silva', 
+    emailFaturamento: 'faturamento@alphatec.com', 
+    contactPhone: '(11) 99999-0001', 
+    endereco: {...defaultAddress, rua: 'Rua da AlphaTec', cep: '11111-111'},
+    status: 'active', 
+    createdAt: now, 
+    updatedAt: now 
+  },
+  { 
+    id: 'comp-002', 
+    type: 'juridica',
+    razaoSocial: 'Beta Consultoria e Serviços S/A',
+    nomeFantasia: 'BetaConsult', 
+    cnpj: '44.555.666/0001-77', 
+    situacaoIcms: 'isento',
+    responsavelNome: 'Ana Costa', 
+    emailFaturamento: 'financeiro@betaconsult.com.br', 
+    contactPhone: '(21) 88888-0002', 
+    endereco: {...defaultAddress, cidade: 'Rio de Janeiro', estado: 'RJ', rua: 'Av. BetaConsult', cep: '22222-222'},
+    status: 'pending_payment', 
+    createdAt: now, 
+    updatedAt: now 
+  },
+  { 
+    id: 'comp-003', 
+    type: 'fisica',
+    razaoSocial: 'Pedro Almeida Desenvolvimento Individual',
+    nomeFantasia: 'Pedro Dev', 
+    cpf: '123.456.789-00',
+    situacaoIcms: 'nao_contribuinte',
+    responsavelNome: 'Pedro Almeida', 
+    emailFaturamento: 'pedro.almeida.dev@email.com', 
+    contactPhone: '(31) 77777-0003', 
+    endereco: {...defaultAddress, cidade: 'Belo Horizonte', estado: 'MG', rua: 'Rua dos Códigos', cep: '33333-333'},
+    status: 'trial', 
+    createdAt: now, 
+    updatedAt: now 
+  },
 ];
 
 
@@ -32,39 +77,59 @@ export default function ManageCompaniesPage() {
 
   const handleOpenFormDialog = (company: ClientCompany | null = null) => {
     setEditingCompany(company);
-    // setIsFormDialogOpen(true); // Habilitar quando o CompanyFormDialog for criado
-    alert(`Funcionalidade "Adicionar/Editar Empresa" (ID: ${company?.id || 'Novo'}) a ser implementada.`);
+    setIsFormDialogOpen(true);
   };
 
   const handleDeleteRequest = (company: ClientCompany) => {
     setCompanyToDelete(company);
-    // setIsConfirmDeleteDialogOpen(true); // Habilitar quando a lógica de deleção for implementada
-    alert(`Funcionalidade "Excluir Empresa" (ID: ${company.id}) a ser implementada.`);
+    setIsConfirmDeleteDialogOpen(true);
   };
 
   const confirmDelete = () => {
     if (!companyToDelete) return;
-    // Lógica para deletar a empresa
-    // setCompanies(prev => prev.filter(c => c.id !== companyToDelete.id));
-    toast({ title: "Sucesso!", description: `Empresa "${companyToDelete.name}" excluída.` });
+    setCompanies(prev => prev.filter(c => c.id !== companyToDelete.id));
+    toast({ title: "Sucesso!", description: `Empresa "${companyToDelete.nomeFantasia || companyToDelete.razaoSocial}" excluída.` });
     setCompanyToDelete(null);
     setIsConfirmDeleteDialogOpen(false);
   };
+  
+  const handleSubmitCompany = (data: Omit<ClientCompany, 'id' | 'createdAt' | 'updatedAt'>, id?: string) => {
+    const nowISO = new Date().toISOString();
+    if (id) { // Editing existing company
+      setCompanies(prevCompanies => 
+        prevCompanies.map(c => c.id === id ? { ...c, ...data, updatedAt: nowISO } : c)
+      );
+      toast({ title: "Sucesso!", description: "Empresa atualizada." });
+    } else { // Adding new company
+      const newCompany: ClientCompany = {
+        id: `comp-${Date.now()}`,
+        ...data,
+        createdAt: nowISO,
+        updatedAt: nowISO,
+      };
+      setCompanies(prevCompanies => [...prevCompanies, newCompany]);
+      toast({ title: "Sucesso!", description: "Empresa adicionada." });
+    }
+    setIsFormDialogOpen(false);
+    setEditingCompany(null);
+  };
+
 
   const filteredCompanies = companies.filter(company => {
     const lowerSearchTerm = searchTerm.toLowerCase();
     const numbersOnlySearchTerm = searchTerm.replace(/\D/g, '');
 
-    const nameMatch = company.name.toLowerCase().includes(lowerSearchTerm);
+    const nameMatch = (company.nomeFantasia || '').toLowerCase().includes(lowerSearchTerm) || 
+                      (company.razaoSocial || '').toLowerCase().includes(lowerSearchTerm);
     
-    const cnpjMatch = company.cnpj && numbersOnlySearchTerm.length > 0 && company.cnpj.replace(/\D/g, '').includes(numbersOnlySearchTerm);
+    const doc = company.type === 'juridica' ? company.cnpj : company.cpf;
+    const docMatch = doc && numbersOnlySearchTerm.length > 0 && doc.replace(/\D/g, '').includes(numbersOnlySearchTerm);
     
-    const contactEmailMatch = company.contactEmail.toLowerCase().includes(lowerSearchTerm);
+    const emailMatch = (company.emailFaturamento || '').toLowerCase().includes(lowerSearchTerm);
+    const responsavelMatch = (company.responsavelNome || '').toLowerCase().includes(lowerSearchTerm);
     
-    const contactNameMatch = company.contactName && company.contactName.toLowerCase().includes(lowerSearchTerm);
-    
-    if (searchTerm === "") return true; // Se a busca estiver vazia, mostrar todas as empresas
-    return nameMatch || !!cnpjMatch || contactEmailMatch || !!contactNameMatch;
+    if (searchTerm === "") return true;
+    return nameMatch || !!docMatch || emailMatch || responsavelMatch;
   });
 
   const getStatusLabel = (status: ClientCompany['status']) => {
@@ -75,6 +140,13 @@ export default function ManageCompaniesPage() {
       trial: 'Teste',
     };
     return map[status] || status;
+  };
+
+  const getDocument = (company: ClientCompany) => {
+    if (company.type === 'juridica') {
+      return company.cnpj || 'N/A';
+    }
+    return company.cpf || 'N/A';
   };
 
 
@@ -99,7 +171,7 @@ export default function ManageCompaniesPage() {
            <div className="mt-4 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome, CNPJ, contato ou e-mail..."
+              placeholder="Buscar por nome, CNPJ/CPF, responsável ou e-mail..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 w-full max-w-md"
@@ -131,11 +203,12 @@ export default function ManageCompaniesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="min-w-[200px]">Nome da Empresa</TableHead>
-                    <TableHead className="min-w-[150px]">CNPJ</TableHead>
-                    <TableHead className="min-w-[180px]">Contato Responsável</TableHead>
-                    <TableHead className="min-w-[180px]">Email de Contato</TableHead>
-                    <TableHead className="min-w-[120px]">Telefone</TableHead>
+                    <TableHead className="min-w-[180px]">Nome Fantasia</TableHead>
+                    <TableHead className="min-w-[180px]">Razão Social</TableHead>
+                    <TableHead className="min-w-[140px]">CNPJ/CPF</TableHead>
+                    <TableHead className="min-w-[180px]">Responsável</TableHead>
+                    <TableHead className="min-w-[180px]">Email Faturamento</TableHead>
+                     <TableHead className="min-w-[120px]">Telefone</TableHead>
                     <TableHead className="min-w-[100px]">Status Licença</TableHead>
                     <TableHead className="text-right w-[100px]">Ações</TableHead>
                   </TableRow>
@@ -143,10 +216,11 @@ export default function ManageCompaniesPage() {
                 <TableBody>
                   {filteredCompanies.map((company) => (
                     <TableRow key={company.id}>
-                      <TableCell className="font-medium">{company.name}</TableCell>
-                      <TableCell>{company.cnpj || 'N/A'}</TableCell>
-                      <TableCell>{company.contactName || 'N/A'}</TableCell>
-                      <TableCell>{company.contactEmail}</TableCell>
+                      <TableCell className="font-medium">{company.nomeFantasia || (company.type === 'fisica' ? company.razaoSocial : 'N/A')}</TableCell>
+                      <TableCell>{company.razaoSocial}</TableCell>
+                      <TableCell>{getDocument(company)}</TableCell>
+                      <TableCell>{company.responsavelNome || 'N/A'}</TableCell>
+                      <TableCell>{company.emailFaturamento}</TableCell>
                       <TableCell>{company.contactPhone || 'N/A'}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
@@ -168,7 +242,7 @@ export default function ManageCompaniesPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => alert(`Visualizar licenças de ${company.name}`)}>
+                            <DropdownMenuItem onClick={() => alert(`Visualizar licenças de ${company.nomeFantasia || company.razaoSocial}`)}>
                               Gerenciar Licenças
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleOpenFormDialog(company)}>
@@ -194,14 +268,13 @@ export default function ManageCompaniesPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* 
+      
       {isFormDialogOpen && (
         <CompanyFormDialog
           open={isFormDialogOpen}
           onOpenChange={setIsFormDialogOpen}
+          onSubmitAction={handleSubmitCompany}
           initialData={editingCompany}
-          // onSubmitAction={handleSubmitCompany} // Será implementada
         />
       )}
 
@@ -211,12 +284,9 @@ export default function ManageCompaniesPage() {
           onOpenChange={setIsConfirmDeleteDialogOpen}
           onConfirm={confirmDelete}
           title="Confirmar exclusão de empresa"
-          description={`Tem certeza que deseja excluir a empresa "${companyToDelete.name}"? Esta ação não pode ser desfeita e removerá todas as licenças associadas.`}
+          description={`Tem certeza que deseja excluir a empresa "${companyToDelete.nomeFantasia || companyToDelete.razaoSocial}"? Esta ação não pode ser desfeita e removerá todas as licenças associadas.`}
         />
       )}
-      */}
     </div>
   );
 }
-
-    

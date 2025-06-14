@@ -8,14 +8,32 @@ export interface AdminUser {
   role: 'superadmin' | 'admin'; // Exemplo de papéis
 }
 
+export interface EnderecoEmpresa {
+  cep: string;
+  estado: string;
+  cidade: string;
+  bairro: string;
+  rua: string;
+  numero: string;
+  complemento?: string;
+}
+
+export type SituacaoICMSEmpresa = 'contribuinte' | 'nao_contribuinte' | 'isento';
+
 export interface ClientCompany {
-  id: string; // UUID gerado
-  name: string; // Nome da empresa cliente
-  cnpj?: string; // CNPJ, se aplicável
-  contactName?: string; // Nome do contato principal na empresa
-  contactEmail: string; // Email do contato principal
-  contactPhone?: string;
-  status: 'active' | 'inactive' | 'pending_payment' | 'trial';
+  id: string;
+  type: 'fisica' | 'juridica';
+  razaoSocial: string; // Nome completo para PF, Razão Social para PJ
+  nomeFantasia: string; // Apelido para PF (opcional), Nome Fantasia para PJ (obrigatório)
+  cnpj?: string; // Para PJ
+  cpf?: string; // Para PF
+  situacaoIcms: SituacaoICMSEmpresa;
+  inscricaoEstadual?: string; // Obrigatório se situacaoIcms for 'contribuinte'
+  responsavelNome: string; // Nome do responsável/contato principal
+  emailFaturamento: string; // Email para faturamento/contato principal
+  contactPhone?: string; // Telefone de contato principal
+  endereco: EnderecoEmpresa;
+  status: 'active' | 'inactive' | 'pending_payment' | 'trial'; // Status da licença/cliente
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
