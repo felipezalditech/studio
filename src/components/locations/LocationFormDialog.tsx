@@ -96,7 +96,7 @@ export function LocationFormDialog({ open, onOpenChange, initialData, onLocation
                 <FormItem>
                   <FormLabel>Nome do local</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Escritório Central, Almoxarifado" {...field} />
+                    <Input placeholder="Ex: Escritório Central, Almoxarifado" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -109,7 +109,7 @@ export function LocationFormDialog({ open, onOpenChange, initialData, onLocation
                 <FormItem>
                   <FormLabel>Endereço (opcional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Rua Exemplo, 123, Bairro, Cidade - UF" {...field} />
+                    <Textarea placeholder="Rua Exemplo, 123, Bairro, Cidade - UF" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -45,7 +45,7 @@ export type AssetModelFormValues = z.infer<typeof assetModelFormSchema>;
 interface AssetModelFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: Partial<AssetModel> | null; // Alterado para aceitar Partial<AssetModel> para criação com apenas nome
+  initialData?: Partial<AssetModel> | null;
   onModelAdded?: (modelId: string) => void;
 }
 
@@ -119,7 +119,7 @@ export function AssetModelFormDialog({ open, onOpenChange, initialData, onModelA
                 <FormItem>
                   <FormLabel>Nome do modelo</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Notebook Dell XPS 15, Cadeira Ergonômica" {...field} />
+                    <Input placeholder="Ex: Notebook Dell XPS 15, Cadeira Ergonômica" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -132,7 +132,7 @@ export function AssetModelFormDialog({ open, onOpenChange, initialData, onModelA
                 <FormItem>
                   <FormLabel>Marca (opcional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Dell, Flexform" {...field} />
+                    <Input placeholder="Ex: Dell, Flexform" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -145,7 +145,7 @@ export function AssetModelFormDialog({ open, onOpenChange, initialData, onModelA
                 <FormItem>
                   <FormLabel>Cor (opcional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Preto, Prata com detalhes azuis" {...field} />
+                    <Input placeholder="Ex: Preto, Prata com detalhes azuis" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -202,7 +202,7 @@ export function AssetModelFormDialog({ open, onOpenChange, initialData, onModelA
                 <FormItem>
                   <FormLabel>Descrição (opcional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Detalhes adicionais sobre o modelo..." {...field} />
+                    <Textarea placeholder="Detalhes adicionais sobre o modelo..." {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -213,8 +213,8 @@ export function AssetModelFormDialog({ open, onOpenChange, initialData, onModelA
                 Cancelar
               </Button>
               <Button
-                type="button" // Alterado de "submit" para "button"
-                onClick={form.handleSubmit(onSubmit)} // Chama o submit do formulário do diálogo programaticamente
+                type="button" 
+                onClick={form.handleSubmit(onSubmit)} 
                 disabled={form.formState.isSubmitting}
               >
                 <Save className="mr-2 h-4 w-4" />

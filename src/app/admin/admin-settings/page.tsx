@@ -586,7 +586,7 @@ export default function AdminPersonalizationPage() {
                           </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
-                              <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
+                              <Input type="color" {...field} value={field.value ?? ''} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
                             </FormControl>
                             <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
                           </div>
@@ -609,7 +609,7 @@ export default function AdminPersonalizationPage() {
                           </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
-                              <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border" />
+                              <Input type="color" {...field} value={field.value ?? ''} className="w-12 h-10 p-1 cursor-pointer rounded-md border" />
                             </FormControl>
                             <span className="text-sm text-muted-foreground">{field.value || '#3F51B5 (Padrão)'}</span>
                           </div>
@@ -632,7 +632,7 @@ export default function AdminPersonalizationPage() {
                           </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
-                              <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
+                              <Input type="color" {...field} value={field.value ?? ''} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
                             </FormControl>
                             <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
                           </div>
@@ -654,7 +654,7 @@ export default function AdminPersonalizationPage() {
                           </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
-                              <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
+                              <Input type="color" {...field} value={field.value ?? ''} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
                             </FormControl>
                             <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
                           </div>
@@ -677,7 +677,7 @@ export default function AdminPersonalizationPage() {
                           </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
-                              <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
+                              <Input type="color" {...field} value={field.value ?? ''} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
                             </FormControl>
                             <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
                           </div>
@@ -700,7 +700,7 @@ export default function AdminPersonalizationPage() {
                           </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
-                              <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
+                              <Input type="color" {...field} value={field.value ?? ''} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
                             </FormControl>
                             <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
                           </div>

@@ -128,7 +128,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
                 <FormItem>
                   <FormLabel>Nome da categoria</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Eletrônicos de Escritório" {...field} />
+                    <Input placeholder="Ex: Eletrônicos de Escritório" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -165,7 +165,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
                 <FormItem>
                   <FormLabel>Vida útil (em anos)</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="Ex: 5 (deixe 0 ou vazio se usar taxa)" {...field} />
+                    <Input type="number" placeholder="Ex: 5 (deixe 0 ou vazio se usar taxa)" {...field} value={field.value ?? ''} />
                   </FormControl>
                    <FormDescription>
                     Preencha se a depreciação for baseada na vida útil.
@@ -208,7 +208,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
                 <FormItem>
                   <FormLabel>Valor da taxa de depreciação (%, opcional)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" placeholder="Ex: 20 (para 20%)" {...field} />
+                    <Input type="number" step="0.01" placeholder="Ex: 20 (para 20%)" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormDescription>
                     Percentual da taxa de depreciação, se aplicável.
@@ -224,7 +224,7 @@ export function CategoryFormDialog({ open, onOpenChange, onSubmitAction, initial
                 <FormItem>
                   <FormLabel>Valor residual (percentual %)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" placeholder="Ex: 10 (para 10%)" {...field} />
+                    <Input type="number" step="0.01" placeholder="Ex: 10 (para 10%)" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormDescription>
                     Percentual do valor de compra que o ativo terá ao final de sua depreciação.
