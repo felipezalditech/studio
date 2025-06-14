@@ -4,15 +4,31 @@ import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import React, { createContext, useContext } from 'react';
 import useLocalStorage from '@/lib/hooks/use-local-storage';
 
+export interface Endereco {
+  cep: string;
+  estado: string;
+  cidade: string;
+  bairro: string;
+  rua: string;
+  numero: string;
+  complemento?: string;
+}
+
+export type SituacaoICMS = 'contribuinte' | 'nao_contribuinte' | 'isento';
+
 export interface Supplier {
   id: string;
   type: 'fisica' | 'juridica';
   razaoSocial: string; // Para PJ é Razão Social, para PF é Nome Completo
-  nomeFantasia: string; // Obrigatório para PJ, opcional para PF
+  nomeFantasia: string; // Obrigatório para PJ, opcional para PF (ou pode ser o mesmo que razaoSocial para PF)
   cnpj?: string;
   cpf?: string;
-  contato: string;
-  endereco: string;
+  situacaoIcms: SituacaoICMS;
+  inscricaoEstadual?: string;
+  responsavelNome: string; // Nome do responsável pela empresa
+  emailFaturamento: string;
+  endereco: Endereco;
+  // O campo 'contato' (telefone/email geral) e 'endereco' (string simples) foram substituídos/refinados.
 }
 
 interface SupplierContextType {
@@ -30,29 +46,59 @@ const initialMockSuppliers: Supplier[] = [
   {
     id: 'sup-001',
     type: 'juridica',
-    razaoSocial: 'Tech Solutions LTDA',
+    razaoSocial: 'Tech Solutions LTDA ME',
     nomeFantasia: 'Tech Solutions',
     cnpj: '12.345.678/0001-99',
-    contato: '(11) 98765-4321',
-    endereco: 'Rua Exemplo, 123, São Paulo, SP'
+    situacaoIcms: 'contribuinte',
+    inscricaoEstadual: '123.456.789.112',
+    responsavelNome: 'Carlos Admin',
+    emailFaturamento: 'faturamento@techsolutions.com',
+    endereco: {
+      cep: '01000-000',
+      estado: 'SP',
+      cidade: 'São Paulo',
+      bairro: 'Centro',
+      rua: 'Rua Exemplo Soluções',
+      numero: '123',
+      complemento: 'Sala 101'
+    }
   },
   {
     id: 'sup-002',
     type: 'juridica',
-    razaoSocial: 'Móveis Conforto & Cia',
+    razaoSocial: 'Móveis Conforto & Cia LTDA',
     nomeFantasia: 'Móveis Conforto',
     cnpj: '98.765.432/0001-11',
-    contato: 'contato@moveisconforto.com',
-    endereco: 'Av. Principal, 456, Rio de Janeiro, RJ'
+    situacaoIcms: 'isento',
+    responsavelNome: 'Ana Gestora',
+    emailFaturamento: 'financeiro@moveisconforto.com',
+    endereco: {
+      cep: '20000-000',
+      estado: 'RJ',
+      cidade: 'Rio de Janeiro',
+      bairro: 'Copacabana',
+      rua: 'Av. Principal Mobiliário',
+      numero: '456',
+    }
   },
   {
     id: 'sup-003',
     type: 'fisica',
-    razaoSocial: 'João da Silva Programações', // Nome Completo
-    nomeFantasia: 'JS Programador', // Opcional
+    razaoSocial: 'João da Silva Programações Autônomas', // Nome Completo
+    nomeFantasia: 'JS Programador', // Opcional para PF, mas útil
     cpf: '123.456.789-00',
-    contato: 'joao.silva@email.com',
-    endereco: 'Rua dos Desenvolvedores, 789, Belo Horizonte, MG'
+    situacaoIcms: 'nao_contribuinte',
+    responsavelNome: 'João da Silva',
+    emailFaturamento: 'joao.silva.fatura@email.com',
+    endereco: {
+      cep: '30000-000',
+      estado: 'MG',
+      cidade: 'Belo Horizonte',
+      bairro: 'Savassi',
+      rua: 'Rua dos Desenvolvedores de Software',
+      numero: '789',
+      complemento: 'Apto 302'
+    }
   },
 ];
 

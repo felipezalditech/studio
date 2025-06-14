@@ -11,10 +11,10 @@ export function maskCPF(value: string): string {
   value = value.replace(/\D/g, '') // Remove todos os não dígitos
   value = value.substring(0, 11) // Limita a 11 dígitos
 
-  if (value.length <= 3) return value
-  if (value.length <= 6) return `${value.slice(0, 3)}.${value.slice(3)}`
-  if (value.length <= 9) return `${value.slice(0, 3)}.${value.slice(3, 6)}.${value.slice(6)}`
-  return `${value.slice(0, 3)}.${value.slice(3, 6)}.${value.slice(6, 9)}-${value.slice(9)}`
+  value = value.replace(/(\d{3})(\d)/, '$1.$2')
+  value = value.replace(/(\d{3})(\d)/, '$1.$2')
+  value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+  return value
 }
 
 export function maskCNPJ(value: string): string {
@@ -22,9 +22,18 @@ export function maskCNPJ(value: string): string {
   value = value.replace(/\D/g, '') // Remove todos os não dígitos
   value = value.substring(0, 14) // Limita a 14 dígitos
 
-  if (value.length <= 2) return value
-  if (value.length <= 5) return `${value.slice(0, 2)}.${value.slice(2)}`
-  if (value.length <= 8) return `${value.slice(0, 2)}.${value.slice(2, 5)}.${value.slice(5)}`
-  if (value.length <= 12) return `${value.slice(0, 2)}.${value.slice(2, 5)}.${value.slice(5, 8)}/${value.slice(8)}`
-  return `${value.slice(0, 2)}.${value.slice(2, 5)}.${value.slice(5, 8)}/${value.slice(8, 12)}-${value.slice(12)}`
+  value = value.replace(/^(\d{2})(\d)/, '$1.$2')
+  value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+  value = value.replace(/\.(\d{3})(\d)/, '.$1/$2')
+  value = value.replace(/(\d{4})(\d)/, '$1-$2')
+  return value
+}
+
+export function maskCEP(value: string): string {
+  if (!value) return ""
+  value = value.replace(/\D/g, '') // Remove todos os não dígitos
+  value = value.substring(0, 8)   // Limita a 8 dígitos
+
+  value = value.replace(/(\d{5})(\d)/, '$1-$2')
+  return value
 }
