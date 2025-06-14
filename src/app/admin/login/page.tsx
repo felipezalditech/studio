@@ -76,12 +76,13 @@ export default function UnifiedLoginPage() {
     backgroundColor: currentCardBackgroundColor || 'hsl(var(--background))',
   };
 
-  const rightPanelStyle: React.CSSProperties = {};
+  const rightPanelStyle: React.CSSProperties = {
+    backgroundSize: 'cover', 
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+  };
   if (currentBackgroundImageUrl) {
     rightPanelStyle.backgroundImage = `url(${currentBackgroundImageUrl})`;
-    rightPanelStyle.backgroundSize = 'cover';
-    rightPanelStyle.backgroundPosition = 'center';
-    rightPanelStyle.backgroundRepeat = 'no-repeat';
   } else {
     rightPanelStyle.backgroundColor = 'hsl(var(--muted) / 0.4)';
   }
@@ -150,7 +151,7 @@ export default function UnifiedLoginPage() {
                     />
                 </div>
                 ) : (
-                <h1 className="text-2xl font-bold mb-4 mt-4">Zaldi Imo</h1>
+                <h1 className="text-2xl font-bold mb-10 mt-4">Zaldi Imo</h1>
                 )}
                 <p className="text-2xl font-bold mb-8" style={descriptionStyle}>Bem vindo ao Zaldi Imo</p>
             </div>
@@ -208,6 +209,15 @@ export default function UnifiedLoginPage() {
                 >
                     {isLoading ? 'Entrando...' : 'Entrar'}
                 </Button>
+                <Button 
+                    type="button" 
+                    variant="link" 
+                    className="w-full mt-2 text-primary"
+                    onClick={() => {/* Lógica futura aqui */}}
+                    disabled={isLoading}
+                >
+                    Esqueci minha senha
+                </Button>
             </form>
             <p className="mt-8 text-xs text-center text-muted-foreground">
             Administrador: admin@zaldi.com / password<br/>
@@ -235,5 +245,4 @@ export default function UnifiedLoginPage() {
     </div>
   );
 }
-
     

@@ -308,12 +308,14 @@ export default function AdminPersonalizationPage() {
   };
 
 
-  const previewRightPanelStyle: React.CSSProperties = {};
+  const previewRightPanelStyle: React.CSSProperties = {
+    backgroundSize: 'cover', 
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+  };
+
   if (watchedValues.backgroundImageUrl) {
     previewRightPanelStyle.backgroundImage = `url(${watchedValues.backgroundImageUrl})`;
-    previewRightPanelStyle.backgroundSize = 'cover';
-    previewRightPanelStyle.backgroundPosition = 'center';
-    previewRightPanelStyle.backgroundRepeat = 'no-repeat';
   } else {
     previewRightPanelStyle.backgroundColor = 'hsl(var(--muted) / 0.4)';
   }
@@ -447,7 +449,7 @@ export default function AdminPersonalizationPage() {
                             Imagem de fundo da tela de login
                           </FormLabel>
                           <FormDescUI className="pb-2">
-                            Para melhor ajuste com `background-size: cover`, recomendamos uma imagem com cerca de 1200px de largura por 1400px de altura (ou 1200x1200px). Imagens com alta resolução e proporção próxima a retrato ou quadrada tendem a ter menos cortes visíveis e mantêm boa qualidade.
+                           Para melhor ajuste com `background-size: cover`, recomendamos uma imagem com cerca de 1200px de largura por 1400px de altura (ou 1200x1200px). Imagens com alta resolução e proporção próxima a retrato ou quadrada tendem a ter menos cortes visíveis e mantêm boa qualidade.
                           </FormDescUI>
                           <div className="flex items-center gap-2">
                             <FormControl>
@@ -655,11 +657,11 @@ export default function AdminPersonalizationPage() {
                           >
                             <div className="w-full max-w-[90%] space-y-2">
                               {watchedValues.logoUrl ? (
-                                <div className="mx-auto mb-2 mt-1 h-[14px] w-auto max-w-[50px] relative">
+                                <div className="mx-auto mb-5 mt-1 h-[14px] w-auto max-w-[50px] relative">
                                   <NextImage src={watchedValues.logoUrl} alt="Preview Logo" fill style={{objectFit:"contain"}} data-ai-hint="login logo dynamic preview"/>
                                 </div>
                               ) : (
-                                 <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-1.5 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
+                                 <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-4 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
                               )}
 
                               <p className="text-center text-[13px] font-bold mb-1.5" style={previewDescriptionStyle}>
@@ -698,6 +700,9 @@ export default function AdminPersonalizationPage() {
                               <div className="h-5 rounded-sm flex items-center justify-center text-[8px] font-medium" style={previewLoginButtonStyle}>
                                 Entrar
                               </div>
+                              <p className="text-center text-[7px] mt-1" style={{ color: previewLoginButtonStyle.backgroundColor || 'hsl(var(--primary))' }}>
+                                Esqueci minha senha
+                              </p>
                             </div>
                           </div>
 
@@ -759,5 +764,4 @@ export default function AdminPersonalizationPage() {
     </>
   );
 }
-
     
