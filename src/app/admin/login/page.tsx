@@ -25,7 +25,7 @@ export default function UnifiedLoginPage() {
   const [currentLoginButtonColor, setCurrentLoginButtonColor] = useState<string | undefined>(undefined);
   const [currentCardBackgroundColor, setCurrentCardBackgroundColor] = useState<string | undefined>(undefined);
   const [currentInputBackgroundColor, setCurrentInputBackgroundColor] = useState<string | undefined>(undefined);
-  const [currentInputBorderColor, setCurrentInputBorderColor] = useState<string | undefined>(undefined); // Novo
+  const [currentInputBorderColor, setCurrentInputBorderColor] = useState<string | undefined>(undefined);
   const [currentLabelTextColor, setCurrentLabelTextColor] = useState<string | undefined>(undefined);
   const [currentDescriptionTextColor, setCurrentDescriptionTextColor] = useState<string | undefined>(undefined);
 
@@ -36,7 +36,7 @@ export default function UnifiedLoginPage() {
     setCurrentLoginButtonColor(loginScreenBranding.loginButtonColor);
     setCurrentCardBackgroundColor(loginScreenBranding.cardBackgroundColor);
     setCurrentInputBackgroundColor(loginScreenBranding.inputBackgroundColor);
-    setCurrentInputBorderColor(loginScreenBranding.inputBorderColor); // Novo
+    setCurrentInputBorderColor(loginScreenBranding.inputBorderColor);
     setCurrentLabelTextColor(loginScreenBranding.labelTextColor);
     setCurrentDescriptionTextColor(loginScreenBranding.descriptionTextColor);
   }, [loginScreenBranding]);
@@ -90,7 +90,7 @@ export default function UnifiedLoginPage() {
   if (currentInputBackgroundColor) {
     inputStyle.backgroundColor = currentInputBackgroundColor;
   }
-  if (currentInputBorderColor) { // Novo
+  if (currentInputBorderColor) {
     inputStyle.borderColor = currentInputBorderColor;
   }
   
@@ -108,7 +108,7 @@ export default function UnifiedLoginPage() {
   if (currentLoginButtonColor) {
     loginButtonStyle.backgroundColor = currentLoginButtonColor;
     const hex = currentLoginButtonColor.replace('#', '');
-    if (hex.length === 3 || hex.length === 6) { // Ajustado para aceitar 3 ou 6 dígitos hex
+    if (hex.length === 3 || hex.length === 6) {
         let r, g, b;
         if (hex.length === 3) {
             r = parseInt(hex[0] + hex[0], 16);
@@ -160,7 +160,7 @@ export default function UnifiedLoginPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email" style={labelStyle}>Email</Label>
+              <Label htmlFor="email" style={labelStyle}>E-mail</Label>
               <Input
                 id="email"
                 type="email"
