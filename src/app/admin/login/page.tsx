@@ -132,13 +132,13 @@ export default function UnifiedLoginPage() {
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* Left Column: Form */}
       <div 
-        className="w-full md:w-1/2 lg:w-[45%] xl:w-2/5 flex flex-col items-center justify-center px-6 sm:px-10 pt-4 sm:pt-8 pb-6 sm:pb-10"
+        className="w-full md:w-1/2 lg:w-[45%] xl:w-2/5 flex flex-col items-center justify-start px-6 sm:px-10 pt-8 sm:pt-12 pb-6 sm:pb-10"
         style={leftPanelStyle}
       >
         <div className="w-full max-w-md">
             <div className="text-center">
                 {currentLogoUrl ? (
-                <div className="mb-6 flex justify-center">
+                <div className="mb-10 flex justify-center">
                     <Image
                     src={currentLogoUrl}
                     alt="Logo Zaldi Imo"
