@@ -44,8 +44,8 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
     image.src = url;
   });
 
-const LOGO_OUTPUT_WIDTH = 120; 
-const LOGO_OUTPUT_HEIGHT = 40; 
+const LOGO_OUTPUT_WIDTH = 240; 
+const LOGO_OUTPUT_HEIGHT = 80; 
 
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string> {
   if (!pixelCrop || typeof pixelCrop.width !== 'number' || typeof pixelCrop.height !== 'number' || typeof pixelCrop.x !== 'number' || typeof pixelCrop.y !== 'number') {
