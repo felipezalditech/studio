@@ -146,7 +146,7 @@ export default function AdminPersonalizationPage() {
                  <div className="pt-6 flex justify-end">
                   <Button type="submit" disabled={form.formState.isSubmitting}>
                     <Save className="mr-2 h-4 w-4" />
-                    {form.formState.isSubmitting ? "Salvando..." : "Salvar logo"}
+                    {form.formState.isSubmitting ? "Salvando..." : "Salvar"}
                   </Button>
                 </div>
               </div>
