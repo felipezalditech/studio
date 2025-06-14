@@ -53,8 +53,8 @@ export default function UnifiedLoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Login Zaldi Imo</CardTitle>
-          <CardDescription>Acesse sua conta ou o painel de administração.</CardDescription>
+          <CardTitle className="text-2xl font-bold">Zaldi Imo</CardTitle>
+          <CardDescription>Acesse sua conta Zaldi Imo.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6">
