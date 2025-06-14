@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as FormDescUI } from "@/components/ui/form";
-import { Palette, UploadCloud, XCircle, Save, ImageIcon as ImageIconLucide, Brush, Square, Type, Columns2, Eye, Spline, ImageUp, CheckCircle2, Crop } from "lucide-react";
+import { Palette, UploadCloud, XCircle, Save, ImageIcon as ImageIconLucide, Brush, Square, Type, Columns2, Eye, Spline, ImageUp, CheckCircle2, Crop, RotateCcw } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useLoginScreenBranding } from '@/hooks/useLoginScreenBranding';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -222,6 +222,23 @@ export default function AdminPersonalizationPage() {
     toast({ title: "Sucesso!", description: "Personalização da tela de login atualizada." });
   };
 
+  const handleCancel = () => {
+    form.reset({
+      logoUrl: loginScreenBranding.logoUrl || '',
+      backgroundImageUrl: loginScreenBranding.backgroundImageUrl || '',
+      loginButtonColor: loginScreenBranding.loginButtonColor || '#3F51B5',
+      cardBackgroundColor: loginScreenBranding.cardBackgroundColor || '',
+      inputBackgroundColor: loginScreenBranding.inputBackgroundColor || '',
+      inputBorderColor: loginScreenBranding.inputBorderColor || '',
+      labelTextColor: loginScreenBranding.labelTextColor || '',
+      descriptionTextColor: loginScreenBranding.descriptionTextColor || '',
+    });
+    toast({
+      title: "Alterações descartadas",
+      description: "As modificações não salvas foram revertidas.",
+    });
+  };
+
   const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
@@ -247,7 +264,7 @@ export default function AdminPersonalizationPage() {
         form.setValue(currentFieldToUpdate, croppedImage);
         toast({
           title: `${currentFieldToUpdate === 'logoUrl' ? 'Logo' : 'Imagem de fundo'} atualizada!`,
-          description: `A nova imagem foi definida.`,
+          description: `A nova imagem foi definida. Salve as alterações para persistir.`,
           action: <CheckCircle2 className="text-green-500" />,
         });
       }
@@ -657,7 +674,11 @@ export default function AdminPersonalizationPage() {
                         </FormItem>
                       )}
                     />
-                    <div className="pt-6 flex justify-end">
+                    <div className="pt-6 flex justify-end space-x-2">
+                      <Button type="button" variant="outline" onClick={handleCancel}>
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        Cancelar
+                      </Button>
                       <Button type="submit" disabled={form.formState.isSubmitting}>
                         <Save className="mr-2 h-4 w-4" />
                         {form.formState.isSubmitting ? "Salvando..." : "Salvar"}
@@ -760,6 +781,7 @@ export default function AdminPersonalizationPage() {
                 image={imageToCrop}
                 crop={crop}
                 zoom={zoom}
+                minZoom={0.75}
                 aspect={currentFieldToUpdate === 'logoUrl' ? (240/56) : (3/4)}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
@@ -771,7 +793,7 @@ export default function AdminPersonalizationPage() {
                 <span className="text-sm text-muted-foreground">Zoom:</span>
                 <Slider
                     value={[zoom]}
-                    min={1}
+                    min={0.75}
                     max={3}
                     step={0.01}
                     onValueChange={(value) => setZoom(value[0])}
