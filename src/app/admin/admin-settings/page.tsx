@@ -88,16 +88,6 @@ export default function AdminPersonalizationPage() {
     }
   };
 
-  const getBrightness = (hexColor: string): number => {
-    if (!hexColor || !hexColorRegex.test(hexColor)) return 128; // Default to mid-brightness
-    const hex = hexColor.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    return (r * 299 + g * 587 + b * 114) / 1000;
-  };
-
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -249,19 +239,10 @@ export default function AdminPersonalizationPage() {
                         <Input
                           type="color"
                           {...field}
-                          className="w-20 h-10 p-1 cursor-pointer"
+                          className="w-16 h-10 p-1 cursor-pointer rounded-md border"
                         />
                       </FormControl>
-                      <div 
-                        className="w-24 h-10 rounded-md border flex items-center justify-center" 
-                        style={{ 
-                          backgroundColor: field.value || 'transparent',
-                          color: field.value && getBrightness(field.value) > 125 ? '#000000' : '#FFFFFF'
-                        }}
-                      >
-                        <span className="text-xs">Cor</span>
-                      </div>
-                       <span className="text-sm text-muted-foreground">{field.value || 'Padrão'}</span>
+                       <span className="text-sm text-muted-foreground">{field.value || '#3F51B5 (Padrão)'}</span>
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -285,13 +266,9 @@ export default function AdminPersonalizationPage() {
                         <Input
                           type="color"
                           {...field}
-                          className="w-20 h-10 p-1 cursor-pointer"
+                          className="w-16 h-10 p-1 cursor-pointer rounded-md border"
                         />
                       </FormControl>
-                      <div 
-                        className="w-24 h-10 rounded-md border" 
-                        style={{ backgroundColor: field.value || 'transparent' }}
-                      ></div>
                        <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
                     </div>
                     <FormMessage />
@@ -305,7 +282,7 @@ export default function AdminPersonalizationPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center text-lg font-semibold">
-                      <Columns className="mr-2 h-5 w-5" /> {/* Usando ícone alternativo */}
+                      <Columns className="mr-2 h-5 w-5" />
                       Cor de fundo dos campos de entrada
                     </FormLabel>
                     <FormDescription className="pb-2">
@@ -316,13 +293,9 @@ export default function AdminPersonalizationPage() {
                         <Input
                           type="color"
                           {...field}
-                          className="w-20 h-10 p-1 cursor-pointer"
+                          className="w-16 h-10 p-1 cursor-pointer rounded-md border"
                         />
                       </FormControl>
-                       <div 
-                        className="w-24 h-10 rounded-md border" 
-                        style={{ backgroundColor: field.value || 'transparent' }}
-                      ></div>
                        <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
                     </div>
                     <FormMessage />
@@ -347,17 +320,9 @@ export default function AdminPersonalizationPage() {
                         <Input
                           type="color"
                           {...field}
-                          className="w-20 h-10 p-1 cursor-pointer"
+                          className="w-16 h-10 p-1 cursor-pointer rounded-md border"
                         />
                       </FormControl>
-                       <div 
-                        className="w-24 h-10 rounded-md border flex items-center justify-center" 
-                        style={{ backgroundColor: field.value || 'transparent', color: field.value && getBrightness(field.value) > 125 ? '#000000' : '#FFFFFF' }}
-                      >
-                         <span className="text-xs" style={{ color: field.value && getBrightness(field.value) > 125 ? '#000000' : '#FFFFFF' }}>
-                            Aa
-                          </span>
-                      </div>
                        <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
                     </div>
                     <FormMessage />
@@ -371,7 +336,7 @@ export default function AdminPersonalizationPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center text-lg font-semibold">
-                      <Type className="mr-2 h-5 w-5" /> {/* Ícone repetido, mas ok por enquanto */}
+                      <Type className="mr-2 h-5 w-5" />
                       Cor do texto da descrição
                     </FormLabel>
                     <FormDescription className="pb-2">
@@ -382,17 +347,9 @@ export default function AdminPersonalizationPage() {
                         <Input
                           type="color"
                           {...field}
-                          className="w-20 h-10 p-1 cursor-pointer"
+                          className="w-16 h-10 p-1 cursor-pointer rounded-md border"
                         />
                       </FormControl>
-                       <div 
-                        className="w-24 h-10 rounded-md border flex items-center justify-center" 
-                        style={{ backgroundColor: field.value || 'transparent' }}
-                      >
-                         <span className="text-xs" style={{ color: field.value && getBrightness(field.value) > 125 ? '#000000' : '#FFFFFF' }}>
-                            Aa
-                          </span>
-                      </div>
                        <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
                     </div>
                     <FormMessage />
