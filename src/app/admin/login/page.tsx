@@ -1,13 +1,15 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useLoginScreenBranding } from '@/hooks/useLoginScreenBranding';
 
 export default function UnifiedLoginPage() {
   const router = useRouter();
@@ -15,6 +17,15 @@ export default function UnifiedLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loginScreenBranding, _setLoginScreenBranding] = useLoginScreenBranding(); // Renomeado para evitar conflito com useState
+  const [currentLogoUrl, setCurrentLogoUrl] = useState<string>('');
+
+  useEffect(() => {
+    // Este useEffect garante que currentLogoUrl seja atualizado
+    // apenas no cliente, após a montagem, evitando mismatches de hidratação.
+    setCurrentLogoUrl(loginScreenBranding.logoUrl);
+  }, [loginScreenBranding.logoUrl]);
+
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -24,7 +35,7 @@ export default function UnifiedLoginPage() {
     setTimeout(() => {
       if (email === 'admin@zaldi.com' && password === 'password') {
         localStorage.setItem('adminLoggedIn', 'true');
-        localStorage.removeItem('userLoggedIn'); // Garante que apenas um tipo de usuário esteja logado
+        localStorage.removeItem('userLoggedIn'); 
         toast({
           title: 'Login de Administrador bem-sucedido!',
           description: 'Redirecionando para o painel de administração...',
@@ -32,12 +43,12 @@ export default function UnifiedLoginPage() {
         router.push('/admin/dashboard');
       } else if (email === 'cliente@empresa.com' && password === 'cliente123') {
         localStorage.setItem('userLoggedIn', 'true');
-        localStorage.removeItem('adminLoggedIn'); // Garante que apenas um tipo de usuário esteja logado
+        localStorage.removeItem('adminLoggedIn'); 
         toast({
           title: 'Login de Cliente bem-sucedido!',
           description: 'Redirecionando para a aplicação...',
         });
-        router.push('/'); // Redireciona para a página inicial da aplicação cliente
+        router.push('/'); 
       } else {
         toast({
           title: 'Erro de login',
@@ -53,6 +64,19 @@ export default function UnifiedLoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
+          {currentLogoUrl && (
+            <div className="mb-4 flex justify-center">
+              <Image
+                src={currentLogoUrl}
+                alt="Logo Zaldi Imo"
+                width={180} 
+                height={60} 
+                priority
+                className="max-h-[60px] w-auto"
+                data-ai-hint="login screen logo"
+              />
+            </div>
+          )}
           <CardTitle className="text-2xl font-bold">Zaldi Imo</CardTitle>
           <CardDescription>Acesse sua conta Zaldi Imo.</CardDescription>
         </CardHeader>
