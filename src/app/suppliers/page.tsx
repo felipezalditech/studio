@@ -7,6 +7,7 @@ import type {
   SortingState,
   VisibilityState,
   ColumnFiltersState,
+  RowSelectionState, // Importar RowSelectionState
 } from "@tanstack/react-table";
 import {
   flexRender,
@@ -15,6 +16,8 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  getFacetedRowModel, // Necessário para algumas funcionalidades de filtro/seleção
+  getFacetedUniqueValues, // Necessário para algumas funcionalidades de filtro/seleção
 } from "@tanstack/react-table";
 
 import { Button } from '@/components/ui/button';
@@ -29,7 +32,7 @@ import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
 import { getSupplierColumns } from '@/components/suppliers/columns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import useLocalStorage from '@/lib/hooks/use-local-storage'; // Importar o hook useLocalStorage
+import useLocalStorage from '@/lib/hooks/use-local-storage';
 
 
 export default function SuppliersPage() {
@@ -38,13 +41,14 @@ export default function SuppliersPage() {
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
   const [supplierToDeleteId, setSupplierToDeleteId] = useState<string | null>(null);
+  const [isConfirmDeleteMultipleDialogOpen, setIsConfirmDeleteMultipleDialogOpen] = useState(false); // Novo estado
   const { toast } = useToast();
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  // Usar useLocalStorage para columnVisibility
   const [columnVisibility, setColumnVisibility] = useLocalStorage<VisibilityState>('supplierTableColumnVisibility', {});
   const [globalFilter, setGlobalFilter] = React.useState('');
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({}); // Novo estado para seleção
 
   const handleOpenDialog = (supplier: Supplier | null = null) => {
     setEditingSupplier(supplier);
@@ -61,12 +65,30 @@ export default function SuppliersPage() {
       deleteSupplier(supplierToDeleteId);
       toast({ title: "Sucesso!", description: "Fornecedor excluído." });
       setSupplierToDeleteId(null);
+      setRowSelection({}); // Limpar seleção após exclusão
     }
+  };
+
+  const handleDeleteMultipleRequest = () => {
+    if (Object.keys(rowSelection).length > 0) {
+      setIsConfirmDeleteMultipleDialogOpen(true);
+    } else {
+      toast({ title: "Nenhum fornecedor selecionado", description: "Por favor, selecione ao menos um fornecedor para excluir.", variant: "default" });
+    }
+  };
+
+  const confirmDeleteMultipleSuppliers = () => {
+    const selectedSupplierIds = table.getFilteredSelectedRowModel().rows.map(row => row.original.id);
+    if (selectedSupplierIds.length > 0) {
+      selectedSupplierIds.forEach(id => deleteSupplier(id));
+      toast({ title: "Sucesso!", description: `${selectedSupplierIds.length} fornecedor(es) excluído(s).` });
+      setRowSelection({}); // Limpar seleção
+    }
+    setIsConfirmDeleteMultipleDialogOpen(false);
   };
 
   const columns = useMemo(
     () => getSupplierColumns(handleOpenDialog, handleDeleteSupplierRequest),
-    // As dependências podem precisar ser ajustadas se handleOpenDialog/handleDeleteSupplierRequest mudarem
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [] 
   );
@@ -79,15 +101,20 @@ export default function SuppliersPage() {
       columnFilters,
       columnVisibility,
       globalFilter,
+      rowSelection, // Adicionar estado de seleção
     },
+    enableRowSelection: true, // Habilitar seleção de linha
+    onRowSelectionChange: setRowSelection, // Handler para mudança de seleção
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility, // setColumnVisibility é fornecido por useLocalStorage
+    onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getFacetedRowModel: getFacetedRowModel(), // Adicionar para funcionalidades de filtro
+    getFacetedUniqueValues: getFacetedUniqueValues(), // Adicionar para funcionalidades de filtro
     initialState: {
       pagination: {
         pageSize: 10,
@@ -97,6 +124,7 @@ export default function SuppliersPage() {
 
   const getColumnDisplayName = (columnId: string): string => {
     const nameMap: Record<string, string> = {
+      select: "Seleção",
       type: "Tipo",
       nomeFantasia: "Nome Fantasia / Nome",
       razaoSocial: "Razão Social / Nome Completo",
@@ -111,17 +139,30 @@ export default function SuppliersPage() {
     return nameMap[columnId] || columnId;
   };
 
+  const selectedRowsCount = Object.keys(rowSelection).length;
+
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Gerenciar fornecedores</h1>
           <p className="text-muted-foreground">Adicione, edite ou remova fornecedores.</p>
         </div>
-        <Button onClick={() => handleOpenDialog()}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Adicionar fornecedor
-        </Button>
+        <div className="flex space-x-2">
+            {selectedRowsCount > 0 && (
+            <Button
+                onClick={handleDeleteMultipleRequest}
+                variant="destructive"
+            >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir Selecionados ({selectedRowsCount})
+            </Button>
+            )}
+            <Button onClick={() => handleOpenDialog()}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar fornecedor
+            </Button>
+        </div>
       </div>
 
       <Card className="shadow-lg">
@@ -164,7 +205,7 @@ export default function SuppliersPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {suppliers.length === 0 ? (
+          {suppliers.length === 0 && !globalFilter ? (
             <p className="text-muted-foreground text-center py-4">Nenhum fornecedor cadastrado.</p>
           ) : (
             <div className="overflow-x-auto">
@@ -213,6 +254,10 @@ export default function SuppliersPage() {
             </div>
           )}
            <div className="flex items-center justify-between space-x-2 p-4">
+              <div className="flex-1 text-sm text-muted-foreground">
+                {table.getFilteredSelectedRowModel().rows.length} de{" "}
+                {table.getFilteredRowModel().rows.length} linha(s) selecionada(s).
+              </div>
               <div className="flex items-center space-x-2">
                 <p className="text-sm font-medium text-muted-foreground">Linhas por página:</p>
                 <Select
@@ -236,7 +281,7 @@ export default function SuppliersPage() {
               <div className="flex items-center space-x-2">
                   <span className="text-sm text-muted-foreground">
                     Página {table.getState().pagination.pageIndex + 1} de{" "}
-                    {table.getPageCount()}
+                    {table.getPageCount() > 0 ? table.getPageCount() : 1}
                   </span>
                   <Button
                       variant="outline"
@@ -273,6 +318,14 @@ export default function SuppliersPage() {
         onConfirm={confirmDeleteSupplier}
         title="Confirmar exclusão de fornecedor"
         description={`Tem certeza que deseja excluir o fornecedor "${suppliers.find(s => s.id === supplierToDeleteId)?.nomeFantasia || suppliers.find(s => s.id === supplierToDeleteId)?.razaoSocial || ''}"? Esta ação não pode ser desfeita.`}
+      />
+
+      <ConfirmationDialog
+        open={isConfirmDeleteMultipleDialogOpen}
+        onOpenChange={setIsConfirmDeleteMultipleDialogOpen}
+        onConfirm={confirmDeleteMultipleSuppliers}
+        title="Confirmar exclusão múltipla"
+        description={`Tem certeza que deseja excluir os ${selectedRowsCount} fornecedores selecionados? Esta ação não pode ser desfeita.`}
       />
     </div>
   );

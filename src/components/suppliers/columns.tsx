@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ArrowUpDown, MoreHorizontal, Edit2, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox"; // Importar Checkbox
 
 const getSituacaoIcmsLabel = (situacao: Supplier['situacaoIcms']) => {
   switch (situacao) {
@@ -34,6 +35,30 @@ export const getSupplierColumns = (
   onEdit: (supplier: Supplier) => void,
   onDelete: (supplierId: string) => void
 ): ColumnDef<Supplier>[] => [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Selecionar todas as linhas"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Selecionar linha"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: "type",
     header: ({ column }) => (
@@ -153,6 +178,6 @@ export const getSupplierColumns = (
       );
     },
     enableSorting: false,
-    enableHiding: false,
+    enableHiding: true, // Coluna de ações pode ser escondida
   },
 ];
