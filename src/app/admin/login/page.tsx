@@ -82,6 +82,8 @@ export default function UnifiedLoginPage() {
     rightPanelStyle.backgroundSize = 'cover';
     rightPanelStyle.backgroundPosition = 'center';
     rightPanelStyle.backgroundRepeat = 'no-repeat';
+  } else {
+    rightPanelStyle.backgroundColor = 'hsl(var(--muted) / 0.4)';
   }
 
 
@@ -136,12 +138,12 @@ export default function UnifiedLoginPage() {
         <div className="w-full max-w-md">
             <div className="text-center">
                 {currentLogoUrl ? (
-                <div className="mt-4 mb-4 flex justify-center">
+                <div className="mb-2 flex justify-center">
                     <Image
                     src={currentLogoUrl}
                     alt="Logo Zaldi Imo"
-                    width={120} 
-                    height={40} 
+                    width={240} 
+                    height={80} 
                     priority
                     className="max-h-[40px] w-auto"
                     data-ai-hint="company login logo"
