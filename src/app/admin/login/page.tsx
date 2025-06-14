@@ -25,17 +25,18 @@ export default function UnifiedLoginPage() {
   const [currentLoginButtonColor, setCurrentLoginButtonColor] = useState<string | undefined>(undefined);
   const [currentCardBackgroundColor, setCurrentCardBackgroundColor] = useState<string | undefined>(undefined);
   const [currentInputBackgroundColor, setCurrentInputBackgroundColor] = useState<string | undefined>(undefined);
+  const [currentInputBorderColor, setCurrentInputBorderColor] = useState<string | undefined>(undefined); // Novo
   const [currentLabelTextColor, setCurrentLabelTextColor] = useState<string | undefined>(undefined);
   const [currentDescriptionTextColor, setCurrentDescriptionTextColor] = useState<string | undefined>(undefined);
 
 
   useEffect(() => {
-    // Garante que estas operações que dependem do localStorage só rodem no cliente
     setCurrentLogoUrl(loginScreenBranding.logoUrl);
     setCurrentBackgroundImageUrl(loginScreenBranding.backgroundImageUrl);
     setCurrentLoginButtonColor(loginScreenBranding.loginButtonColor);
     setCurrentCardBackgroundColor(loginScreenBranding.cardBackgroundColor);
     setCurrentInputBackgroundColor(loginScreenBranding.inputBackgroundColor);
+    setCurrentInputBorderColor(loginScreenBranding.inputBorderColor); // Novo
     setCurrentLabelTextColor(loginScreenBranding.labelTextColor);
     setCurrentDescriptionTextColor(loginScreenBranding.descriptionTextColor);
   }, [loginScreenBranding]);
@@ -88,7 +89,9 @@ export default function UnifiedLoginPage() {
   const inputStyle: React.CSSProperties = {};
   if (currentInputBackgroundColor) {
     inputStyle.backgroundColor = currentInputBackgroundColor;
-    // Potencialmente adicionar cor do texto aqui se o fundo for muito escuro/claro
+  }
+  if (currentInputBorderColor) { // Novo
+    inputStyle.borderColor = currentInputBorderColor;
   }
   
   const labelStyle: React.CSSProperties = {};
@@ -105,14 +108,21 @@ export default function UnifiedLoginPage() {
   if (currentLoginButtonColor) {
     loginButtonStyle.backgroundColor = currentLoginButtonColor;
     const hex = currentLoginButtonColor.replace('#', '');
-    if (hex.length === 6) {
-        const r = parseInt(hex.substring(0, 2), 16);
-        const g = parseInt(hex.substring(2, 4), 16);
-        const b = parseInt(hex.substring(4, 6), 16);
+    if (hex.length === 3 || hex.length === 6) { // Ajustado para aceitar 3 ou 6 dígitos hex
+        let r, g, b;
+        if (hex.length === 3) {
+            r = parseInt(hex[0] + hex[0], 16);
+            g = parseInt(hex[1] + hex[1], 16);
+            b = parseInt(hex[2] + hex[2], 16);
+        } else {
+            r = parseInt(hex.substring(0, 2), 16);
+            g = parseInt(hex.substring(2, 4), 16);
+            b = parseInt(hex.substring(4, 6), 16);
+        }
         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
         loginButtonStyle.color = brightness > 125 ? '#000000' : '#FFFFFF';
     } else {
-        loginButtonStyle.color = '#FFFFFF'; // Fallback para texto branco
+        loginButtonStyle.color = '#FFFFFF'; 
     }
   }
 
@@ -195,3 +205,4 @@ export default function UnifiedLoginPage() {
     </div>
   );
 }
+

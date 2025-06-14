@@ -9,6 +9,7 @@ export interface LoginScreenBrandingConfig {
   loginButtonColor?: string;
   cardBackgroundColor?: string;
   inputBackgroundColor?: string;
+  inputBorderColor?: string; // Nova propriedade
   labelTextColor?: string;
   descriptionTextColor?: string;
 }
@@ -16,9 +17,10 @@ export interface LoginScreenBrandingConfig {
 const defaultLoginScreenBrandingConfig: LoginScreenBrandingConfig = {
   logoUrl: '',
   backgroundImageUrl: '',
-  loginButtonColor: '#3F51B5', // Cor primária padrão
+  loginButtonColor: '#3F51B5', 
   cardBackgroundColor: '',
   inputBackgroundColor: '',
+  inputBorderColor: '', // Padrão vazio
   labelTextColor: '',
   descriptionTextColor: '',
 };
@@ -30,3 +32,4 @@ export function useLoginScreenBranding(): [LoginScreenBrandingConfig, Dispatch<S
   );
   return [config, setConfig];
 }
+

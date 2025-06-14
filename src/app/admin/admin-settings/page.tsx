@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Palette, UploadCloud, XCircle, Save, Image as ImageIcon, Brush, Square, Type, Columns2, Eye } from "lucide-react";
+import { Palette, UploadCloud, XCircle, Save, Image as ImageIcon, Brush, Square, Type, Columns2, Eye, Spline } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useLoginScreenBranding, type LoginScreenBrandingConfig } from '@/hooks/useLoginScreenBranding';
 import { cn } from '@/lib/utils';
@@ -24,6 +24,7 @@ const loginScreenBrandingSchema = z.object({
   loginButtonColor: optionalHexColor,
   cardBackgroundColor: optionalHexColor,
   inputBackgroundColor: optionalHexColor,
+  inputBorderColor: optionalHexColor, // Novo campo
   labelTextColor: optionalHexColor,
   descriptionTextColor: optionalHexColor,
 });
@@ -43,6 +44,7 @@ export default function AdminPersonalizationPage() {
       loginButtonColor: loginScreenBranding.loginButtonColor || '#3F51B5',
       cardBackgroundColor: loginScreenBranding.cardBackgroundColor || '',
       inputBackgroundColor: loginScreenBranding.inputBackgroundColor || '',
+      inputBorderColor: loginScreenBranding.inputBorderColor || '', // Novo campo
       labelTextColor: loginScreenBranding.labelTextColor || '',
       descriptionTextColor: loginScreenBranding.descriptionTextColor || '',
     },
@@ -57,6 +59,7 @@ export default function AdminPersonalizationPage() {
       loginButtonColor: loginScreenBranding.loginButtonColor || '#3F51B5',
       cardBackgroundColor: loginScreenBranding.cardBackgroundColor || '',
       inputBackgroundColor: loginScreenBranding.inputBackgroundColor || '',
+      inputBorderColor: loginScreenBranding.inputBorderColor || '', // Novo campo
       labelTextColor: loginScreenBranding.labelTextColor || '',
       descriptionTextColor: loginScreenBranding.descriptionTextColor || '',
     });
@@ -70,6 +73,7 @@ export default function AdminPersonalizationPage() {
       loginButtonColor: data.loginButtonColor || '#3F51B5',
       cardBackgroundColor: data.cardBackgroundColor || '',
       inputBackgroundColor: data.inputBackgroundColor || '',
+      inputBorderColor: data.inputBorderColor || '', // Novo campo
       labelTextColor: data.labelTextColor || '',
       descriptionTextColor: data.descriptionTextColor || '',
     }));
@@ -142,6 +146,16 @@ export default function AdminPersonalizationPage() {
     previewInputStyle.backgroundColor = watchedValues.inputBackgroundColor;
   } else {
      previewInputStyle.backgroundColor = 'hsl(var(--input))'; 
+  }
+  if (watchedValues.inputBorderColor) {
+    previewInputStyle.borderColor = watchedValues.inputBorderColor;
+    previewInputStyle.borderWidth = '1px';
+    previewInputStyle.borderStyle = 'solid';
+  } else {
+    // Usa a cor de borda padrão do tema para a pré-visualização ou a cor de fundo do input se o fundo do card for diferente
+    previewInputStyle.borderColor = 'hsl(var(--border))'; 
+    previewInputStyle.borderWidth = '1px';
+    previewInputStyle.borderStyle = 'solid';
   }
   
   const previewLabelStyle: React.CSSProperties = {};
@@ -344,6 +358,28 @@ export default function AdminPersonalizationPage() {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="inputBorderColor"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center text-lg font-semibold">
+                          <Spline className="mr-2 h-5 w-5" /> {/* Ícone Spline como sugestão para borda */}
+                          Cor da borda dos campos de entrada
+                        </FormLabel>
+                        <FormDescription className="pb-2">
+                          Deixe em branco para usar a cor padrão do tema.
+                        </FormDescription>
+                        <div className="flex items-center gap-2 max-w-md">
+                          <FormControl>
+                            <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
+                          </FormControl>
+                          <span className="text-sm text-muted-foreground">{field.value || 'Padrão do tema'}</span>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}
@@ -447,3 +483,4 @@ export default function AdminPersonalizationPage() {
     </div>
   );
 }
+
