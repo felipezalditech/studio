@@ -148,7 +148,7 @@ export default function UnifiedLoginPage() {
                     />
                 </div>
                 ) : (
-                <h1 className="text-2xl font-bold">Zaldi Imo</h1>
+                <h1 className="text-2xl font-bold mt-4 mb-6">Zaldi Imo</h1>
                 )}
                 <p className="text-muted-foreground" style={descriptionStyle}>Acesse sua conta Zaldi Imo.</p>
             </div>
@@ -198,7 +198,7 @@ export default function UnifiedLoginPage() {
 
       {/* Right Column: Visual Area */}
       <div
-        className="hidden md:flex md:w-1/2 lg:w-[55%] xl:w-3/5 items-center justify-center relative overflow-hidden bg-muted/40" // Adicionado bg-muted/40 como fallback
+        className="hidden md:flex md:w-1/2 lg:w-[55%] xl:w-3/5 items-center justify-center relative overflow-hidden bg-muted/40" 
         style={rightPanelStyle}
       >
         {!currentBackgroundImageUrl && (
