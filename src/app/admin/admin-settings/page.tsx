@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import Image from 'next/image';
+import NextImage from 'next/image'; // Renomeado para NextImage para evitar conflito com window.Image
 import Cropper, { type Area } from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
 
@@ -13,9 +13,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription as DialogDesc } from "@/components/ui/dialog"; // Renomeado DialogDescription para evitar conflito
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription as DialogDesc } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-import { Palette, UploadCloud, XCircle, Save, ImageIcon as ImageIconLucide, Brush, Square, Type, Columns2, Eye, Spline, Crop, ZoomIn, ZoomOut } from "lucide-react"; // Renomeado Image para ImageIconLucide
+import { Palette, UploadCloud, XCircle, Save, ImageIcon as ImageIconLucide, Brush, Square, Type, Columns2, Eye, Spline, Crop, ZoomIn, ZoomOut } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useLoginScreenBranding, type LoginScreenBrandingConfig } from '@/hooks/useLoginScreenBranding';
 import { cn } from '@/lib/utils';
@@ -35,15 +35,17 @@ const loginScreenBrandingSchema = z.object({
 });
 type LoginScreenBrandingFormValues = z.infer<typeof loginScreenBrandingSchema>;
 
-// Helper function to create a cropped image (typically used with react-easy-crop)
 const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
-    const image = new window.Image(); // Usar window.Image para evitar conflito com next/image
+    const image = new window.Image();
     image.addEventListener('load', () => resolve(image));
     image.addEventListener('error', (error) => reject(error));
-    image.setAttribute('crossOrigin', 'anonymous'); // Needed to avoid tainted canvases
+    image.setAttribute('crossOrigin', 'anonymous');
     image.src = url;
   });
+
+const LOGO_OUTPUT_WIDTH = 360; // 3x the display width of 120px
+const LOGO_OUTPUT_HEIGHT = 120; // 3x the display height of 40px (maintaining 3:1 aspect ratio)
 
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string> {
   if (!pixelCrop || typeof pixelCrop.width !== 'number' || typeof pixelCrop.height !== 'number' || typeof pixelCrop.x !== 'number' || typeof pixelCrop.y !== 'number') {
@@ -63,8 +65,8 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string>
     throw new Error("Não foi possível obter o contexto 2D do canvas.");
   }
 
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+  canvas.width = LOGO_OUTPUT_WIDTH;
+  canvas.height = LOGO_OUTPUT_HEIGHT;
 
   try {
     ctx.drawImage(
@@ -75,8 +77,8 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string>
       pixelCrop.height,
       0,
       0,
-      pixelCrop.width,
-      pixelCrop.height
+      LOGO_OUTPUT_WIDTH,
+      LOGO_OUTPUT_HEIGHT
     );
   } catch (e: any) {
     console.error("Erro durante ctx.drawImage:", e, { sourceDimensions: { w: image.width, h: image.height }, crop: pixelCrop });
@@ -103,7 +105,6 @@ export default function AdminPersonalizationPage() {
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bgImageInputRef = useRef<HTMLInputElement>(null);
 
-  // State for image cropping
   const [imageSrcForCropper, setImageSrcForCropper] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -206,7 +207,6 @@ export default function AdminPersonalizationPage() {
       if (croppedImage) {
         form.setValue('logoUrl', croppedImage);
       } else {
-         // Should not happen if getCroppedImg throws on failure
         throw new Error("A função getCroppedImg retornou um valor nulo inesperadamente.");
       }
     } catch (e: any) {
@@ -575,7 +575,7 @@ export default function AdminPersonalizationPage() {
                           >
                               {watchedValues.logoUrl ? (
                                   <div className="mx-auto mb-2 h-8 w-auto max-w-[100px] relative">
-                                      <Image src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
+                                      <NextImage src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
                                   </div>
                               ) : (
                                   <div className="h-8 w-20 bg-muted/70 rounded mx-auto mb-2 flex items-center justify-center text-[9px]" style={{color: previewDescriptionStyle.color || 'hsl(var(--muted-foreground))'}}>Logo Aqui</div>
@@ -626,7 +626,7 @@ export default function AdminPersonalizationPage() {
                 <Crop className="mr-2 h-5 w-5" />
                 Ajustar Logo
               </DialogTitle>
-              <DialogDesc> {/* Usando DialogDesc aqui */}
+              <DialogDesc>
                 Ajuste o zoom e a área de corte da sua logo. A proporção é de 3:1.
               </DialogDesc>
             </DialogHeader>
@@ -679,5 +679,3 @@ export default function AdminPersonalizationPage() {
     </>
   );
 }
-
-
