@@ -447,7 +447,7 @@ export default function AdminPersonalizationPage() {
                             Imagem de fundo da tela de login
                           </FormLabel>
                           <FormDescUI className="pb-2">
-                            descreva o tamanho exato da imagem de fundo em pixel. de forma que ela não corte e nem perca qualidade
+                            Para melhor ajuste com `background-size: cover`, recomendamos uma imagem com cerca de 1200px de largura por 1400px de altura (ou 1200x1200px). Imagens com alta resolução e proporção próxima a retrato ou quadrada tendem a ter menos cortes visíveis e mantêm boa qualidade.
                           </FormDescUI>
                           <div className="flex items-center gap-2">
                             <FormControl>
