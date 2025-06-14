@@ -12,7 +12,7 @@ import 'react-easy-crop/react-easy-crop.css';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as FormDescUI } from "@/components/ui/form"; // Renomeado FormDescription para FormDescUI
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription as DialogDesc } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { Palette, UploadCloud, XCircle, Save, ImageIcon as ImageIconLucide, Brush, Square, Type, Columns2, Eye, Spline, Crop, ZoomIn, ZoomOut } from "lucide-react";
@@ -253,14 +253,14 @@ export default function AdminPersonalizationPage() {
   };
 
 
-  const previewPageStyle: React.CSSProperties = {};
+  const previewRightPanelStyle: React.CSSProperties = {};
   if (watchedValues.backgroundImageUrl) {
-    previewPageStyle.backgroundImage = `url(${watchedValues.backgroundImageUrl})`;
-    previewPageStyle.backgroundSize = 'cover';
-    previewPageStyle.backgroundPosition = 'center';
-    previewPageStyle.backgroundRepeat = 'no-repeat';
+    previewRightPanelStyle.backgroundImage = `url(${watchedValues.backgroundImageUrl})`;
+    previewRightPanelStyle.backgroundSize = 'cover';
+    previewRightPanelStyle.backgroundPosition = 'center';
+    previewRightPanelStyle.backgroundRepeat = 'no-repeat';
   } else {
-    previewPageStyle.backgroundColor = 'hsl(var(--muted) / 0.4)';
+    previewRightPanelStyle.backgroundColor = 'hsl(var(--muted) / 0.4)';
   }
 
   const previewCardStyle: React.CSSProperties = {};
@@ -342,10 +342,10 @@ export default function AdminPersonalizationPage() {
                             <UploadCloud className="mr-2 h-5 w-5" />
                             Logo na tela de login
                           </FormLabel>
-                          <FormDescription className="pb-2">
+                          <FormDescUI className="pb-2">
                             Altura máxima: 40 pixels. A largura será ajustada para manter a proporção.
                             Selecione uma imagem para abrir o editor de corte.
-                          </FormDescription>
+                          </FormDescUI>
                           <div className="flex items-center gap-2">
                             <FormControl>
                               <Input
@@ -386,9 +386,9 @@ export default function AdminPersonalizationPage() {
                             <ImageIconLucide className="mr-2 h-5 w-5" />
                             Imagem de fundo da tela de login
                           </FormLabel>
-                          <FormDescription className="pb-2">
+                          <FormDescUI className="pb-2">
                             Se nenhuma imagem for selecionada, uma cor padrão será usada.
-                          </FormDescription>
+                          </FormDescUI>
                           <div className="flex items-center gap-2">
                             <FormControl>
                               <Input
@@ -429,9 +429,9 @@ export default function AdminPersonalizationPage() {
                             <Brush className="mr-2 h-5 w-5" />
                             Cor do botão de login
                           </FormLabel>
-                          <FormDescription className="pb-2">
+                          <FormDescUI className="pb-2">
                             Escolha a cor de fundo para o botão principal.
-                          </FormDescription>
+                          </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
                               <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border" />
@@ -452,9 +452,9 @@ export default function AdminPersonalizationPage() {
                             <Square className="mr-2 h-5 w-5" />
                             Cor de fundo do card de login
                           </FormLabel>
-                          <FormDescription className="pb-2">
+                          <FormDescUI className="pb-2">
                             Deixe em branco para usar a cor padrão do tema.
-                          </FormDescription>
+                          </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
                               <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
@@ -475,9 +475,9 @@ export default function AdminPersonalizationPage() {
                             <Columns2 className="mr-2 h-5 w-5" />
                             Cor de fundo dos campos de entrada
                           </FormLabel>
-                          <FormDescription className="pb-2">
+                          <FormDescUI className="pb-2">
                             Deixe em branco para usar a cor padrão do tema.
-                          </FormDescription>
+                          </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
                               <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
@@ -497,9 +497,9 @@ export default function AdminPersonalizationPage() {
                             <Spline className="mr-2 h-5 w-5" />
                             Cor da borda dos campos de entrada
                           </FormLabel>
-                          <FormDescription className="pb-2">
+                          <FormDescUI className="pb-2">
                             Deixe em branco para usar a cor padrão do tema.
-                          </FormDescription>
+                          </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
                               <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
@@ -520,9 +520,9 @@ export default function AdminPersonalizationPage() {
                             <Type className="mr-2 h-5 w-5" />
                             Cor do texto dos rótulos
                           </FormLabel>
-                          <FormDescription className="pb-2">
+                          <FormDescUI className="pb-2">
                             Para "E-mail" e "Senha". Deixe em branco para padrão.
-                          </FormDescription>
+                          </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
                               <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
@@ -543,9 +543,9 @@ export default function AdminPersonalizationPage() {
                             <Type className="mr-2 h-5 w-5" />
                             Cor do texto da descrição
                           </FormLabel>
-                          <FormDescription className="pb-2">
+                          <FormDescUI className="pb-2">
                             Para "Acesse sua conta...". Deixe em branco para padrão.
-                          </FormDescription>
+                          </FormDescUI>
                           <div className="flex items-center gap-2 max-w-md">
                             <FormControl>
                               <Input type="color" {...field} className="w-12 h-10 p-1 cursor-pointer rounded-md border"/>
@@ -570,39 +570,52 @@ export default function AdminPersonalizationPage() {
                           Pré-visualização da tela de login
                       </div>
                       <div
-                          className="relative w-full aspect-video max-h-[450px] sm:max-h-[400px] border-2 border-border rounded-xl overflow-hidden shadow-lg"
-                          style={previewPageStyle}
+                        className="relative w-full aspect-video max-h-[450px] sm:max-h-[400px] border-2 border-border rounded-xl overflow-hidden shadow-lg"
                       >
-                          <div
-                              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-[280px] p-4 rounded-lg shadow-2xl backdrop-blur-sm bg-opacity-80"
+                        <div className="flex h-full w-full">
+                          {/* Coluna Esquerda (Formulário Preview) */}
+                          <div className="w-2/5 flex flex-col items-center justify-center p-3 bg-background dark:bg-muted/10">
+                            <div 
+                              className="w-full max-w-[90%] p-3 rounded-md shadow-lg" 
                               style={previewCardStyle}
-                          >
+                            >
                               {watchedValues.logoUrl ? (
-                                  <div className="mx-auto mb-2 h-8 w-auto max-w-[100px] relative">
-                                      <NextImage src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
-                                  </div>
+                                <div className="mx-auto mb-1 mt-1 h-5 w-auto max-w-[70px] relative">
+                                  <NextImage src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
+                                </div>
                               ) : (
-                                  <div className="h-8 w-20 bg-muted/70 rounded mx-auto mb-2 flex items-center justify-center text-[9px]" style={{color: previewDescriptionStyle.color || 'hsl(var(--muted-foreground))'}}>Logo Aqui</div>
+                                <div className="h-5 w-14 bg-muted/70 rounded mx-auto mb-1 mt-1 flex items-center justify-center text-[8px]" style={{color: previewDescriptionStyle.color || 'hsl(var(--muted-foreground))'}}>Logo Aqui</div>
                               )}
 
-                              <p className="text-center text-[10px] mb-3" style={previewDescriptionStyle}>
-                                  Acesse sua conta Zaldi Imo
+                              <p className="text-center text-[8px] mb-2" style={previewDescriptionStyle}>
+                                Acesse sua conta Zaldi Imo
                               </p>
 
-                              <div className="mb-2">
-                                  <label className="block text-[10px] font-medium mb-0.5" style={previewLabelStyle}>E-mail</label>
-                                  <div className="h-6 rounded-sm" style={previewInputStyle}></div>
+                              <div className="mb-1.5">
+                                <label className="block text-[8px] font-medium mb-0.5" style={previewLabelStyle}>E-mail</label>
+                                <div className="h-4 rounded-sm" style={previewInputStyle}></div>
                               </div>
 
-                              <div className="mb-2">
-                                  <label className="block text-[10px] font-medium mb-0.5" style={previewLabelStyle}>Senha</label>
-                                  <div className="h-6 rounded-sm" style={previewInputStyle}></div>
+                              <div className="mb-1.5">
+                                <label className="block text-[8px] font-medium mb-0.5" style={previewLabelStyle}>Senha</label>
+                                <div className="h-4 rounded-sm" style={previewInputStyle}></div>
                               </div>
 
-                              <div className="h-7 rounded-md flex items-center justify-center text-[10px] font-medium" style={previewLoginButtonStyle}>
-                                  Entrar
+                              <div className="h-5 rounded-sm flex items-center justify-center text-[8px] font-medium" style={previewLoginButtonStyle}>
+                                Entrar
                               </div>
+                            </div>
                           </div>
+
+                          {/* Coluna Direita (Visual Preview) */}
+                          <div className="w-3/5" style={previewRightPanelStyle}>
+                            {!watchedValues.backgroundImageUrl && (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <ImageIconLucide className="w-12 h-12 text-muted-foreground/30" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                   </div>
                 </div>
@@ -683,4 +696,3 @@ export default function AdminPersonalizationPage() {
     </>
   );
 }
-
