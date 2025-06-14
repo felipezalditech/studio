@@ -641,6 +641,7 @@ export default function AdminPersonalizationPage() {
                 onCropComplete={onCropComplete}
                 cropShape="rect"
                 showGrid={true}
+                restrictPosition={false} 
               />
             </div>
             <div className="space-y-2">
@@ -678,4 +679,5 @@ export default function AdminPersonalizationPage() {
     </>
   );
 }
+
 
