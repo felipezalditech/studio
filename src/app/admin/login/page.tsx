@@ -79,7 +79,7 @@ export default function UnifiedLoginPage() {
   const rightPanelStyle: React.CSSProperties = {};
   if (currentBackgroundImageUrl) {
     rightPanelStyle.backgroundImage = `url(${currentBackgroundImageUrl})`;
-    rightPanelStyle.backgroundSize = 'cover';
+    rightPanelStyle.backgroundSize = 'contain'; // Alterado de cover para contain
     rightPanelStyle.backgroundPosition = 'center';
     rightPanelStyle.backgroundRepeat = 'no-repeat';
   } else {
@@ -225,8 +225,8 @@ export default function UnifiedLoginPage() {
           <Image
             src="https://placehold.co/1000x1200.png" 
             alt="Painel de login"
-            layout="fill"
-            objectFit="cover"
+            fill // Changed from layout="fill"
+            style={{objectFit:"cover"}} // Changed from objectFit="cover"
             priority
             data-ai-hint="abstract background"
           />

@@ -6,15 +6,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import NextImage from 'next/image';
+import Cropper, { type Area } from 'react-easy-crop';
 
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as FormDescUI } from "@/components/ui/form";
-import { Palette, UploadCloud, XCircle, Save, ImageIcon as ImageIconLucide, Brush, Square, Type, Columns2, Eye, Spline, ImageUp, CheckCircle2 } from "lucide-react";
+import { Palette, UploadCloud, XCircle, Save, ImageIcon as ImageIconLucide, Brush, Square, Type, Columns2, Eye, Spline, ImageUp, CheckCircle2, Crop } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useLoginScreenBranding } from '@/hooks/useLoginScreenBranding';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Slider } from '@/components/ui/slider';
 
 
 const hexColorRegex = /^#([0-9A-Fa-f]{3}){1,2}$/;
@@ -33,11 +36,116 @@ const loginScreenBrandingSchema = z.object({
 type LoginScreenBrandingFormValues = z.infer<typeof loginScreenBrandingSchema>;
 
 
+const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', (error) => reject(error));
+    image.setAttribute('crossOrigin', 'anonymous'); 
+    image.src = url;
+  });
+
+function getRadianAngle(degreeValue: number) {
+  return (degreeValue * Math.PI) / 180;
+}
+
+/**
+ * Retorna um novo canvas contendo a imagem rotacionada.
+ */
+function rotateSize(width: number, height: number, rotation: number) {
+  const rotRad = getRadianAngle(rotation);
+  return {
+    width:
+      Math.abs(Math.cos(rotRad) * width) + Math.abs(Math.sin(rotRad) * height),
+    height:
+      Math.abs(Math.sin(rotRad) * width) + Math.abs(Math.cos(rotRad) * height),
+  };
+}
+
+
+async function getCroppedImg(
+  imageSrc: string,
+  pixelCrop: Area,
+  rotation = 0,
+  flip = { horizontal: false, vertical: false }
+): Promise<string | null> {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    return null;
+  }
+
+  const rotRad = getRadianAngle(rotation);
+
+  // calcula o tamanho da bounding box da imagem rotacionada
+  const { width: bBoxWidth, height: bBoxHeight } = rotateSize(
+    image.width,
+    image.height,
+    rotation
+  );
+
+  // define o tamanho do canvas para acomodar a imagem rotacionada
+  canvas.width = bBoxWidth;
+  canvas.height = bBoxHeight;
+
+  // translada e rotaciona o contexto para desenhar a imagem no centro
+  ctx.translate(bBoxWidth / 2, bBoxHeight / 2);
+  ctx.rotate(rotRad);
+  ctx.scale(flip.horizontal ? -1 : 1, flip.vertical ? -1 : 1);
+  ctx.translate(-image.width / 2, -image.height / 2);
+
+  // desenha a imagem rotacionada
+  ctx.drawImage(image, 0, 0);
+
+  const data = ctx.getImageData(
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height
+  );
+
+  // define o tamanho do canvas final para o tamanho do corte
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+
+  // cola os dados da imagem cortada no canvas final
+  ctx.putImageData(data, 0, 0);
+
+  // Como base64 ou blob para uso futuro
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((file) => {
+      if (file) {
+        resolve(URL.createObjectURL(file));
+      } else {
+        reject(new Error('Falha ao criar blob da imagem cortada.'));
+      }
+    }, 'image/png'); // ou image/jpeg
+    try {
+        const dataUrl = canvas.toDataURL('image/png'); // ou image/jpeg
+        resolve(dataUrl);
+      } catch (e: any) {
+        console.error("Erro ao converter canvas para Data URL:", e);
+        reject(new Error(`Erro ao gerar a imagem final (toDataURL): ${e.message}`))
+      }
+  });
+}
+
+
 export default function AdminPersonalizationPage() {
   const [loginScreenBranding, setLoginScreenBranding] = useLoginScreenBranding();
   const { toast } = useToast();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bgImageInputRef = useRef<HTMLInputElement>(null);
+
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [currentFieldToUpdate, setCurrentFieldToUpdate] = useState<'logoUrl' | 'backgroundImageUrl' | null>(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+
 
   const form = useForm<LoginScreenBrandingFormValues>({
     resolver: zodResolver(loginScreenBrandingSchema),
@@ -83,42 +191,50 @@ export default function AdminPersonalizationPage() {
     toast({ title: "Sucesso!", description: "Personalização da tela de login atualizada." });
   };
 
-  const handleLogoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        form.setValue('logoUrl', result);
+  const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleShowCroppedImage = useCallback(async () => {
+    if (!imageToCrop || !croppedAreaPixels || !currentFieldToUpdate) {
+      return;
+    }
+    try {
+      const croppedImage = await getCroppedImg(imageToCrop, croppedAreaPixels);
+      if (croppedImage) {
+        form.setValue(currentFieldToUpdate, croppedImage);
         toast({
-          title: "Logo atualizada!",
-          description: "A nova logo foi definida.",
+          title: `${currentFieldToUpdate === 'logoUrl' ? 'Logo' : 'Imagem de fundo'} atualizada!`,
+          description: `A nova imagem foi definida.`,
           action: <CheckCircle2 className="text-green-500" />,
         });
-      };
-      reader.readAsDataURL(file);
+      }
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Erro ao cortar imagem", description: "Não foi possível processar a imagem.", variant: "destructive" });
     }
-     if (logoInputRef.current) {
-        logoInputRef.current.value = '';
-    }
-  };
-  
-  const handleBackgroundImageFileChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    fieldOnChange: (value: string) => void
-  ) => {
+    setIsCropperOpen(false);
+    setImageToCrop(null);
+    setCurrentFieldToUpdate(null);
+  }, [imageToCrop, croppedAreaPixels, currentFieldToUpdate, form, toast]);
+
+
+  const handleFileChangeForCropping = (event: React.ChangeEvent<HTMLInputElement>, fieldToUpdate: 'logoUrl' | 'backgroundImageUrl') => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        fieldOnChange(reader.result as string);
+        setImageToCrop(reader.result as string);
+        setCurrentFieldToUpdate(fieldToUpdate);
+        setIsCropperOpen(true);
+        setZoom(1); 
+        setCrop({ x: 0, y: 0 });
       };
       reader.readAsDataURL(file);
-    } else {
-      fieldOnChange('');
     }
-     if (bgImageInputRef.current) {
-        bgImageInputRef.current.value = '';
+    // Limpa o valor do input para permitir selecionar o mesmo arquivo novamente
+    if (event.target) {
+      event.target.value = '';
     }
   };
 
@@ -154,7 +270,7 @@ export default function AdminPersonalizationPage() {
   const previewRightPanelStyle: React.CSSProperties = {};
   if (watchedValues.backgroundImageUrl) {
     previewRightPanelStyle.backgroundImage = `url(${watchedValues.backgroundImageUrl})`;
-    previewRightPanelStyle.backgroundSize = 'cover';
+    previewRightPanelStyle.backgroundSize = 'contain'; // Alterado de cover para contain
     previewRightPanelStyle.backgroundPosition = 'center';
     previewRightPanelStyle.backgroundRepeat = 'no-repeat';
   } else {
@@ -241,7 +357,7 @@ export default function AdminPersonalizationPage() {
                                 type="file"
                                 accept="image/*"
                                 ref={logoInputRef}
-                                onChange={handleLogoFileChange}
+                                onChange={(e) => handleFileChangeForCropping(e, 'logoUrl')}
                                 className="cursor-pointer flex-grow"
                               />
                             </FormControl>
@@ -268,8 +384,8 @@ export default function AdminPersonalizationPage() {
                                 <NextImage
                                   src={field.value}
                                   alt="Pré-visualização do Logo"
-                                  layout="fill"
-                                  objectFit="contain"
+                                  fill
+                                  style={{objectFit:"contain"}}
                                   data-ai-hint="company settings logo current"
                                 />
                               </div>
@@ -298,7 +414,7 @@ export default function AdminPersonalizationPage() {
                                 type="file"
                                 accept="image/*"
                                 ref={bgImageInputRef}
-                                onChange={(e) => handleBackgroundImageFileChange(e, field.onChange)}
+                                onChange={(e) => handleFileChangeForCropping(e, 'backgroundImageUrl')}
                                 className="cursor-pointer flex-grow"
                               />
                             </FormControl>
@@ -318,6 +434,20 @@ export default function AdminPersonalizationPage() {
                               </Button>
                             )}
                           </div>
+                           {field.value && (
+                            <div className="mt-4 space-y-2">
+                              <FormDescUI>Imagem de fundo atual:</FormDescUI>
+                               <div className="relative w-full max-w-xs h-32 border rounded-md overflow-hidden group bg-muted/20 p-1">
+                                <NextImage
+                                  src={field.value}
+                                  alt="Pré-visualização da Imagem de Fundo"
+                                  fill
+                                  style={{objectFit:"contain"}}
+                                  data-ai-hint="background image preview"
+                                />
+                              </div>
+                            </div>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -485,10 +615,10 @@ export default function AdminPersonalizationPage() {
                             <div className="w-full max-w-[90%] space-y-2">
                               {watchedValues.logoUrl ? (
                                 <div className="mx-auto mb-4 mt-1 h-[14px] w-auto max-w-[50px] relative">
-                                  <NextImage src={watchedValues.logoUrl} alt="Preview Logo" layout="fill" objectFit="contain" data-ai-hint="login logo dynamic preview"/>
+                                  <NextImage src={watchedValues.logoUrl} alt="Preview Logo" fill style={{objectFit:"contain"}} data-ai-hint="login logo dynamic preview"/>
                                 </div>
                               ) : (
-                                 <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-2 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
+                                 <div className="h-[14px] w-14 bg-muted/70 rounded mx-auto mb-1.5 mt-1 flex items-center justify-center text-[8px]" style={previewDescriptionStyle}>Logo Aqui</div>
                               )}
 
                               <p className="text-center text-[13px] font-bold mb-1.5" style={previewDescriptionStyle}>
@@ -547,6 +677,44 @@ export default function AdminPersonalizationPage() {
           </CardContent>
         </Card>
       </div>
+
+      {isCropperOpen && imageToCrop && (
+        <Dialog open={isCropperOpen} onOpenChange={(open) => { if (!open) { setIsCropperOpen(false); setImageToCrop(null); }}}>
+          <DialogContent className="min-w-[80vw] md:min-w-[60vw] lg:min-w-[50vw] xl:min-w-[40vw] h-[80vh] flex flex-col p-0">
+            <DialogHeader className="p-4 border-b">
+              <DialogTitle className="flex items-center"><Crop className="mr-2"/>Cortar Imagem</DialogTitle>
+            </DialogHeader>
+            <div className="relative flex-grow">
+              <Cropper
+                image={imageToCrop}
+                crop={crop}
+                zoom={zoom}
+                aspect={currentFieldToUpdate === 'logoUrl' ? (240/56) : (4/3)} // Ex: 16/9 para bg, 1/1 para logo
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+            <div className="p-4 border-t space-y-4">
+               <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Zoom:</span>
+                <Slider
+                    value={[zoom]}
+                    min={1}
+                    max={3}
+                    step={0.01}
+                    onValueChange={(value) => setZoom(value[0])}
+                    className="w-[calc(100%-50px)]"
+                />
+              </div>
+              <DialogFooter className="gap-2 sm:justify-end">
+                <Button variant="outline" onClick={() => { setIsCropperOpen(false); setImageToCrop(null); }}>Cancelar</Button>
+                <Button onClick={handleShowCroppedImage}>Aplicar Corte</Button>
+              </DialogFooter>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }
