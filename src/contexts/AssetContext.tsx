@@ -29,10 +29,10 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
   const { getLocationById } = useLocations();
   const { getAssetModelById: getModelCtxById } = useAssetModels(); 
 
-  const addAsset = (assetData: Omit<Asset, 'id' | 'currentValue'> & { aplicarRegrasDepreciacao: boolean }) => {
+  const addAsset = (assetData: Omit<Asset, 'id' | 'currentValue'> & { aplicarRegrasDepreciacao: boolean; arquivado: boolean }) => {
     const currentValue = assetData.aplicarRegrasDepreciacao 
-        ? assetData.purchaseValue - (assetData.previouslyDepreciatedValue || 0) // Valor inicial se depreciavel, lógica mais complexa será na consulta
-        : assetData.purchaseValue - (assetData.previouslyDepreciatedValue || 0); // Se não depreciável, valor atual não muda pelo sistema
+        ? assetData.purchaseValue - (assetData.previouslyDepreciatedValue || 0)
+        : assetData.purchaseValue - (assetData.previouslyDepreciatedValue || 0);
 
     const newAsset: Asset = {
       ...assetData,
@@ -44,14 +44,14 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
       additionalInfo: assetData.additionalInfo || undefined,
       previouslyDepreciatedValue: assetData.previouslyDepreciatedValue || 0, 
       currentValue: currentValue, 
-      // aplicarRegrasDepreciacao já vem de assetData
+      arquivado: assetData.arquivado, // Incluído
     };
     setAssets(prevAssets => [...prevAssets, newAsset]);
   };
 
   const updateAsset = (updatedAsset: Asset) => {
      const currentValue = updatedAsset.aplicarRegrasDepreciacao
-        ? updatedAsset.purchaseValue - (updatedAsset.previouslyDepreciatedValue || 0) // Recalcula para consistência, mas o cálculo dinâmico é na consulta
+        ? updatedAsset.purchaseValue - (updatedAsset.previouslyDepreciatedValue || 0) 
         : updatedAsset.purchaseValue - (updatedAsset.previouslyDepreciatedValue || 0);
 
     setAssets(prevAssets =>
@@ -61,7 +61,8 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
         modelId: updatedAsset.modelId || undefined, 
         serialNumber: updatedAsset.serialNumber || undefined, 
         previouslyDepreciatedValue: updatedAsset.previouslyDepreciatedValue || 0,
-        currentValue: currentValue, // Usar o currentValue calculado
+        currentValue: currentValue, 
+        arquivado: updatedAsset.arquivado, // Incluído
        } : asset))
     );
   };

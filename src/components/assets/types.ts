@@ -5,7 +5,7 @@ export interface Asset {
   name: string;
   modelId?: string; 
   invoiceNumber: string;
-  serialNumber: string;
+  serialNumber?: string; // Já era opcional
   assetTag: string;
   supplier: string; 
   categoryId: string;
@@ -15,5 +15,6 @@ export interface Asset {
   imageDateUris?: string[];
   previouslyDepreciatedValue?: number;
   additionalInfo?: string; 
-  aplicarRegrasDepreciacao: boolean; // Novo campo
+  aplicarRegrasDepreciacao: boolean;
+  arquivado: boolean; // Novo campo
 }

@@ -34,6 +34,7 @@ const MAX_PHOTOS = 10;
 
 const assetFormSchema = z.object({
   aplicarRegrasDepreciacao: z.boolean({ required_error: "O campo 'Depreciável?' é obrigatório." }),
+  arquivado: z.boolean({ required_error: "O campo 'Arquivar?' é obrigatório." }),
   name: z.string().min(1, "Nome do ativo é obrigatório."),
   modelId: z.string().optional(),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
@@ -73,6 +74,7 @@ export default function EditAssetPage() {
     resolver: zodResolver(assetFormSchema),
     defaultValues: {
       aplicarRegrasDepreciacao: true,
+      arquivado: false,
       name: '',
       modelId: undefined,
       assetTag: '',
@@ -102,6 +104,7 @@ export default function EditAssetPage() {
         form.reset({
           ...assetToEdit,
           aplicarRegrasDepreciacao: assetToEdit.aplicarRegrasDepreciacao !== undefined ? assetToEdit.aplicarRegrasDepreciacao : true,
+          arquivado: assetToEdit.arquivado !== undefined ? assetToEdit.arquivado : false,
           modelId: assetToEdit.modelId || undefined,
           serialNumber: assetToEdit.serialNumber || undefined,
           purchaseDate: assetToEdit.purchaseDate ? parseISO(assetToEdit.purchaseDate) : undefined,
@@ -261,7 +264,7 @@ export default function EditAssetPage() {
                   </TabsList>
 
                   <TabsContent value="general">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                     <FormField
                         control={form.control}
                         name="aplicarRegrasDepreciacao"
@@ -292,6 +295,43 @@ export default function EditAssetPage() {
                                 />
                               </FormControl>
                               <label htmlFor="aplicarRegrasDepreciacao" className="text-sm text-muted-foreground cursor-pointer">
+                                {field.value ? "Sim" : "Não"}
+                              </label>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                        control={form.control}
+                        name="arquivado"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center">
+                              <FormLabel className="flex items-center">Arquivar? *
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Marque "Sim" para arquivar o ativo. Ativos arquivados geralmente não são incluídos em cálculos ou relatórios operacionais, mas permanecem registrados para fins históricos.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </FormLabel>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  id="arquivado"
+                                />
+                              </FormControl>
+                              <label htmlFor="arquivado" className="text-sm text-muted-foreground cursor-pointer">
                                 {field.value ? "Sim" : "Não"}
                               </label>
                             </div>
@@ -447,7 +487,7 @@ export default function EditAssetPage() {
                           control={form.control}
                           name="locationId"
                           render={({ field }) => (
-                            <FormItem>
+                            <FormItem className="md:col-span-2">
                               <div className="flex items-center">
                                 <FormLabel>Local alocado</FormLabel>
                                 <TooltipProvider>
