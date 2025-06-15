@@ -43,7 +43,7 @@ export type ExtractNFeDataInput = z.infer<typeof ExtractNFeDataInputSchema>;
 const ExtractNFeDataOutputSchema = z.object({
   supplierCNPJ: z.string().optional().describe("CNPJ do emitente da NF-e (localizado em infNFe.emit.CNPJ). Retorne apenas os números, sem máscara. Se não houver, retorne string vazia."),
   supplierName: z.string().optional().describe("Razão Social ou Nome do emitente da NF-e (localizado em infNFe.emit.xNome). Se não houver, retorne string vazia."),
-  supplierEmail: z.string().optional().describe("E-mail do emitente da NF-e, localizado EXCLUSIVAMENTE em infNFe.emit.email. Se esta tag não existir ou estiver vazia, omita o campo ou retorne undefined."),
+  supplierEmail: z.string().optional().describe("E-mail do EMITENTE da NF-e, localizado EXCLUSIVAMENTE na tag 'infNFe.emit.email'. Se esta tag específica não existir ou estiver vazia, este campo DEVE ser undefined. NÃO utilize e-mails de outras seções (ex: destinatário)."),
   supplierIE: z.string().optional().describe("Inscrição Estadual (IE) do emitente da NF-e, localizada em infNFe.emit.IE. Retorne o valor EXATO encontrado nesta tag. Se a tag infNFe.emit.IE não existir, ou se existir mas estiver vazia, retorne uma string vazia."),
   invoiceNumber: z.string().optional().describe("Número da NF-e (localizado em infNFe.ide.nNF). Se não houver, retorne string vazia."),
   emissionDate: z.string().optional().describe("Data e hora de emissão da NF-e (localizada em infNFe.ide.dhEmi), no formato ISO 8601 (ex: YYYY-MM-DDTHH:MM:SSZ ou YYYY-MM-DDTHH:MM:SS-03:00). Se não houver, retorne string vazia."),
@@ -83,7 +83,7 @@ const nfeExtractorPrompt = ai.definePrompt({
     Instruções para extração:
     1.  **supplierCNPJ**: Encontre o CNPJ do emitente. Geralmente está em \`infNFe > emit > CNPJ\`. Retorne como string, APENAS OS NÚMEROS, sem pontos, barras ou traços.
     2.  **supplierName**: Encontre a Razão Social ou Nome do emitente. Geralmente está em \`infNFe > emit > xNome\`. Retorne como string.
-    3.  **supplierEmail**: Encontre o e-mail do emitente, **EXCLUSIVAMENTE** na tag \`infNFe > emit > email\`. Se esta tag não existir ou estiver vazia, **NÃO** tente encontrar e-mails em outras partes do documento (como no destinatário) e, nesse caso, omita este campo da saída ou retorne \`undefined\` ou uma string vazia.
+    3.  **supplierEmail**: Localize o e-mail do emitente **ESTRITAMENTE E APENAS** na tag \`infNFe > emit > email\`. Se a tag \`infNFe.emit.email\` não existir no XML, OU SE ESTIVER PRESENTE MAS VAZIA, o campo 'supplierEmail' na saída JSON DEVE ser omitido ou ter valor \`undefined\`. É CRUCIAL que você NÃO utilize e-mails de QUALQUER OUTRA PARTE do documento XML (especialmente da seção do destinatário) para preencher este campo 'supplierEmail'. Se não houver e-mail do emitente em \`infNFe.emit.email\`, deixe o campo \`supplierEmail\` vazio/undefined na resposta.
     4.  **supplierIE**: Localize a Inscrição Estadual (IE) do emitente na tag \`infNFe.emit.IE\`. Retorne o valor EXATO contido nesta tag como uma string. Se a tag \`infNFe.emit.IE\` não existir, ou se existir mas estiver vazia, retorne uma string vazia.
     5.  **invoiceNumber**: Encontre o número da NF-e. Geralmente está em \`infNFe > ide > nNF\`. Retorne como string.
     6.  **emissionDate**: Encontre a data e hora de emissão. Geralmente está em \`infNFe > ide > dhEmi\`. Retorne como string no formato ISO 8601 (ex: "2023-10-27T10:00:00-03:00" ou "2023-10-27T10:00:00Z").
