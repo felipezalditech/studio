@@ -127,18 +127,23 @@ const extractNFeDataFlow = ai.defineFlow(
       zipCode: output.supplierAddress.zipCode ? output.supplierAddress.zipCode.replace(/\D/g, '') : undefined,
     } : undefined;
 
+    // Normalização explícita dos produtos
+    const cleanedProducts = (output.products || []).map(p => ({
+      description: p.description || "", 
+      quantity: p.quantity || 0,       
+      unitValue: p.unitValue || 0,    
+      totalValue: p.totalValue || 0,   
+    }));
+
     return {
       ...output,
       supplierCNPJ: output.supplierCNPJ ? output.supplierCNPJ.replace(/\D/g, '') : undefined,
       supplierEmail: output.supplierEmail && output.supplierEmail.trim() !== '' ? output.supplierEmail.trim() : undefined,
       supplierIE: output.supplierIE && output.supplierIE.trim() !== '' ? output.supplierIE.trim() : undefined,
-      products: output.products || [],
+      products: cleanedProducts, 
       shippingValue: output.shippingValue || 0,
       nfeTotalValue: output.nfeTotalValue || 0,
       supplierAddress: cleanedSupplierAddress,
     };
   }
 );
-
-
-    
