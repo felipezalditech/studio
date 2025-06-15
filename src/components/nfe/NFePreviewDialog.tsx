@@ -17,7 +17,7 @@ import { SupplierFormDialog, type SupplierFormValues } from '@/components/suppli
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/components/assets/columns'; // Usar formatação consistente
 import { Badge } from '@/components/ui/badge';
-import { maskCEP } from '@/lib/utils';
+import { maskCEP, maskCNPJ } from '@/lib/utils';
 
 
 interface NFePreviewDialogProps {
@@ -37,7 +37,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
 
   useEffect(() => {
     if (open && nfeData?.supplierCNPJ) {
-      const foundSupplier = getSupplierByDocument(nfeData.supplierCNPJ);
+      const foundSupplier = getSupplierByDocument(nfeData.supplierCNPJ.replace(/\D/g, ''));
       setSupplierOnRecord(foundSupplier || null);
     } else if (open) {
       setSupplierOnRecord(null); // No CNPJ, so not found
@@ -98,7 +98,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
   };
 
   const handleSupplierAdded = (newSupplierId: string) => {
-    const newlyAddedSupplier = getSupplierByDocument(nfeData?.supplierCNPJ || "");
+    const newlyAddedSupplier = getSupplierByDocument(nfeData?.supplierCNPJ?.replace(/\D/g, '') || "");
     setSupplierOnRecord(newlyAddedSupplier || null);
     setIsSupplierFormOpen(false);
     toast({ title: "Fornecedor cadastrado!", description: "Agora você pode prosseguir com a importação dos itens.", icon: <CheckCircle className="h-5 w-5 text-green-500" /> });
@@ -110,7 +110,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     const nfeAddress: NFeSupplierAddress | undefined = nfeData.supplierAddress;
     
     const initialEndereco: Endereco = {
-        cep: nfeAddress?.zipCode ? maskCEP(nfeAddress.zipCode) : '',
+        cep: nfeAddress?.zipCode ? maskCEP(nfeAddress.zipCode.replace(/\D/g, '')) : '',
         estado: nfeAddress?.state || '',
         cidade: nfeAddress?.city || '',
         bairro: nfeAddress?.neighborhood || '',
@@ -123,10 +123,10 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
       type: 'juridica' as 'juridica',
       razaoSocial: nfeData.supplierName || '',
       nomeFantasia: nfeData.supplierName || '', 
-      cnpj: nfeData.supplierCNPJ || '',
+      cnpj: nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : '',
       situacaoIcms: 'nao_contribuinte', // Default, pode precisar de lógica mais complexa
       responsavelNome: '', // Precisa ser preenchido pelo usuário
-      emailFaturamento: '', // Precisa ser preenchido pelo usuário
+      emailFaturamento: nfeData.supplierEmail || '', // Usa o e-mail do emitente extraído
       endereco: initialEndereco,
     };
   }, [nfeData]);
@@ -150,7 +150,8 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-1 text-sm border-b pb-3 mb-3">
             <div><strong>Fornecedor:</strong> {nfeData.supplierName || "Não informado"}</div>
-            <div><strong>CNPJ:</strong> {nfeData.supplierCNPJ || "Não informado"}</div>
+            <div><strong>CNPJ:</strong> {nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : "Não informado"}</div>
+            <div><strong>E-mail:</strong> {nfeData.supplierEmail || "Não informado"}</div>
             <div><strong>Data Emissão:</strong> {nfeData.emissionDate ? new Date(nfeData.emissionDate).toLocaleDateString('pt-BR') : "Não informada"}</div>
             <div><strong>Valor Total NF-e:</strong> {formatCurrency(nfeData.nfeTotalValue || 0)}</div>
             <div><strong>Valor Frete:</strong> {formatCurrency(nfeData.shippingValue || 0)}</div>
@@ -168,7 +169,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
               <Building className="h-4 w-4" />
               <AlertTitle>Fornecedor não cadastrado</AlertTitle>
               <AlertDescription className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                <span>O fornecedor <Badge variant="secondary">{nfeData.supplierName || nfeData.supplierCNPJ}</Badge> não foi encontrado no sistema.</span>
+                <span>O fornecedor <Badge variant="secondary">{nfeData.supplierName || maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, ''))}</Badge> não foi encontrado no sistema.</span>
                 <Button onClick={() => setIsSupplierFormOpen(true)} size="sm" variant="outline" className="shrink-0 border-yellow-500 hover:bg-yellow-50 text-yellow-700 dark:border-yellow-400 dark:hover:bg-yellow-700/20 dark:text-yellow-300">
                   <PlusCircle className="mr-2 h-4 w-4" /> Cadastrar Fornecedor
                 </Button>
@@ -180,7 +181,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
               <CheckCircle className="h-4 w-4" />
               <AlertTitle>Fornecedor Localizado</AlertTitle>
               <AlertDescription>
-                Fornecedor: <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{supplierOnRecord.nomeFantasia || supplierOnRecord.razaoSocial}</Badge> (CNPJ: {supplierOnRecord.cnpj}).
+                Fornecedor: <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{supplierOnRecord.nomeFantasia || supplierOnRecord.razaoSocial}</Badge> (CNPJ: {supplierOnRecord.cnpj ? maskCNPJ(supplierOnRecord.cnpj.replace(/\D/g, '')) : 'N/A'}).
               </AlertDescription>
             </Alert>
           )}
