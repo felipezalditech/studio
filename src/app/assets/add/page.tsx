@@ -33,8 +33,8 @@ import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox
 const MAX_PHOTOS = 10;
 
 const assetFormSchema = z.object({
-  aplicarRegrasDepreciacao: z.boolean({ required_error: "O campo 'Depreciável?' é obrigatório." }),
-  arquivado: z.boolean({ required_error: "O campo 'Arquivar?' é obrigatório." }),
+  aplicarRegrasDepreciacao: z.boolean({ required_error: "O campo 'Depreciável *' é obrigatório." }),
+  arquivado: z.boolean({ required_error: "O campo 'Arquivar *' é obrigatório." }),
   name: z.string().min(1, "Nome do ativo é obrigatório."),
   modelId: z.string().optional(),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
@@ -210,7 +210,7 @@ export default function AddAssetPage() {
                         name="aplicarRegrasDepreciacao"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center mb-1">
+                            <div className="flex items-center min-h-7 mb-1">
                               <FormLabel>Depreciável *</FormLabel>
                               <TooltipProvider>
                                 <Tooltip>
@@ -246,7 +246,7 @@ export default function AddAssetPage() {
                         name="arquivado"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center mb-1">
+                            <div className="flex items-center min-h-7 mb-1">
                               <FormLabel>Arquivar *</FormLabel>
                                 <TooltipProvider>
                                   <Tooltip>
@@ -285,7 +285,9 @@ export default function AddAssetPage() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Nome do ativo *</FormLabel>
+                             <div className="flex items-center min-h-7 mb-1">
+                              <FormLabel>Nome do ativo *</FormLabel>
+                            </div>
                             <FormControl>
                               <Input placeholder="Ex: Notebook Dell XPS 15" {...field} />
                             </FormControl>
@@ -298,7 +300,7 @@ export default function AddAssetPage() {
                         name="modelId"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center">
+                            <div className="flex items-center min-h-7 mb-1">
                               <FormLabel>Modelo</FormLabel>
                               <TooltipProvider>
                                 <Tooltip>
@@ -326,7 +328,9 @@ export default function AddAssetPage() {
                         name="assetTag"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Nº de patrimônio *</FormLabel>
+                             <div className="flex items-center min-h-7 mb-1">
+                              <FormLabel>Nº de patrimônio *</FormLabel>
+                            </div>
                             <FormControl>
                               <Input placeholder="Ex: ZDI-00123" {...field} />
                             </FormControl>
@@ -339,7 +343,9 @@ export default function AddAssetPage() {
                         name="serialNumber"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Nº de série</FormLabel>
+                             <div className="flex items-center min-h-7 mb-1">
+                              <FormLabel>Nº de série</FormLabel>
+                            </div>
                             <FormControl>
                               <Input placeholder="Ex: SN-ABC123XYZ" {...field} value={field.value ?? ''}/>
                             </FormControl>
@@ -352,7 +358,7 @@ export default function AddAssetPage() {
                         name="categoryId"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center">
+                            <div className="flex items-center min-h-7 mb-1">
                               <FormLabel>Categoria *</FormLabel>
                               <TooltipProvider>
                                 <Tooltip>
@@ -394,7 +400,7 @@ export default function AddAssetPage() {
                         name="supplier"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center">
+                            <div className="flex items-center min-h-7 mb-1">
                                 <FormLabel>Fornecedor *</FormLabel>
                                 <TooltipProvider>
                                   <Tooltip>
@@ -422,7 +428,7 @@ export default function AddAssetPage() {
                         name="locationId"
                         render={({ field }) => (
                           <FormItem className="md:col-span-2">
-                            <div className="flex items-center">
+                            <div className="flex items-center min-h-7 mb-1">
                               <FormLabel>Local alocado</FormLabel>
                               <TooltipProvider>
                                 <Tooltip>
