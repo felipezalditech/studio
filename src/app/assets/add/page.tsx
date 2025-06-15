@@ -295,7 +295,7 @@ export default function AddAssetPage() {
             <p className="text-muted-foreground">Preencha os campos abaixo para cadastrar um novo ativo.</p>
           </div>
            <div>
-            <Button onClick={() => nfeFileInputRef.current?.click()} disabled={isProcessingNFe} variant="outline">
+            <Button onClick={() => nfeFileInputRef.current?.click()} disabled={isProcessingNFe} variant="default">
               <FileText className="mr-2 h-4 w-4" />
               {isProcessingNFe ? "Processando NF-e..." : "Importar Dados da NF-e (XML)"}
             </Button>
