@@ -14,7 +14,7 @@ body {
     --card-foreground: 0 0% 20%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 20%;
-    --primary: 231 48% 48%; /* #3F51B5 */
+    --primary: 217 91% 60%; /* #3B82F6 - Alterado de 231 48% 48% */
     --primary-foreground: 0 0% 100%; /* #FFFFFF */
     --secondary: 0 0% 90%;
     --secondary-foreground: 0 0% 20%;
@@ -26,7 +26,7 @@ body {
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 80%;
     --input: 0 0% 80%;
-    --ring: 231 48% 48%; /* Primary color for focus rings */
+    --ring: 217 91% 60%; /* Alterado de 231 48% 48% para corresponder ao novo primary */
     --chart-1: 12 76% 61%; /* Orange-ish for current value in chart */
     --chart-2: 173 58% 39%; /* Green-ish for purchase value in chart */
     --chart-3: 0 84% 60%;   /* Red for depreciated value in chart (matches text-red-500) */
@@ -51,7 +51,7 @@ body {
     --card-foreground: 0 0% 87.8%;
     --popover: 0 0% 15%;
     --popover-foreground: 0 0% 87.8%;
-    --primary: 231 48% 48%; /* #3F51B5 */
+    --primary: 217 91% 60%; /* #3B82F6 - Alterado de 231 48% 48% */
     --primary-foreground: 0 0% 100%; /* #FFFFFF */
     --secondary: 0 0% 20%;
     --secondary-foreground: 0 0% 87.8%;
@@ -63,7 +63,7 @@ body {
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 30%;
     --input: 0 0% 30%;
-    --ring: 231 48% 48%; /* Primary color for focus rings */
+    --ring: 217 91% 60%; /* Alterado de 231 48% 48% para corresponder ao novo primary */
     --chart-1: 12 76% 61%; /* Orange-ish for current value in chart */
     --chart-2: 173 58% 39%; /* Green-ish for purchase value in chart */
     --chart-3: 0 69% 50%;   /* Red for depreciated value in chart (matches text-red-600) */
