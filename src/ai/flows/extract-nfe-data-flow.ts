@@ -98,7 +98,7 @@ const nfeExtractorPrompt = ai.definePrompt({
         *   **neighborhood**: Bairro (\`xBairro\`).
         *   **city**: Nome do município (\`xMun\`).
         *   **state**: Sigla da UF (\`UF\`).
-        *   **zipCode**: CEP (\`CEP\`). Retorne APENAS OS NÚMEROS.
+        *   **zipCode**: CEP (\`CEP\`). Retorne APENAS OS NÚMEROS, sem pontos, barras ou traços.
 
     Se algum campo opcional não for encontrado, omita-o do objeto de saída ou retorne o valor padrão especificado (0 para números, string vazia para strings, array vazio para 'products', objeto vazio para 'supplierAddress' se todo ele for opcional e não encontrado).
     Preste atenção aos tipos de dados esperados no schema de saída (string, number). Converta os valores do XML para esses tipos. Por exemplo, valores numéricos devem ser retornados como números, não strings.
@@ -125,7 +125,7 @@ const extractNFeDataFlow = ai.defineFlow(
 
     return {
       ...output,
-      supplierCNPJ: output.supplierCNPJ ? output.supplierCNPJ.replace(/\D/g, '') : '',
+      supplierCNPJ: output.supplierCNPJ ? output.supplierCNPJ.replace(/\D/g, '') : undefined,
       products: output.products || [],
       shippingValue: output.shippingValue || 0,
       nfeTotalValue: output.nfeTotalValue || 0,

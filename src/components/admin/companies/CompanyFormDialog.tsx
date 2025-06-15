@@ -140,11 +140,16 @@ export function CompanyFormDialog({ open, onOpenChange, onSubmitAction, initialD
       if (initialData) {
         form.reset({
             ...initialData,
-            cnpj: initialData.cnpj || undefined,
-            cpf: initialData.cpf || undefined,
+            cnpj: initialData.cnpj ? maskCNPJ(initialData.cnpj) : undefined,
+            cpf: initialData.cpf ? maskCPF(initialData.cpf) : undefined,
             inscricaoEstadual: initialData.inscricaoEstadual || undefined,
             contactPhone: initialData.contactPhone || undefined,
             nomeFantasia: initialData.nomeFantasia || '',
+            endereco: {
+                ...defaultEndereco,
+                ...(initialData.endereco || {}),
+                cep: initialData.endereco?.cep ? maskCEP(initialData.endereco.cep) : '',
+            }
         });
       } else {
         form.reset({
@@ -536,3 +541,4 @@ export function CompanyFormDialog({ open, onOpenChange, onSubmitAction, initialD
     </Dialog>
   );
 }
+

@@ -144,13 +144,17 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
         type: (initialData as Supplier)?.type || 'juridica',
         razaoSocial: initialData?.razaoSocial || '',
         nomeFantasia: initialData?.nomeFantasia || '',
-        cnpj: (initialData as Supplier)?.cnpj || '',
-        cpf: (initialData as Supplier)?.cpf || '',
+        cnpj: initialData?.cnpj ? maskCNPJ(initialData.cnpj) : '',
+        cpf: initialData?.cpf ? maskCPF(initialData.cpf) : '',
         situacaoIcms: (initialData as Supplier)?.situacaoIcms || 'nao_contribuinte',
         inscricaoEstadual: (initialData as Supplier)?.inscricaoEstadual || '',
         responsavelNome: (initialData as Supplier)?.responsavelNome || '',
         emailFaturamento: (initialData as Supplier)?.emailFaturamento || '',
-        endereco: (initialData as Supplier)?.endereco || defaultEndereco,
+        endereco: {
+          ...defaultEndereco,
+          ...(initialData?.endereco || {}),
+          cep: initialData?.endereco?.cep ? maskCEP(initialData.endereco.cep) : '',
+        }
       });
     }
   }, [initialData, form, open]);
@@ -507,3 +511,4 @@ export function SupplierFormDialog({ open, onOpenChange, initialData, onSupplier
     </Dialog>
   );
 }
+
