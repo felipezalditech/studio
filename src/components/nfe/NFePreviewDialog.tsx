@@ -10,13 +10,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Building, CheckCircle, Info, PlusCircle, ShoppingCart, Tag, Truck, Users } from 'lucide-react';
-import type { ExtractNFeDataOutput, NFeProduct } from '@/ai/flows/extract-nfe-data-flow';
-import type { Supplier } from '@/contexts/SupplierContext';
+import type { ExtractNFeDataOutput, NFeProduct, NFeSupplierAddress } from '@/ai/flows/extract-nfe-data-flow';
+import type { Supplier, Endereco } from '@/contexts/SupplierContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
-import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog';
+import { SupplierFormDialog, type SupplierFormValues } from '@/components/suppliers/SupplierFormDialog';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/components/assets/columns'; // Usar formatação consistente
 import { Badge } from '@/components/ui/badge';
+import { maskCEP } from '@/lib/utils';
+
 
 interface NFePreviewDialogProps {
   open: boolean;
@@ -87,7 +89,6 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     }
     
     if (!supplierOnRecord && !nfeData.supplierCNPJ) {
-        // Este caso é menos provável se o fluxo sempre extrair CNPJ, mas é uma salvaguarda
         toast({ title: "Fornecedor Inválido", description: "Não foi possível identificar o fornecedor da NF-e.", variant: "destructive" });
         return;
     }
@@ -105,14 +106,28 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
 
   const supplierForFormDialog = useMemo(() => {
     if (!nfeData) return null;
+    
+    const nfeAddress: NFeSupplierAddress | undefined = nfeData.supplierAddress;
+    
+    const initialEndereco: Endereco = {
+        cep: nfeAddress?.zipCode ? maskCEP(nfeAddress.zipCode) : '',
+        estado: nfeAddress?.state || '',
+        cidade: nfeAddress?.city || '',
+        bairro: nfeAddress?.neighborhood || '',
+        rua: nfeAddress?.street || '',
+        numero: nfeAddress?.number || '',
+        complemento: nfeAddress?.complement || '',
+    };
+
     return {
-      type: 'juridica' as 'juridica', // Assumindo jurídica pelo CNPJ
+      type: 'juridica' as 'juridica',
       razaoSocial: nfeData.supplierName || '',
-      nomeFantasia: nfeData.supplierName || '', // Pode ser melhorado se xFant existir no XML
+      nomeFantasia: nfeData.supplierName || '', 
       cnpj: nfeData.supplierCNPJ || '',
-      // Inicializar outros campos obrigatórios do SupplierFormDialog se necessário
-      // Ex: emailFaturamento, endereco, responsavelNome podem precisar de valores padrão ou serem opcionais no form.
-      // Por agora, o SupplierFormDialog já tem seus próprios defaults.
+      situacaoIcms: 'nao_contribuinte', // Default, pode precisar de lógica mais complexa
+      responsavelNome: '', // Precisa ser preenchido pelo usuário
+      emailFaturamento: '', // Precisa ser preenchido pelo usuário
+      endereco: initialEndereco,
     };
   }, [nfeData]);
 
@@ -238,7 +253,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
         <SupplierFormDialog
           open={isSupplierFormOpen}
           onOpenChange={setIsSupplierFormOpen}
-          initialData={supplierForFormDialog}
+          initialData={supplierForFormDialog as Partial<SupplierFormValues>}
           onSupplierAdded={handleSupplierAdded}
         />
       )}
