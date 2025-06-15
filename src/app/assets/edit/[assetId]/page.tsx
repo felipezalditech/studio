@@ -270,7 +270,7 @@ export default function EditAssetPage() {
                         name="aplicarRegrasDepreciacao"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center h-8 mb-1">
+                            <div className="flex items-baseline h-8 mb-1">
                               <FormLabel>Depreciável *</FormLabel>
                               <TooltipProvider>
                                 <Tooltip>
@@ -306,7 +306,7 @@ export default function EditAssetPage() {
                         name="arquivado"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center h-8 mb-1">
+                            <div className="flex items-baseline h-8 mb-1">
                               <FormLabel>Arquivar *</FormLabel>
                                 <TooltipProvider>
                                   <Tooltip>
@@ -344,7 +344,7 @@ export default function EditAssetPage() {
                           name="name"
                           render={({ field }) => (
                             <FormItem>
-                              <div className="flex items-center h-8 mb-1">
+                              <div className="flex items-baseline h-8 mb-1">
                                 <FormLabel>Nome do ativo *</FormLabel>
                               </div>
                               <FormControl>
@@ -359,7 +359,7 @@ export default function EditAssetPage() {
                           name="modelId"
                           render={({ field }) => (
                             <FormItem>
-                              <div className="flex items-center h-8 mb-1">
+                              <div className="flex items-baseline h-8 mb-1">
                                 <FormLabel>Modelo</FormLabel>
                                 <TooltipProvider>
                                   <Tooltip>
@@ -387,7 +387,7 @@ export default function EditAssetPage() {
                           name="assetTag"
                           render={({ field }) => (
                             <FormItem>
-                              <div className="flex items-center h-8 mb-1">
+                              <div className="flex items-baseline h-8 mb-1">
                                 <FormLabel>Nº de patrimônio *</FormLabel>
                               </div>
                               <FormControl>
@@ -402,7 +402,7 @@ export default function EditAssetPage() {
                           name="serialNumber"
                           render={({ field }) => (
                             <FormItem>
-                              <div className="flex items-center h-8 mb-1">
+                              <div className="flex items-baseline h-8 mb-1">
                                 <FormLabel>Nº de série</FormLabel>
                               </div>
                               <FormControl>
@@ -417,7 +417,7 @@ export default function EditAssetPage() {
                           name="categoryId"
                           render={({ field }) => (
                             <FormItem>
-                              <div className="flex items-center h-8 mb-1">
+                              <div className="flex items-baseline h-8 mb-1">
                                 <FormLabel>Categoria *</FormLabel>
                                 <TooltipProvider>
                                   <Tooltip>
@@ -460,7 +460,7 @@ export default function EditAssetPage() {
                           name="supplier"
                           render={({ field }) => (
                             <FormItem>
-                              <div className="flex items-center h-8 mb-1">
+                              <div className="flex items-baseline h-8 mb-1">
                                   <FormLabel>Fornecedor *</FormLabel>
                                   <TooltipProvider>
                                     <Tooltip>
@@ -488,7 +488,7 @@ export default function EditAssetPage() {
                           name="locationId"
                           render={({ field }) => (
                             <FormItem className="md:col-span-2">
-                              <div className="flex items-center h-8 mb-1">
+                              <div className="flex items-baseline h-8 mb-1">
                                 <FormLabel>Local alocado</FormLabel>
                                 <TooltipProvider>
                                   <Tooltip>
@@ -521,7 +521,7 @@ export default function EditAssetPage() {
                         name="purchaseDate"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center h-8 mb-1">
+                            <div className="flex items-baseline h-8 mb-1">
                               <FormLabel>Data da compra *</FormLabel>
                             </div>
                             <Popover>
@@ -565,7 +565,7 @@ export default function EditAssetPage() {
                         name="invoiceNumber"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center h-8 mb-1">
+                            <div className="flex items-baseline h-8 mb-1">
                               <FormLabel>Nº da nota fiscal *</FormLabel>
                             </div>
                             <FormControl>
@@ -581,7 +581,7 @@ export default function EditAssetPage() {
                         name="purchaseValue"
                         render={({ field }) => (
                           <FormItem>
-                             <div className="flex items-center h-8 mb-1">
+                             <div className="flex items-baseline h-8 mb-1">
                               <FormLabel>Valor de compra (R$) *</FormLabel>
                             </div>
                             <FormControl>
@@ -596,7 +596,7 @@ export default function EditAssetPage() {
                         name="previouslyDepreciatedValue"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center h-8 mb-1">
+                            <div className="flex items-baseline h-8 mb-1">
                               <FormLabel>Valor depreciado R$</FormLabel>
                               <TooltipProvider>
                                 <Tooltip>
@@ -628,7 +628,7 @@ export default function EditAssetPage() {
                             name="additionalInfo"
                             render={({ field }) => (
                               <FormItem>
-                                 <div className="flex items-center h-8 mb-1">
+                                 <div className="flex items-baseline h-8 mb-1">
                                   <FormLabel>Informações adicionais</FormLabel>
                                 </div>
                                 <FormControl>
@@ -649,7 +649,7 @@ export default function EditAssetPage() {
                             name="imageDateUris"
                             render={({ field }) => (
                               <FormItem>
-                                <div className="flex items-center h-8 mb-1">
+                                <div className="flex items-baseline h-8 mb-1">
                                   <FormLabel className="flex items-center">
                                     <UploadCloud className="mr-2 h-5 w-5" />
                                     Fotos do ativo (Máx. {MAX_PHOTOS})
