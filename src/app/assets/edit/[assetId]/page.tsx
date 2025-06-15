@@ -14,11 +14,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as CardDesc } from '@/components/ui/card';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
-import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -66,7 +67,6 @@ export default function EditAssetPage() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [assetNotFound, setAssetNotFound] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
@@ -216,14 +216,6 @@ export default function EditAssetPage() {
     fieldOnChange(currentUris);
   };
 
-  const handleNextStep = async () => {
-    setCurrentStep(2);
-  };
-
-  const handlePrevStep = () => {
-    setCurrentStep(1);
-  };
-
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen"><p>Carregando dados do ativo...</p></div>;
   }
@@ -252,58 +244,57 @@ export default function EditAssetPage() {
           <CardHeader>
             <CardTitle>Detalhes do ativo</CardTitle>
             <CardDesc>
-              {currentStep === 1
-                ? "Etapa 1 de 2: Configurações gerais do ativo."
-                : "Etapa 2 de 2: Informações detalhadas do ativo."}
+              Preencha as informações nas abas abaixo.
             </CardDesc>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                 {currentStep === 1 && (
-                   <div className="space-y-6">
-                    <FormField
+                <Tabs defaultValue="general" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-6">
+                    <TabsTrigger value="general">Dados Gerais</TabsTrigger>
+                    <TabsTrigger value="purchase">Compra e Valores</TabsTrigger>
+                    <TabsTrigger value="others">Outros e Fotos</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="general" className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <FormField
                         control={form.control}
                         name="aplicarRegrasDepreciacao"
                         render={({ field }) => (
-                        <FormItem>
+                          <FormItem>
                             <div className="flex items-center">
-                            <FormLabel>Depreciável?</FormLabel>
-                            <TooltipProvider>
+                              <FormLabel>Depreciável?</FormLabel>
+                              <TooltipProvider>
                                 <Tooltip>
-                                <TooltipTrigger asChild>
+                                  <TooltipTrigger asChild>
                                     <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
                                     <p>Selecione "Não" se o ativo não deve ser depreciado (ex: já totalmente depreciado, controle apenas patrimonial).</p>
-                                </TooltipContent>
+                                  </TooltipContent>
                                 </Tooltip>
-                            </TooltipProvider>
+                              </TooltipProvider>
                             </div>
                             <Select
-                            onValueChange={(value) => field.onChange(value === 'true')}
-                            value={field.value ? 'true' : 'false'}
+                              onValueChange={(value) => field.onChange(value === 'true')}
+                              value={field.value ? 'true' : 'false'}
                             >
-                            <FormControl>
+                              <FormControl>
                                 <SelectTrigger>
-                                <SelectValue placeholder="Selecione Sim ou Não" />
+                                  <SelectValue placeholder="Selecione Sim ou Não" />
                                 </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
+                              </FormControl>
+                              <SelectContent>
                                 <SelectItem value="true">Sim</SelectItem>
                                 <SelectItem value="false">Não</SelectItem>
-                            </SelectContent>
+                              </SelectContent>
                             </Select>
                             <FormMessage />
-                        </FormItem>
+                          </FormItem>
                         )}
-                    />
-                   </div>
-                 )}
-
-                {currentStep === 2 && (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      />
                       <FormField
                           control={form.control}
                           name="name"
@@ -453,233 +444,222 @@ export default function EditAssetPage() {
                             </FormItem>
                           )}
                         />
-                        <FormField
-                          control={form.control}
-                          name="purchaseDate"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center">
-                                <FormLabel>Data da compra *</FormLabel>
-                              </div>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant={"outline"}
-                                      className={cn(
-                                        "w-full pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                      )}
-                                    >
-                                      {field.value ? (
-                                        format(field.value, "PPP", { locale: ptBR })
-                                      ) : (
-                                        <span>Escolha uma data</span>
-                                      )}
-                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                      date > new Date() || date < new Date("1900-01-01")
-                                    }
-                                    initialFocus
-                                    locale={ptBR}
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="invoiceNumber"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center">
-                                <FormLabel>Nº da nota fiscal *</FormLabel>
-                              </div>
-                              <FormControl>
-                                <Input placeholder="Ex: NF-000123456" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="serialNumber"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center">
-                                <FormLabel>Nº de série</FormLabel>
-                              </div>
-                              <FormControl>
-                                <Input placeholder="Ex: SN-ABC123XYZ" {...field} value={field.value ?? ''}/>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="purchaseValue"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center">
-                                <FormLabel>Valor de compra (R$) *</FormLabel>
-                              </div>
-                              <FormControl>
-                                <Input type="number" step="0.01" placeholder="Ex: 2500.00" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="previouslyDepreciatedValue"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center">
-                                <FormLabel>Valor depreciado R$</FormLabel>
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Informe se o ativo foi adquirido usado e já possuía depreciação acumulada. Este valor será subtraído do valor de compra para definir o valor atual inicial.</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </div>
-                              <FormControl>
-                                <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} value={field.value ?? ''}/>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="additionalInfo"
-                          render={({ field }) => (
-                            <FormItem className="lg:col-span-2 md:col-span-2">
-                              <div className="flex items-center">
-                                  <FormLabel>Informações adicionais</FormLabel>
-                                </div>
-                              <FormControl>
-                                <Textarea
-                                  placeholder="Detalhes extras sobre o ativo, condições, observações, etc."
-                                  className="resize-y h-10 min-h-[40px]"
-                                  {...field}
-                                  value={field.value ?? ''}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                    </div>
+                  </TabsContent>
 
-                      <div className="space-y-2 pt-4">
-                        <FormField
-                          control={form.control}
-                          name="imageDateUris"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center">
-                                <FormLabel className="flex items-center">
-                                  <UploadCloud className="mr-2 h-5 w-5" />
-                                  Fotos do ativo (Máx. {MAX_PHOTOS})
-                                </FormLabel>
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até {MAX_PHOTOS} fotos.</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </div>
-                              <FormControl>
-                                <Input
-                                  type="file"
-                                  accept="image/*"
-                                  multiple
-                                  ref={fileInputRef}
-                                  onChange={(e) => handleImageChange(e, field.onChange as any)}
-                                  className="cursor-pointer"
-                                  disabled={(form.getValues('imageDateUris')?.length || 0) >= MAX_PHOTOS}
-                                />
-                              </FormControl>
-                              <FormDescription>
-                                Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/{MAX_PHOTOS}.
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        {imagePreviews.length > 0 && (
-                          <div className="mt-4 space-y-2">
-                            <p className="text-sm font-medium text-muted-foreground">Pré-visualização ({imagePreviews.length}/{MAX_PHOTOS}):</p>
-                            <div className="flex flex-wrap gap-4 p-2 border rounded-md">
-                              {imagePreviews.map((previewUrl, index) => (
-                                <div key={index} className="relative w-32 h-32 border rounded-md overflow-hidden group">
-                                  <Image src={previewUrl} alt={`Pré-visualização ${index + 1}`} layout="fill" objectFit="contain" data-ai-hint="asset photo preview"/>
-                                  <Button
-                                    type="button"
-                                    variant="destructive"
-                                    size="icon"
-                                    onClick={() => handleRemoveImage(index, form.setValue.bind(form, 'imageDateUris') as any)}
-                                    className="absolute top-1 right-1 h-6 w-6 opacity-70 group-hover:opacity-100"
-                                    title="Remover imagem"
-                                  >
-                                    <XCircle className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ))}
+                  <TabsContent value="purchase" className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="purchaseDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center">
+                              <FormLabel>Data da compra *</FormLabel>
                             </div>
-                          </div>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-full pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP", { locale: ptBR })
+                                    ) : (
+                                      <span>Escolha uma data</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  disabled={(date) =>
+                                    date > new Date() || date < new Date("1900-01-01")
+                                  }
+                                  initialFocus
+                                  locale={ptBR}
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                      </div>
-                  </>
-                )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="invoiceNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center">
+                              <FormLabel>Nº da nota fiscal *</FormLabel>
+                            </div>
+                            <FormControl>
+                              <Input placeholder="Ex: NF-000123456" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="serialNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center">
+                              <FormLabel>Nº de série</FormLabel>
+                            </div>
+                            <FormControl>
+                              <Input placeholder="Ex: SN-ABC123XYZ" {...field} value={field.value ?? ''}/>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="purchaseValue"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center">
+                              <FormLabel>Valor de compra (R$) *</FormLabel>
+                            </div>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="Ex: 2500.00" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="previouslyDepreciatedValue"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center">
+                              <FormLabel>Valor depreciado R$</FormLabel>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Informe se o ativo foi adquirido usado e já possuía depreciação acumulada. Este valor será subtraído do valor de compra para definir o valor atual inicial.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} value={field.value ?? ''}/>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </TabsContent>
 
+                  <TabsContent value="others" className="space-y-6">
+                     <FormField
+                        control={form.control}
+                        name="additionalInfo"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center">
+                                <FormLabel>Informações adicionais</FormLabel>
+                              </div>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Detalhes extras sobre o ativo, condições, observações, etc."
+                                className="resize-y h-10 min-h-[40px]"
+                                {...field}
+                                value={field.value ?? ''}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    <div className="space-y-2">
+                      <FormField
+                        control={form.control}
+                        name="imageDateUris"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center">
+                              <FormLabel className="flex items-center">
+                                <UploadCloud className="mr-2 h-5 w-5" />
+                                Fotos do ativo (Máx. {MAX_PHOTOS})
+                              </FormLabel>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até {MAX_PHOTOS} fotos.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                            <FormControl>
+                              <Input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                ref={fileInputRef}
+                                onChange={(e) => handleImageChange(e, field.onChange as any)}
+                                className="cursor-pointer"
+                                disabled={(form.getValues('imageDateUris')?.length || 0) >= MAX_PHOTOS}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/{MAX_PHOTOS}.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {imagePreviews.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <p className="text-sm font-medium text-muted-foreground">Pré-visualização ({imagePreviews.length}/{MAX_PHOTOS}):</p>
+                          <div className="flex flex-wrap gap-4 p-2 border rounded-md">
+                            {imagePreviews.map((previewUrl, index) => (
+                              <div key={index} className="relative w-32 h-32 border rounded-md overflow-hidden group">
+                                <Image src={previewUrl} alt={`Pré-visualização ${index + 1}`} layout="fill" objectFit="contain" data-ai-hint="asset photo preview"/>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  onClick={() => handleRemoveImage(index, form.setValue.bind(form, 'imageDateUris') as any)}
+                                  className="absolute top-1 right-1 h-6 w-6 opacity-70 group-hover:opacity-100"
+                                  title="Remover imagem"
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
                 <div className="flex justify-end space-x-2 pt-6">
-                  {currentStep === 1 && (
-                    <>
-                      <Button type="button" variant="outline" onClick={() => router.back()}>
-                        Cancelar
-                      </Button>
-                      <Button type="button" onClick={handleNextStep}>
-                        Próximo <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                  {currentStep === 2 && (
-                    <>
-                      <Button type="button" variant="outline" onClick={handlePrevStep}>
-                         <ArrowLeft className="mr-2 h-4 w-4" /> Anterior
-                      </Button>
-                      <Button type="button" variant="outline" onClick={() => router.back()}>
-                        Cancelar
-                      </Button>
-                      <Button type="submit" disabled={form.formState.isSubmitting}>
-                        <Save className="mr-2 h-4 w-4" />
-                        {form.formState.isSubmitting ? "Salvando..." : "Salvar alterações"}
-                      </Button>
-                    </>
-                  )}
+                  <Button type="button" variant="outline" onClick={() => router.back()}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    <Save className="mr-2 h-4 w-4" />
+                    {form.formState.isSubmitting ? "Salvando..." : "Salvar alterações"}
+                  </Button>
                 </div>
               </form>
             </Form>
@@ -689,3 +669,5 @@ export default function EditAssetPage() {
     </>
   );
 }
+
+    

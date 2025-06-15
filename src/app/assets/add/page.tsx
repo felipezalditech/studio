@@ -14,11 +14,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as CardDesc } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -60,7 +61,6 @@ export default function AddAssetPage() {
   const router = useRouter();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [currentStep, setCurrentStep] = useState(1);
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
@@ -173,16 +173,6 @@ export default function AddAssetPage() {
     fieldOnChange(currentUris);
   };
 
-  const handleNextStep = async () => {
-    // Validação da Etapa 1 - 'aplicarRegrasDepreciacao' é um select, sempre terá valor
-    // Poderia adicionar form.trigger aqui se houvessem mais campos na Etapa 1
-    setCurrentStep(2);
-  };
-
-  const handlePrevStep = () => {
-    setCurrentStep(1);
-  };
-
   return (
     <>
       <div className="space-y-6">
@@ -196,59 +186,58 @@ export default function AddAssetPage() {
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Detalhes do ativo</CardTitle>
-             <CardDesc>
-              {currentStep === 1
-                ? "Etapa 1 de 2: Configurações gerais do ativo."
-                : "Etapa 2 de 2: Informações detalhadas do ativo."}
+            <CardDesc>
+              Preencha as informações nas abas abaixo.
             </CardDesc>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                {currentStep === 1 && (
-                  <div className="space-y-6"> {/* Envolve o FormField para espaçamento, se necessário */}
-                    <FormField
-                      control={form.control}
-                      name="aplicarRegrasDepreciacao"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex items-center">
-                            <FormLabel>Depreciável?</FormLabel>
-                             <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Selecione "Não" se o ativo não deve ser depreciado (ex: já totalmente depreciado, controle apenas patrimonial).</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </div>
-                          <Select
-                            onValueChange={(value) => field.onChange(value === 'true')}
-                            value={field.value ? 'true' : 'false'}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione Sim ou Não" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="true">Sim</SelectItem>
-                              <SelectItem value="false">Não</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
+                <Tabs defaultValue="general" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-6">
+                    <TabsTrigger value="general">Dados Gerais</TabsTrigger>
+                    <TabsTrigger value="purchase">Compra e Valores</TabsTrigger>
+                    <TabsTrigger value="others">Outros e Fotos</TabsTrigger>
+                  </TabsList>
 
-                {currentStep === 2 && (
-                  <>
+                  <TabsContent value="general" className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="aplicarRegrasDepreciacao"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center">
+                              <FormLabel>Depreciável?</FormLabel>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Selecione "Não" se o ativo não deve ser depreciado (ex: já totalmente depreciado, controle apenas patrimonial).</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                            <Select
+                              onValueChange={(value) => field.onChange(value === 'true')}
+                              value={field.value ? 'true' : 'false'}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione Sim ou Não" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="true">Sim</SelectItem>
+                                <SelectItem value="false">Não</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       <FormField
                         control={form.control}
                         name="name"
@@ -397,6 +386,11 @@ export default function AddAssetPage() {
                           </FormItem>
                         )}
                       />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="purchase" className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       <FormField
                         control={form.control}
                         name="purchaseDate"
@@ -511,11 +505,15 @@ export default function AddAssetPage() {
                           </FormItem>
                         )}
                       />
-                      <FormField
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="others" className="space-y-6">
+                    <FormField
                         control={form.control}
                         name="additionalInfo"
                         render={({ field }) => (
-                          <FormItem className="lg:col-span-2 md:col-span-2">
+                          <FormItem>
                             <div className="flex items-center">
                               <FormLabel>Informações adicionais</FormLabel>
                             </div>
@@ -531,9 +529,7 @@ export default function AddAssetPage() {
                           </FormItem>
                         )}
                       />
-                    </div>
-
-                    <div className="space-y-2 pt-4">
+                    <div className="space-y-2">
                       <FormField
                         control={form.control}
                         name="imageDateUris"
@@ -596,34 +592,17 @@ export default function AddAssetPage() {
                         </div>
                       )}
                     </div>
-                  </>
-                )}
+                  </TabsContent>
+                </Tabs>
 
                 <div className="flex justify-end space-x-2 pt-6">
-                  {currentStep === 1 && (
-                    <>
-                      <Button type="button" variant="outline" onClick={() => router.back()}>
-                        Cancelar
-                      </Button>
-                      <Button type="button" onClick={handleNextStep}>
-                        Próximo <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                  {currentStep === 2 && (
-                    <>
-                      <Button type="button" variant="outline" onClick={handlePrevStep}>
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Anterior
-                      </Button>
-                      <Button type="button" variant="outline" onClick={() => router.back()}>
-                        Cancelar
-                      </Button>
-                      <Button type="submit" disabled={form.formState.isSubmitting}>
-                        <Save className="mr-2 h-4 w-4" />
-                        {form.formState.isSubmitting ? "Salvando..." : "Salvar ativo"}
-                      </Button>
-                    </>
-                  )}
+                  <Button type="button" variant="outline" onClick={() => router.back()}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    <Save className="mr-2 h-4 w-4" />
+                    {form.formState.isSubmitting ? "Salvando..." : "Salvar ativo"}
+                  </Button>
                 </div>
               </form>
             </Form>
@@ -633,3 +612,5 @@ export default function AddAssetPage() {
     </>
   );
 }
+
+    
