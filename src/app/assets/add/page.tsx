@@ -202,9 +202,9 @@ export default function AddAssetPage() {
             } else {
               toast({
                 title: "Fornecedor não encontrado",
-                description: `O fornecedor ${extractedData.supplierName || ''} (CNPJ: ${extractedData.supplierCNPJ}) não foi encontrado. Cadastre-o manualmente.`,
+                description: `O fornecedor ${extractedData.supplierName || ''} (CNPJ: ${extractedData.supplierCNPJ}) não foi encontrado. Cadastre-o manualmente ou verifique o CNPJ.`,
                 variant: "default",
-                duration: 7000,
+                duration: 8000,
               });
               form.setValue('supplier', ''); 
             }
@@ -214,15 +214,33 @@ export default function AddAssetPage() {
 
           if (extractedData.products && extractedData.products.length > 0) {
             const firstProduct = extractedData.products[0];
-            if (firstProduct && typeof firstProduct === 'object') {
+            // Adicionada verificação para garantir que firstProduct é um objeto antes de acessar suas propriedades
+            if (firstProduct && typeof firstProduct === 'object') { 
               if (firstProduct.description) {
                 form.setValue('name', firstProduct.description);
               }
-              if (firstProduct.totalValue !== undefined) {
+              if (firstProduct.totalValue !== undefined) { // totalValue pode ser 0
                 form.setValue('purchaseValue', firstProduct.totalValue);
               }
             }
+            if (extractedData.products.length > 1) {
+              toast({
+                title: "Múltiplos produtos na NF-e",
+                description: `Esta NF-e contém ${extractedData.products.length} produtos. Os dados do primeiro produto ("${firstProduct?.description || 'Produto 1'}") foram usados para preencher o formulário. Os demais podem ser cadastrados manualmente.`,
+                variant: "default",
+                duration: 10000, // Aumentado para dar tempo de ler
+              });
+            }
+          } else if (extractedData.nfeTotalValue) { // Se não há produtos detalhados, mas há valor total
+            form.setValue('purchaseValue', extractedData.nfeTotalValue);
+            toast({
+                title: "Valor da NF-e utilizado",
+                description: "Nenhum produto detalhado foi extraído. O valor total da NF-e foi usado como valor de compra do ativo.",
+                variant: "default",
+                duration: 8000,
+            });
           }
+
 
           if (extractedData.invoiceNumber) form.setValue('invoiceNumber', extractedData.invoiceNumber);
           
@@ -246,23 +264,19 @@ export default function AddAssetPage() {
               duration: 9000,
             });
           }
-          if ((!extractedData.products || extractedData.products.length === 0) && extractedData.nfeTotalValue) {
-             form.setValue('purchaseValue', extractedData.nfeTotalValue);
-             toast({
-                title: "Valor da NF-e",
-                description: "Nenhum produto detalhado foi extraído, o valor total da NF-e foi usado como valor de compra.",
-                variant: "default",
-             });
-          }
-
 
         } catch (error) {
           console.error("Erro ao processar NF-e:", error);
-          setNfeImportError("Não foi possível processar o XML da NF-e. Verifique o arquivo ou tente novamente.");
+          let errorMessage = "Não foi possível processar o XML da NF-e. Verifique o arquivo ou tente novamente.";
+          if (error instanceof Error) {
+            errorMessage = `Erro na importação: ${error.message}. Verifique o console para detalhes.`;
+          }
+          setNfeImportError(errorMessage);
           toast({
             title: "Erro na Importação da NF-e",
-            description: "Não foi possível extrair os dados do XML. Verifique o console para mais detalhes.",
+            description: errorMessage.substring(0,150), // Limita tamanho da descrição no toast
             variant: "destructive",
+            duration: 10000,
           });
         } finally {
           setIsProcessingNFe(false);
