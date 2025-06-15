@@ -36,6 +36,7 @@ const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
   modelId: z.string().optional(),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
+  serialNumber: z.string().optional(),
   categoryId: z.string().min(1, "Categoria é obrigatória."),
   supplier: z.string().min(1, "Fornecedor é obrigatório."),
   locationId: z.string().optional(),
@@ -44,7 +45,6 @@ const assetFormSchema = z.object({
     invalid_type_error: "Formato de data inválido.",
   }),
   invoiceNumber: z.string().min(1, "Número da nota fiscal é obrigatório."),
-  serialNumber: z.string().optional(),
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
   previouslyDepreciatedValue: z.coerce.number().min(0, "Valor já depreciado não pode ser negativo.").optional(),
   additionalInfo: z.string().optional(),
@@ -75,12 +75,12 @@ export default function EditAssetPage() {
       name: '',
       modelId: undefined,
       assetTag: '',
+      serialNumber: '',
       categoryId: '',
       supplier: '',
       locationId: undefined,
       purchaseDate: undefined,
       invoiceNumber: '',
-      serialNumber: '',
       purchaseValue: 0,
       previouslyDepreciatedValue: undefined,
       additionalInfo: '',
@@ -102,6 +102,7 @@ export default function EditAssetPage() {
           ...assetToEdit,
           aplicarRegrasDepreciacao: assetToEdit.aplicarRegrasDepreciacao !== undefined ? assetToEdit.aplicarRegrasDepreciacao : true,
           modelId: assetToEdit.modelId || undefined,
+          serialNumber: assetToEdit.serialNumber || undefined,
           purchaseDate: assetToEdit.purchaseDate ? parseISO(assetToEdit.purchaseDate) : undefined,
           previouslyDepreciatedValue: assetToEdit.previouslyDepreciatedValue || undefined,
           locationId: assetToEdit.locationId || undefined,
@@ -143,6 +144,7 @@ export default function EditAssetPage() {
       previouslyDepreciatedValue: data.previouslyDepreciatedValue,
       locationId: data.locationId || undefined,
       additionalInfo: data.additionalInfo || undefined,
+      serialNumber: data.serialNumber || undefined,
     };
     updateAsset(assetDataToUpdate);
     toast({
@@ -354,6 +356,21 @@ export default function EditAssetPage() {
                         />
                         <FormField
                           control={form.control}
+                          name="serialNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center">
+                                <FormLabel>Nº de série</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Input placeholder="Ex: SN-ABC123XYZ" {...field} value={field.value ?? ''}/>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
                           name="categoryId"
                           render={({ field }) => (
                             <FormItem>
@@ -509,21 +526,7 @@ export default function EditAssetPage() {
                           </FormItem>
                         )}
                       />
-                      <FormField
-                        control={form.control}
-                        name="serialNumber"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center">
-                              <FormLabel>Nº de série</FormLabel>
-                            </div>
-                            <FormControl>
-                              <Input placeholder="Ex: SN-ABC123XYZ" {...field} value={field.value ?? ''}/>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      
                       <FormField
                         control={form.control}
                         name="purchaseValue"

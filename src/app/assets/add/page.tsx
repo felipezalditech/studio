@@ -37,6 +37,7 @@ const assetFormSchema = z.object({
   name: z.string().min(1, "Nome do ativo é obrigatório."),
   modelId: z.string().optional(),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
+  serialNumber: z.string().optional(),
   categoryId: z.string().min(1, "Categoria é obrigatória."),
   supplier: z.string().min(1, "Fornecedor é obrigatório."),
   locationId: z.string().optional(),
@@ -45,7 +46,6 @@ const assetFormSchema = z.object({
     invalid_type_error: "Formato de data inválido.",
   }),
   invoiceNumber: z.string().min(1, "Número da nota fiscal é obrigatório."),
-  serialNumber: z.string().optional(),
   purchaseValue: z.coerce.number().min(0.01, "Valor de compra deve ser maior que zero."),
   previouslyDepreciatedValue: z.coerce.number().min(0, "Valor já depreciado não pode ser negativo.").optional(),
   additionalInfo: z.string().optional(),
@@ -69,12 +69,12 @@ export default function AddAssetPage() {
       name: '',
       modelId: undefined,
       assetTag: '',
+      serialNumber: '',
       categoryId: '',
       supplier: '',
       locationId: undefined,
       purchaseDate: undefined,
       invoiceNumber: '',
-      serialNumber: '',
       purchaseValue: 0,
       previouslyDepreciatedValue: undefined,
       additionalInfo: '',
@@ -100,6 +100,7 @@ export default function AddAssetPage() {
       previouslyDepreciatedValue: data.previouslyDepreciatedValue,
       locationId: data.locationId || undefined,
       additionalInfo: data.additionalInfo || undefined,
+      serialNumber: data.serialNumber || undefined,
     };
     addAsset(assetDataToSave as Omit<Asset, 'id'>);
     toast({
@@ -295,6 +296,21 @@ export default function AddAssetPage() {
                           </FormItem>
                         )}
                       />
+                       <FormField
+                        control={form.control}
+                        name="serialNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center">
+                              <FormLabel>Nº de série</FormLabel>
+                            </div>
+                            <FormControl>
+                              <Input placeholder="Ex: SN-ABC123XYZ" {...field} value={field.value ?? ''}/>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       <FormField
                         control={form.control}
                         name="categoryId"
@@ -451,21 +467,7 @@ export default function AddAssetPage() {
                           </FormItem>
                         )}
                       />
-                      <FormField
-                        control={form.control}
-                        name="serialNumber"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center">
-                              <FormLabel>Nº de série</FormLabel>
-                            </div>
-                            <FormControl>
-                              <Input placeholder="Ex: SN-ABC123XYZ" {...field} value={field.value ?? ''}/>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                     
                       <FormField
                         control={form.control}
                         name="purchaseValue"
