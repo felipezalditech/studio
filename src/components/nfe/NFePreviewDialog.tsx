@@ -124,9 +124,10 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
       razaoSocial: nfeData.supplierName || '',
       nomeFantasia: nfeData.supplierName || '', 
       cnpj: nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : '',
-      situacaoIcms: 'nao_contribuinte', // Default, pode precisar de lógica mais complexa
-      responsavelNome: '', // Precisa ser preenchido pelo usuário
-      emailFaturamento: nfeData.supplierEmail || '', // Usa o e-mail do emitente extraído
+      inscricaoEstadual: nfeData.supplierIE || '', // Adicionado para usar a IE do emitente
+      situacaoIcms: nfeData.supplierIE ? 'contribuinte' : 'nao_contribuinte', // Lógica simples, pode precisar de ajuste
+      responsavelNome: '', 
+      emailFaturamento: nfeData.supplierEmail || '',
       endereco: initialEndereco,
     };
   }, [nfeData]);
@@ -151,6 +152,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-1 text-sm border-b pb-3 mb-3">
             <div><strong>Fornecedor:</strong> {nfeData.supplierName || "Não informado"}</div>
             <div><strong>CNPJ:</strong> {nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : "Não informado"}</div>
+            <div><strong>IE:</strong> {nfeData.supplierIE || "Não informada"}</div>
             <div><strong>E-mail:</strong> {nfeData.supplierEmail || "Não informado"}</div>
             <div><strong>Data Emissão:</strong> {nfeData.emissionDate ? new Date(nfeData.emissionDate).toLocaleDateString('pt-BR') : "Não informada"}</div>
             <div><strong>Valor Total NF-e:</strong> {formatCurrency(nfeData.nfeTotalValue || 0)}</div>

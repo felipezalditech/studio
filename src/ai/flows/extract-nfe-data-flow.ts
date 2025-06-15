@@ -44,6 +44,7 @@ const ExtractNFeDataOutputSchema = z.object({
   supplierCNPJ: z.string().optional().describe("CNPJ do emitente da NF-e (localizado em infNFe.emit.CNPJ). Retorne apenas os números, sem máscara. Se não houver, retorne string vazia."),
   supplierName: z.string().optional().describe("Razão Social ou Nome do emitente da NF-e (localizado em infNFe.emit.xNome). Se não houver, retorne string vazia."),
   supplierEmail: z.string().optional().describe("E-mail do emitente da NF-e (localizado em infNFe.emit.email). Se não houver, omita o campo ou retorne undefined."),
+  supplierIE: z.string().optional().describe("Inscrição Estadual do emitente da NF-e (localizada em infNFe.emit.IE). Se não houver ou for 'ISENTO', retorne o valor ou string vazia."),
   invoiceNumber: z.string().optional().describe("Número da NF-e (localizado em infNFe.ide.nNF). Se não houver, retorne string vazia."),
   emissionDate: z.string().optional().describe("Data e hora de emissão da NF-e (localizada em infNFe.ide.dhEmi), no formato ISO 8601 (ex: YYYY-MM-DDTHH:MM:SSZ ou YYYY-MM-DDTHH:MM:SS-03:00). Se não houver, retorne string vazia."),
   nfeTotalValue: z.number().optional().describe("Valor Total da NF-e (localizado em infNFe.total.ICMSTot.vNF). Se não houver, retorne 0."),
@@ -83,17 +84,18 @@ const nfeExtractorPrompt = ai.definePrompt({
     1.  **supplierCNPJ**: Encontre o CNPJ do emitente. Geralmente está em \`infNFe > emit > CNPJ\`. Retorne como string, APENAS OS NÚMEROS, sem pontos, barras ou traços.
     2.  **supplierName**: Encontre a Razão Social ou Nome do emitente. Geralmente está em \`infNFe > emit > xNome\`. Retorne como string.
     3.  **supplierEmail**: Encontre o e-mail do emitente. Geralmente está em \`infNFe > emit > email\`. Se não existir, omita este campo ou retorne undefined.
-    4.  **invoiceNumber**: Encontre o número da NF-e. Geralmente está em \`infNFe > ide > nNF\`. Retorne como string.
-    5.  **emissionDate**: Encontre a data e hora de emissão. Geralmente está em \`infNFe > ide > dhEmi\`. Retorne como string no formato ISO 8601 (ex: "2023-10-27T10:00:00-03:00" ou "2023-10-27T10:00:00Z").
-    6.  **nfeTotalValue**: Encontre o valor total da NF-e. Geralmente está em \`infNFe > total > ICMSTot > vNF\`. Retorne como número.
-    7.  **shippingValue**: Encontre o valor total do frete. Geralmente está em \`infNFe > total > ICMSTot > vFrete\`. Se não existir ou for zero, retorne 0. Retorne como número.
-    8.  **products**: Para cada item (tag \`<det>\`) dentro de \`<infNFe>\`:
+    4.  **supplierIE**: Encontre a Inscrição Estadual (IE) do emitente. Geralmente está em \`infNFe > emit > IE\`. Retorne como string. Se o valor for "ISENTO" ou não existir, retorne uma string vazia.
+    5.  **invoiceNumber**: Encontre o número da NF-e. Geralmente está em \`infNFe > ide > nNF\`. Retorne como string.
+    6.  **emissionDate**: Encontre a data e hora de emissão. Geralmente está em \`infNFe > ide > dhEmi\`. Retorne como string no formato ISO 8601 (ex: "2023-10-27T10:00:00-03:00" ou "2023-10-27T10:00:00Z").
+    7.  **nfeTotalValue**: Encontre o valor total da NF-e. Geralmente está em \`infNFe > total > ICMSTot > vNF\`. Retorne como número.
+    8.  **shippingValue**: Encontre o valor total do frete. Geralmente está em \`infNFe > total > ICMSTot > vFrete\`. Se não existir ou for zero, retorne 0. Retorne como número.
+    9.  **products**: Para cada item (tag \`<det>\`) dentro de \`<infNFe>\`:
         *   **description**: Descrição do produto, de \`det > prod > xProd\`. Retorne como string.
         *   **quantity**: Quantidade comercial, de \`det > prod > qCom\`. Retorne como número.
         *   **unitValue**: Valor unitário de comercialização, de \`det > prod > vUnCom\`. Retorne como número.
         *   **totalValue**: Valor total bruto do produto, de \`det > prod > vProd\`. Retorne como número.
         Se não houver itens, retorne um array vazio para 'products'.
-    9.  **supplierAddress**: Extraia o endereço do emitente de \`infNFe > emit > enderEmit\`:
+    10. **supplierAddress**: Extraia o endereço do emitente de \`infNFe > emit > enderEmit\`:
         *   **street**: Logradouro (\`xLgr\`).
         *   **number**: Número (\`nro\`).
         *   **complement**: Complemento (\`xCpl\`).
@@ -103,7 +105,7 @@ const nfeExtractorPrompt = ai.definePrompt({
         *   **zipCode**: CEP (\`CEP\`). Retorne APENAS OS NÚMEROS, sem pontos, barras ou traços.
 
     Se algum campo opcional não for encontrado, omita-o do objeto de saída ou retorne o valor padrão especificado (0 para números, string vazia para strings, array vazio para 'products', objeto vazio para 'supplierAddress' se todo ele for opcional e não encontrado).
-    Preste atenção aos tipos de dados esperados no schema de saída (string, number, email). Converta os valores do XML para esses tipos. Por exemplo, valores numéricos devem ser retornados como números, não strings.
+    Preste atenção aos tipos de dados esperados no schema de saída (string, number). Converta os valores do XML para esses tipos. Por exemplo, valores numéricos devem ser retornados como números, não strings.
     Para campos de texto (string), se o valor não existir no XML, retorne uma string vazia, exceto para supplierEmail que deve ser omitido ou undefined.
   `,
 });
@@ -129,6 +131,7 @@ const extractNFeDataFlow = ai.defineFlow(
       ...output,
       supplierCNPJ: output.supplierCNPJ ? output.supplierCNPJ.replace(/\D/g, '') : undefined,
       supplierEmail: output.supplierEmail || undefined,
+      supplierIE: output.supplierIE || undefined, // Adicionado
       products: output.products || [],
       shippingValue: output.shippingValue || 0,
       nfeTotalValue: output.nfeTotalValue || 0,
