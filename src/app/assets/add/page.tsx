@@ -212,11 +212,16 @@ export default function AddAssetPage() {
             form.setValue('supplier', '');
           }
 
-          if (extractedData.products && extractedData.products.length > 0 && extractedData.products[0]) {
+          if (extractedData.products && extractedData.products.length > 0) {
             const firstProduct = extractedData.products[0];
-            if (firstProduct.description) form.setValue('name', firstProduct.description);
-            if (firstProduct.totalValue !== undefined) form.setValue('purchaseValue', firstProduct.totalValue);
-            // Considerar preencher outros campos como serialNumber se disponível na NF-e e no schema de output
+            if (firstProduct && typeof firstProduct === 'object') {
+              if (firstProduct.description) {
+                form.setValue('name', firstProduct.description);
+              }
+              if (firstProduct.totalValue !== undefined) {
+                form.setValue('purchaseValue', firstProduct.totalValue);
+              }
+            }
           }
 
           if (extractedData.invoiceNumber) form.setValue('invoiceNumber', extractedData.invoiceNumber);
@@ -262,7 +267,7 @@ export default function AddAssetPage() {
         } finally {
           setIsProcessingNFe(false);
           if (nfeFileInputRef.current) {
-            nfeFileInputRef.current.value = ''; // Limpa o input file
+            nfeFileInputRef.current.value = ''; 
           }
         }
       };
