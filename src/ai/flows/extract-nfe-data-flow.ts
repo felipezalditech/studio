@@ -43,8 +43,8 @@ export type ExtractNFeDataInput = z.infer<typeof ExtractNFeDataInputSchema>;
 const ExtractNFeDataOutputSchema = z.object({
   supplierCNPJ: z.string().optional().describe("CNPJ do emitente da NF-e (localizado em infNFe.emit.CNPJ). Retorne apenas os números, sem máscara. Se não houver, retorne string vazia."),
   supplierName: z.string().optional().describe("Razão Social ou Nome do emitente da NF-e (localizado em infNFe.emit.xNome). Se não houver, retorne string vazia."),
-  supplierEmail: z.string().optional().describe("E-mail do emitente da NF-e (localizado em infNFe.emit.email). Se não houver, omita o campo ou retorne undefined."),
-  supplierIE: z.string().optional().describe("Inscrição Estadual do emitente da NF-e (localizada em infNFe.emit.IE). Se não houver ou for 'ISENTO', retorne o valor ou string vazia."),
+  supplierEmail: z.string().optional().describe("E-mail do emitente da NF-e, localizado EXCLUSIVAMENTE em infNFe.emit.email. Se esta tag não existir ou estiver vazia, omita o campo ou retorne undefined."),
+  supplierIE: z.string().optional().describe("Inscrição Estadual (IE) do emitente da NF-e, localizada em infNFe.emit.IE. Retorne o valor EXATO encontrado nesta tag. Se a tag infNFe.emit.IE não existir, ou se existir mas estiver vazia, retorne uma string vazia."),
   invoiceNumber: z.string().optional().describe("Número da NF-e (localizado em infNFe.ide.nNF). Se não houver, retorne string vazia."),
   emissionDate: z.string().optional().describe("Data e hora de emissão da NF-e (localizada em infNFe.ide.dhEmi), no formato ISO 8601 (ex: YYYY-MM-DDTHH:MM:SSZ ou YYYY-MM-DDTHH:MM:SS-03:00). Se não houver, retorne string vazia."),
   nfeTotalValue: z.number().optional().describe("Valor Total da NF-e (localizado em infNFe.total.ICMSTot.vNF). Se não houver, retorne 0."),
@@ -84,7 +84,7 @@ const nfeExtractorPrompt = ai.definePrompt({
     1.  **supplierCNPJ**: Encontre o CNPJ do emitente. Geralmente está em \`infNFe > emit > CNPJ\`. Retorne como string, APENAS OS NÚMEROS, sem pontos, barras ou traços.
     2.  **supplierName**: Encontre a Razão Social ou Nome do emitente. Geralmente está em \`infNFe > emit > xNome\`. Retorne como string.
     3.  **supplierEmail**: Encontre o e-mail do emitente, **EXCLUSIVAMENTE** na tag \`infNFe > emit > email\`. Se esta tag não existir ou estiver vazia, **NÃO** tente encontrar e-mails em outras partes do documento (como no destinatário) e, nesse caso, omita este campo da saída ou retorne \`undefined\` ou uma string vazia.
-    4.  **supplierIE**: Encontre a Inscrição Estadual (IE) do emitente. Geralmente está em \`infNFe > emit > IE\`. Retorne como string. Se o valor for "ISENTO" ou não existir, retorne uma string vazia.
+    4.  **supplierIE**: Localize a Inscrição Estadual (IE) do emitente na tag \`infNFe.emit.IE\`. Retorne o valor EXATO contido nesta tag como uma string. Se a tag \`infNFe.emit.IE\` não existir, ou se existir mas estiver vazia, retorne uma string vazia.
     5.  **invoiceNumber**: Encontre o número da NF-e. Geralmente está em \`infNFe > ide > nNF\`. Retorne como string.
     6.  **emissionDate**: Encontre a data e hora de emissão. Geralmente está em \`infNFe > ide > dhEmi\`. Retorne como string no formato ISO 8601 (ex: "2023-10-27T10:00:00-03:00" ou "2023-10-27T10:00:00Z").
     7.  **nfeTotalValue**: Encontre o valor total da NF-e. Geralmente está em \`infNFe > total > ICMSTot > vNF\`. Retorne como número.
