@@ -196,9 +196,9 @@ export default function AddAssetPage() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <Tabs defaultValue="general" className="w-full">
                   <TabsList className="grid w-full grid-cols-3 mb-6">
-                    <TabsTrigger value="general" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-primary/80 hover:text-primary hover:bg-primary/10">Dados Gerais</TabsTrigger>
-                    <TabsTrigger value="purchase" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-primary/80 hover:text-primary hover:bg-primary/10">Compra e Valores</TabsTrigger>
-                    <TabsTrigger value="others" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-primary/80 hover:text-primary hover:bg-primary/10">Outros e Fotos</TabsTrigger>
+                    <TabsTrigger value="general" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-foreground hover:text-primary hover:bg-primary/10">Dados Gerais</TabsTrigger>
+                    <TabsTrigger value="purchase" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-foreground hover:text-primary hover:bg-primary/10">Compra e Valores</TabsTrigger>
+                    <TabsTrigger value="others" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-foreground hover:text-primary hover:bg-primary/10">Outros e Fotos</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="general" className="space-y-6">
@@ -213,7 +213,9 @@ export default function AddAssetPage() {
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                                    <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                    </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
                                     <p>Selecione "Não" se o ativo não deve ser depreciado (ex: já totalmente depreciado, controle apenas patrimonial).</p>
@@ -265,7 +267,9 @@ export default function AddAssetPage() {
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                                    <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                    </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
                                     <p>Digite para buscar. Se o modelo não existir, a opção para cadastrá-lo aparecerá. Clique no campo para ver todos os modelos.</p>
@@ -321,7 +325,9 @@ export default function AddAssetPage() {
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                                    <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                    </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
                                     <p>Cadastre categorias na tela de "Configurações". A categoria define as regras de depreciação se aplicável.</p>
@@ -361,7 +367,9 @@ export default function AddAssetPage() {
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                                      <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                      </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
                                       <p>Digite para buscar. Se o fornecedor não existir, a opção para cadastrá-lo aparecerá. Clique no campo para ver todos os fornecedores.</p>
@@ -387,7 +395,9 @@ export default function AddAssetPage() {
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                                    <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                    </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
                                     <p>Digite para buscar ou clique para ver opções. Se não encontrar, pode cadastrar um novo local. Cadastre locais na tela de "Configurações".</p>
@@ -493,7 +503,9 @@ export default function AddAssetPage() {
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                                    <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                    </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
                                     <p>Informe se o ativo foi adquirido usado e já possuía depreciação acumulada. Este valor será subtraído do valor de compra para definir o valor atual inicial.</p>
@@ -546,7 +558,9 @@ export default function AddAssetPage() {
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                                    <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                    </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
                                     <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até {MAX_PHOTOS} fotos.</p>
