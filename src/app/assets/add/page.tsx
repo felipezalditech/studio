@@ -205,12 +205,12 @@ export default function AddAssetPage() {
 
                   <TabsContent value="general" className="space-y-6">
                     <div className="flex flex-row flex-wrap gap-x-6 gap-y-4 items-start">
-                      <FormField
+                       <FormField
                         control={form.control}
                         name="aplicarRegrasDepreciacao"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center min-h-7 mb-1">
+                            <div className="flex items-center h-8 mb-1">
                               <FormLabel>Depreciável *</FormLabel>
                               <TooltipProvider>
                                 <Tooltip>
@@ -246,7 +246,7 @@ export default function AddAssetPage() {
                         name="arquivado"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center min-h-7 mb-1">
+                            <div className="flex items-center h-8 mb-1">
                               <FormLabel>Arquivar *</FormLabel>
                                 <TooltipProvider>
                                   <Tooltip>
@@ -285,7 +285,7 @@ export default function AddAssetPage() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                             <div className="flex items-center min-h-7 mb-1">
+                             <div className="flex items-center h-8 mb-1">
                               <FormLabel>Nome do ativo *</FormLabel>
                             </div>
                             <FormControl>
@@ -300,7 +300,7 @@ export default function AddAssetPage() {
                         name="modelId"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center min-h-7 mb-1">
+                            <div className="flex items-center h-8 mb-1">
                               <FormLabel>Modelo</FormLabel>
                               <TooltipProvider>
                                 <Tooltip>
@@ -328,7 +328,7 @@ export default function AddAssetPage() {
                         name="assetTag"
                         render={({ field }) => (
                           <FormItem>
-                             <div className="flex items-center min-h-7 mb-1">
+                             <div className="flex items-center h-8 mb-1">
                               <FormLabel>Nº de patrimônio *</FormLabel>
                             </div>
                             <FormControl>
@@ -343,7 +343,7 @@ export default function AddAssetPage() {
                         name="serialNumber"
                         render={({ field }) => (
                           <FormItem>
-                             <div className="flex items-center min-h-7 mb-1">
+                             <div className="flex items-center h-8 mb-1">
                               <FormLabel>Nº de série</FormLabel>
                             </div>
                             <FormControl>
@@ -358,7 +358,7 @@ export default function AddAssetPage() {
                         name="categoryId"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center min-h-7 mb-1">
+                            <div className="flex items-center h-8 mb-1">
                               <FormLabel>Categoria *</FormLabel>
                               <TooltipProvider>
                                 <Tooltip>
@@ -400,7 +400,7 @@ export default function AddAssetPage() {
                         name="supplier"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center min-h-7 mb-1">
+                            <div className="flex items-center h-8 mb-1">
                                 <FormLabel>Fornecedor *</FormLabel>
                                 <TooltipProvider>
                                   <Tooltip>
@@ -428,7 +428,7 @@ export default function AddAssetPage() {
                         name="locationId"
                         render={({ field }) => (
                           <FormItem className="md:col-span-2">
-                            <div className="flex items-center min-h-7 mb-1">
+                            <div className="flex items-center h-8 mb-1">
                               <FormLabel>Local alocado</FormLabel>
                               <TooltipProvider>
                                 <Tooltip>
@@ -461,7 +461,9 @@ export default function AddAssetPage() {
                         name="purchaseDate"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Data da compra *</FormLabel>
+                             <div className="flex items-center h-8 mb-1">
+                              <FormLabel>Data da compra *</FormLabel>
+                            </div>
                             <Popover>
                               <PopoverTrigger asChild>
                                 <FormControl>
@@ -503,7 +505,9 @@ export default function AddAssetPage() {
                         name="invoiceNumber"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Nº da nota fiscal *</FormLabel>
+                            <div className="flex items-center h-8 mb-1">
+                              <FormLabel>Nº da nota fiscal *</FormLabel>
+                            </div>
                             <FormControl>
                               <Input placeholder="Ex: NF-000123456" {...field} />
                             </FormControl>
@@ -517,7 +521,9 @@ export default function AddAssetPage() {
                         name="purchaseValue"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Valor de compra (R$) *</FormLabel>
+                            <div className="flex items-center h-8 mb-1">
+                              <FormLabel>Valor de compra (R$) *</FormLabel>
+                            </div>
                             <FormControl>
                               <Input type="number" step="0.01" placeholder="Ex: 2500.00" {...field} />
                             </FormControl>
@@ -530,7 +536,7 @@ export default function AddAssetPage() {
                         name="previouslyDepreciatedValue"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center">
+                            <div className="flex items-center h-8 mb-1">
                               <FormLabel>Valor depreciado R$</FormLabel>
                               <TooltipProvider>
                                 <Tooltip>
@@ -562,7 +568,9 @@ export default function AddAssetPage() {
                           name="additionalInfo"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Informações adicionais</FormLabel>
+                              <div className="flex items-center h-8 mb-1">
+                                <FormLabel>Informações adicionais</FormLabel>
+                              </div>
                               <FormControl>
                                 <Textarea
                                   placeholder="Detalhes extras sobre o ativo, condições, observações, etc."
@@ -581,7 +589,7 @@ export default function AddAssetPage() {
                           name="imageDateUris"
                           render={({ field }) => (
                             <FormItem>
-                              <div className="flex items-center">
+                              <div className="flex items-center h-8 mb-1">
                                 <FormLabel className="flex items-center">
                                   <UploadCloud className="mr-2 h-5 w-5" />
                                   Fotos do ativo (Máx. {MAX_PHOTOS})
@@ -661,3 +669,4 @@ export default function AddAssetPage() {
     </>
   );
 }
+
