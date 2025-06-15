@@ -201,8 +201,8 @@ export default function AddAssetPage() {
                     <TabsTrigger value="others" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-foreground hover:text-primary hover:bg-primary/10">Outros e Fotos</TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="general" className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <TabsContent value="general">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                       <FormField
                         control={form.control}
                         name="aplicarRegrasDepreciacao"
@@ -416,8 +416,8 @@ export default function AddAssetPage() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="purchase" className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <TabsContent value="purchase">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                       <FormField
                         control={form.control}
                         name="purchaseDate"
@@ -523,91 +523,93 @@ export default function AddAssetPage() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="others" className="space-y-6">
-                    <FormField
-                        control={form.control}
-                        name="additionalInfo"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center">
-                              <FormLabel>Informações adicionais</FormLabel>
-                            </div>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Detalhes extras sobre o ativo, condições, observações, etc."
-                                className="resize-y h-10 min-h-[40px]"
-                                {...field}
-                                value={field.value ?? ''}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    <div className="space-y-2">
+                  <TabsContent value="others">
+                    <div className="grid grid-cols-1 gap-6 items-start">
                       <FormField
-                        control={form.control}
-                        name="imageDateUris"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center">
-                              <FormLabel className="flex items-center">
-                                <UploadCloud className="mr-2 h-5 w-5" />
-                                Fotos do ativo (Máx. {MAX_PHOTOS})
-                              </FormLabel>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
-                                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até {MAX_PHOTOS} fotos.</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                            <FormControl>
-                              <Input
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                ref={fileInputRef}
-                                onChange={(e) => handleImageChange(e, field.onChange as any)}
-                                className="cursor-pointer"
-                                disabled={(form.getValues('imageDateUris')?.length || 0) >= MAX_PHOTOS}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/{MAX_PHOTOS}.
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      {imagePreviews.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                          <p className="text-sm font-medium text-muted-foreground">Pré-visualização ({imagePreviews.length}/{MAX_PHOTOS}):</p>
-                          <div className="flex flex-wrap gap-4 p-2 border rounded-md">
-                            {imagePreviews.map((previewUrl, index) => (
-                              <div key={index} className="relative w-32 h-32 border rounded-md overflow-hidden group">
-                                <Image src={previewUrl} alt={`Pré-visualização ${index + 1}`} layout="fill" objectFit="contain" data-ai-hint="asset photo preview" />
-                                <Button
-                                  type="button"
-                                  variant="destructive"
-                                  size="icon"
-                                  onClick={() => handleRemoveImage(index, form.setValue.bind(form, 'imageDateUris') as any)}
-                                  className="absolute top-1 right-1 h-6 w-6 opacity-70 group-hover:opacity-100"
-                                  title="Remover imagem"
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                </Button>
+                          control={form.control}
+                          name="additionalInfo"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center">
+                                <FormLabel>Informações adicionais</FormLabel>
                               </div>
-                            ))}
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Detalhes extras sobre o ativo, condições, observações, etc."
+                                  className="resize-y h-10 min-h-[40px]"
+                                  {...field}
+                                  value={field.value ?? ''}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      <div className="space-y-2">
+                        <FormField
+                          control={form.control}
+                          name="imageDateUris"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center">
+                                <FormLabel className="flex items-center">
+                                  <UploadCloud className="mr-2 h-5 w-5" />
+                                  Fotos do ativo (Máx. {MAX_PHOTOS})
+                                </FormLabel>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até {MAX_PHOTOS} fotos.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                              <FormControl>
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  ref={fileInputRef}
+                                  onChange={(e) => handleImageChange(e, field.onChange as any)}
+                                  className="cursor-pointer"
+                                  disabled={(form.getValues('imageDateUris')?.length || 0) >= MAX_PHOTOS}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/{MAX_PHOTOS}.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        {imagePreviews.length > 0 && (
+                          <div className="mt-4 space-y-2">
+                            <p className="text-sm font-medium text-muted-foreground">Pré-visualização ({imagePreviews.length}/{MAX_PHOTOS}):</p>
+                            <div className="flex flex-wrap gap-4 p-2 border rounded-md">
+                              {imagePreviews.map((previewUrl, index) => (
+                                <div key={index} className="relative w-32 h-32 border rounded-md overflow-hidden group">
+                                  <Image src={previewUrl} alt={`Pré-visualização ${index + 1}`} layout="fill" objectFit="contain" data-ai-hint="asset photo preview" />
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="icon"
+                                    onClick={() => handleRemoveImage(index, form.setValue.bind(form, 'imageDateUris') as any)}
+                                    className="absolute top-1 right-1 h-6 w-6 opacity-70 group-hover:opacity-100"
+                                    title="Remover imagem"
+                                  >
+                                    <XCircle className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </TabsContent>
                 </Tabs>
