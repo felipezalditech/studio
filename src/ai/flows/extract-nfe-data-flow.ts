@@ -83,7 +83,7 @@ const nfeExtractorPrompt = ai.definePrompt({
     Instruções para extração:
     1.  **supplierCNPJ**: Encontre o CNPJ do emitente. Geralmente está em \`infNFe > emit > CNPJ\`. Retorne como string, APENAS OS NÚMEROS, sem pontos, barras ou traços.
     2.  **supplierName**: Encontre a Razão Social ou Nome do emitente. Geralmente está em \`infNFe > emit > xNome\`. Retorne como string.
-    3.  **supplierEmail**: Encontre o e-mail do emitente. Geralmente está em \`infNFe > emit > email\`. Se não existir, omita este campo ou retorne undefined.
+    3.  **supplierEmail**: Encontre o e-mail do emitente, **EXCLUSIVAMENTE** na tag \`infNFe > emit > email\`. Se esta tag não existir ou estiver vazia, **NÃO** tente encontrar e-mails em outras partes do documento (como no destinatário) e, nesse caso, omita este campo da saída ou retorne \`undefined\` ou uma string vazia.
     4.  **supplierIE**: Encontre a Inscrição Estadual (IE) do emitente. Geralmente está em \`infNFe > emit > IE\`. Retorne como string. Se o valor for "ISENTO" ou não existir, retorne uma string vazia.
     5.  **invoiceNumber**: Encontre o número da NF-e. Geralmente está em \`infNFe > ide > nNF\`. Retorne como string.
     6.  **emissionDate**: Encontre a data e hora de emissão. Geralmente está em \`infNFe > ide > dhEmi\`. Retorne como string no formato ISO 8601 (ex: "2023-10-27T10:00:00-03:00" ou "2023-10-27T10:00:00Z").
@@ -106,7 +106,7 @@ const nfeExtractorPrompt = ai.definePrompt({
 
     Se algum campo opcional não for encontrado, omita-o do objeto de saída ou retorne o valor padrão especificado (0 para números, string vazia para strings, array vazio para 'products', objeto vazio para 'supplierAddress' se todo ele for opcional e não encontrado).
     Preste atenção aos tipos de dados esperados no schema de saída (string, number). Converta os valores do XML para esses tipos. Por exemplo, valores numéricos devem ser retornados como números, não strings.
-    Para campos de texto (string), se o valor não existir no XML, retorne uma string vazia, exceto para supplierEmail que deve ser omitido ou undefined.
+    Para campos de texto (string), se o valor não existir no XML, retorne uma string vazia, exceto para supplierEmail que deve ser omitido ou undefined se a tag específica \`infNFe > emit > email\` não for encontrada.
   `,
 });
 
@@ -130,8 +130,8 @@ const extractNFeDataFlow = ai.defineFlow(
     return {
       ...output,
       supplierCNPJ: output.supplierCNPJ ? output.supplierCNPJ.replace(/\D/g, '') : undefined,
-      supplierEmail: output.supplierEmail || undefined,
-      supplierIE: output.supplierIE || undefined, // Adicionado
+      supplierEmail: output.supplierEmail && output.supplierEmail.trim() !== '' ? output.supplierEmail.trim() : undefined,
+      supplierIE: output.supplierIE && output.supplierIE.trim() !== '' ? output.supplierIE.trim() : undefined,
       products: output.products || [],
       shippingValue: output.shippingValue || 0,
       nfeTotalValue: output.nfeTotalValue || 0,
@@ -140,3 +140,5 @@ const extractNFeDataFlow = ai.defineFlow(
   }
 );
 
+
+    
