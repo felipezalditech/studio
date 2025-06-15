@@ -209,7 +209,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="aplicarRegrasDepreciacao"
                         render={({ field }) => (
-                          <FormItem className="space-y-1">
+                          <FormItem className="space-y-0.5">
                             <div className="flex items-center h-8">
                               <FormLabel>Depreciável *</FormLabel>
                               <TooltipProvider>
@@ -245,7 +245,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="arquivado"
                         render={({ field }) => (
-                          <FormItem className="space-y-1">
+                          <FormItem className="space-y-0.5">
                             <div className="flex items-center h-8">
                               <FormLabel>Arquivar *</FormLabel>
                                 <TooltipProvider>
@@ -284,7 +284,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="name"
                         render={({ field }) => (
-                          <FormItem className="space-y-1">
+                          <FormItem className="space-y-0.5">
                              <div className="flex items-center h-8">
                               <FormLabel>Nome do ativo *</FormLabel>
                             </div>
@@ -299,7 +299,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="modelId"
                         render={({ field }) => (
-                          <FormItem className="space-y-1">
+                          <FormItem className="space-y-0.5">
                             <div className="flex items-center h-8">
                               <FormLabel>Modelo</FormLabel>
                               <TooltipProvider>
@@ -327,7 +327,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="assetTag"
                         render={({ field }) => (
-                          <FormItem className="space-y-1">
+                          <FormItem className="space-y-0.5">
                              <div className="flex items-center h-8">
                               <FormLabel>Nº de patrimônio *</FormLabel>
                             </div>
@@ -342,7 +342,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="serialNumber"
                         render={({ field }) => (
-                          <FormItem className="space-y-1">
+                          <FormItem className="space-y-0.5">
                              <div className="flex items-center h-8">
                               <FormLabel>Nº de série</FormLabel>
                             </div>
@@ -357,7 +357,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="categoryId"
                         render={({ field }) => (
-                          <FormItem className="space-y-1">
+                          <FormItem className="space-y-0.5">
                             <div className="flex items-center h-8">
                               <FormLabel>Categoria *</FormLabel>
                               <TooltipProvider>
@@ -399,7 +399,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="supplier"
                         render={({ field }) => (
-                          <FormItem className="space-y-1">
+                          <FormItem className="space-y-0.5">
                             <div className="flex items-center h-8">
                                 <FormLabel>Fornecedor *</FormLabel>
                                 <TooltipProvider>
@@ -427,7 +427,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="locationId"
                         render={({ field }) => (
-                          <FormItem className="md:col-span-2 space-y-1">
+                          <FormItem className="md:col-span-2 space-y-0.5">
                             <div className="flex items-center h-8">
                               <FormLabel>Local alocado</FormLabel>
                               <TooltipProvider>
@@ -460,7 +460,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="purchaseDate"
                         render={({ field }) => (
-                          <FormItem className="space-y-1">
+                          <FormItem className="space-y-0.5">
                              <div className="flex items-center h-8">
                               <FormLabel>Data da compra *</FormLabel>
                             </div>
@@ -504,7 +504,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="invoiceNumber"
                         render={({ field }) => (
-                          <FormItem className="space-y-1">
+                          <FormItem className="space-y-0.5">
                             <div className="flex items-center h-8">
                               <FormLabel>Nº da nota fiscal *</FormLabel>
                             </div>
@@ -520,7 +520,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="purchaseValue"
                         render={({ field }) => (
-                          <FormItem className="space-y-1">
+                          <FormItem className="space-y-0.5">
                             <div className="flex items-center h-8">
                               <FormLabel>Valor de compra (R$) *</FormLabel>
                             </div>
@@ -535,7 +535,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="previouslyDepreciatedValue"
                         render={({ field }) => (
-                          <FormItem className="space-y-1">
+                          <FormItem className="space-y-0.5">
                             <div className="flex items-center h-8">
                               <FormLabel>Valor depreciado R$</FormLabel>
                               <TooltipProvider>
@@ -567,7 +567,7 @@ export default function AddAssetPage() {
                           control={form.control}
                           name="additionalInfo"
                           render={({ field }) => (
-                            <FormItem className="space-y-1">
+                            <FormItem className="space-y-0.5">
                               <div className="flex items-center h-8">
                                 <FormLabel>Informações adicionais</FormLabel>
                               </div>
@@ -588,7 +588,7 @@ export default function AddAssetPage() {
                           control={form.control}
                           name="imageDateUris"
                           render={({ field }) => (
-                            <FormItem className="space-y-1">
+                            <FormItem className="space-y-0.5">
                               <div className="flex items-center h-8">
                                 <FormLabel className="flex items-center">
                                   <UploadCloud className="mr-2 h-5 w-5" />
