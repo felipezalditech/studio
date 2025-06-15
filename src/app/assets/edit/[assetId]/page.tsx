@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox'; // Importado
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -18,7 +19,7 @@ import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
-import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle } from 'lucide-react';
+import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -31,6 +32,7 @@ import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox
 const MAX_PHOTOS = 10;
 
 const assetFormSchema = z.object({
+  aplicarRegrasDepreciacao: z.boolean().default(true), // Novo campo
   name: z.string().min(1, "Nome do ativo é obrigatório."),
   modelId: z.string().optional(), 
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
@@ -57,7 +59,6 @@ export default function EditAssetPage() {
   const { toast } = useToast();
   const router = useRouter();
   
-  // Envolvendo useParams com React.use()
   const paramsFromHook = useParams();
   const actualParams = use(paramsFromHook); 
   const assetId = actualParams?.assetId as string | undefined;
@@ -70,6 +71,7 @@ export default function EditAssetPage() {
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
     defaultValues: {
+      aplicarRegrasDepreciacao: true,
       name: '',
       modelId: undefined,
       assetTag: '',
@@ -98,6 +100,7 @@ export default function EditAssetPage() {
       if (assetToEdit) {
         form.reset({
           ...assetToEdit,
+          aplicarRegrasDepreciacao: assetToEdit.aplicarRegrasDepreciacao !== undefined ? assetToEdit.aplicarRegrasDepreciacao : true,
           modelId: assetToEdit.modelId || undefined,
           purchaseDate: assetToEdit.purchaseDate ? parseISO(assetToEdit.purchaseDate) : undefined,
           previouslyDepreciatedValue: assetToEdit.previouslyDepreciatedValue || undefined,
@@ -113,7 +116,6 @@ export default function EditAssetPage() {
         setIsLoading(false);
       }
     } else {
-      // assets array might still be loading from localStorage
       setIsLoading(true);
     }
   }, [assetId, form, getAssetById, assets]);
@@ -122,11 +124,10 @@ export default function EditAssetPage() {
   function onSubmit(data: AssetFormValues) {
     if (!assetId) return;
 
-    const initialCurrentValue = data.purchaseValue - (data.previouslyDepreciatedValue || 0);
-     if (initialCurrentValue < 0) {
-        toast({
+    if (!data.aplicarRegrasDepreciacao && (data.purchaseValue - (data.previouslyDepreciatedValue || 0)) < 0) {
+       toast({
             title: "Erro de validação",
-            description: "O valor já depreciado não pode ser maior que o valor de compra.",
+            description: "Para ativos não depreciáveis, o valor já depreciado não pode ser maior que o valor de compra.",
             variant: "destructive",
         });
         return;
@@ -137,7 +138,8 @@ export default function EditAssetPage() {
       ...data,
       modelId: data.modelId || undefined, 
       purchaseDate: format(data.purchaseDate, 'yyyy-MM-dd'),
-      currentValue: initialCurrentValue,
+      // currentValue será recalculado no contexto/consulta
+      currentValue: 0, // Placeholder, será definido no contexto
       imageDateUris: data.imageDateUris || [],
       previouslyDepreciatedValue: data.previouslyDepreciatedValue,
       locationId: data.locationId || undefined,
@@ -247,6 +249,30 @@ export default function EditAssetPage() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <FormField
+                    control={form.control}
+                    name="aplicarRegrasDepreciacao"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-muted/30">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            id="aplicarRegrasDepreciacao"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel htmlFor="aplicarRegrasDepreciacao" className="flex items-center font-semibold cursor-pointer">
+                            <TrendingDown className="mr-2 h-5 w-5 text-primary"/>
+                            Aplicar regras de depreciação para este ativo?
+                          </FormLabel>
+                          <FormDescription>
+                            Desmarque esta opção se o ativo não deve ser depreciado (ex: já totalmente depreciado, controle apenas patrimonial).
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <FormField
                     control={form.control}
@@ -254,7 +280,7 @@ export default function EditAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Nome do ativo</FormLabel>
+                          <FormLabel>Nome do ativo *</FormLabel>
                         </div>
                         <FormControl>
                           <Input placeholder="Ex: Notebook Dell XPS 15" {...field} />
@@ -269,7 +295,7 @@ export default function EditAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Modelo (opcional)</FormLabel>
+                          <FormLabel>Modelo</FormLabel>
                            <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -295,7 +321,7 @@ export default function EditAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Nº de patrimônio</FormLabel>
+                          <FormLabel>Nº de patrimônio *</FormLabel>
                         </div>
                         <FormControl>
                           <Input placeholder="Ex: ZDI-00123" {...field} />
@@ -310,14 +336,14 @@ export default function EditAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Categoria</FormLabel>
+                          <FormLabel>Categoria *</FormLabel>
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Cadastre categorias na tela de "Configurações".</p>
+                                <p>Cadastre categorias na tela de "Configurações". A categoria define as regras de depreciação se aplicável.</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -351,7 +377,7 @@ export default function EditAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                            <FormLabel>Fornecedor</FormLabel>
+                            <FormLabel>Fornecedor *</FormLabel>
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -403,7 +429,7 @@ export default function EditAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Data da compra</FormLabel>
+                          <FormLabel>Data da compra *</FormLabel>
                         </div>
                         <Popover>
                           <PopoverTrigger asChild>
@@ -447,7 +473,7 @@ export default function EditAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Nº da nota fiscal</FormLabel>
+                          <FormLabel>Nº da nota fiscal *</FormLabel>
                         </div>
                         <FormControl>
                           <Input placeholder="Ex: NF-000123456" {...field} />
@@ -462,10 +488,10 @@ export default function EditAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Nº de série (opcional)</FormLabel>
+                          <FormLabel>Nº de série</FormLabel>
                         </div>
                         <FormControl>
-                          <Input placeholder="Ex: SN-ABC123XYZ" {...field} />
+                          <Input placeholder="Ex: SN-ABC123XYZ" {...field} value={field.value ?? ''}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -477,7 +503,7 @@ export default function EditAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Valor de compra (R$)</FormLabel>
+                          <FormLabel>Valor de compra (R$) *</FormLabel>
                         </div>
                         <FormControl>
                           <Input type="number" step="0.01" placeholder="Ex: 2500.00" {...field} />
@@ -492,20 +518,20 @@ export default function EditAssetPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Valor depreciado R$ (opcional)</FormLabel>
+                          <FormLabel>Valor depreciado R$</FormLabel>
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Informe se o ativo foi adquirido usado e já possuía depreciação acumulada.</p>
+                                <p>Informe se o ativo foi adquirido usado e já possuía depreciação acumulada. Este valor será subtraído do valor de compra para definir o valor atual inicial.</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                         </div>
                         <FormControl>
-                          <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} />
+                          <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} value={field.value ?? ''}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -517,13 +543,14 @@ export default function EditAssetPage() {
                     render={({ field }) => (
                       <FormItem className="lg:col-span-2 md:col-span-2">
                          <div className="flex items-center">
-                            <FormLabel>Informações adicionais (opcional)</FormLabel>
+                            <FormLabel>Informações adicionais</FormLabel>
                           </div>
                         <FormControl>
                           <Textarea
                             placeholder="Detalhes extras sobre o ativo, condições, observações, etc."
                             className="resize-y h-10 min-h-[40px]"
                             {...field}
+                            value={field.value ?? ''}
                           />
                         </FormControl>
                         <FormMessage />
@@ -541,7 +568,7 @@ export default function EditAssetPage() {
                         <div className="flex items-center">
                           <FormLabel className="flex items-center">
                             <UploadCloud className="mr-2 h-5 w-5" />
-                            Fotos do ativo (Máx. ${MAX_PHOTOS})
+                            Fotos do ativo (Máx. {MAX_PHOTOS})
                           </FormLabel>
                           <TooltipProvider>
                             <Tooltip>
@@ -549,7 +576,7 @@ export default function EditAssetPage() {
                                 <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até ${MAX_PHOTOS} fotos.</p>
+                                <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até {MAX_PHOTOS} fotos.</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -566,7 +593,7 @@ export default function EditAssetPage() {
                           />
                         </FormControl>
                         <FormDescription>
-                          Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/${MAX_PHOTOS}.
+                          Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/{MAX_PHOTOS}.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -574,7 +601,7 @@ export default function EditAssetPage() {
                   />
                   {imagePreviews.length > 0 && (
                     <div className="mt-4 space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Pré-visualização ({imagePreviews.length}/${MAX_PHOTOS}):</p>
+                      <p className="text-sm font-medium text-muted-foreground">Pré-visualização ({imagePreviews.length}/{MAX_PHOTOS}):</p>
                       <div className="flex flex-wrap gap-4 p-2 border rounded-md">
                         {imagePreviews.map((previewUrl, index) => (
                           <div key={index} className="relative w-32 h-32 border rounded-md overflow-hidden group">
@@ -613,5 +640,3 @@ export default function EditAssetPage() {
     </>
   );
 }
-
-    

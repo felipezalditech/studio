@@ -46,7 +46,7 @@ export const exportToCSV = (data: CsvExportData[], filename: string = 'ativos.cs
 
 interface PdfColumn {
   header: string;
-  dataKey: keyof AssetWithCalculatedValues | string; // Allow string for custom keys like model (name)
+  dataKey: keyof AssetWithCalculatedValues | string; 
 }
 
 export const exportToPDF = (
@@ -87,8 +87,9 @@ export const exportToPDF = (
     { header: 'ID', dataKey: 'id' },
     { header: 'Data Compra', dataKey: 'purchaseDate' },
     { header: 'Nome', dataKey: 'name' },
-    { header: 'Modelo', dataKey: 'modelName'}, // Changed from model to modelName
+    { header: 'Modelo', dataKey: 'modelName'}, 
     { header: 'Patrimônio', dataKey: 'assetTag' },
+    { header: 'Deprec.?', dataKey: 'aplicarRegrasDepreciacao'}, // Nova coluna
     { header: 'Nota Fiscal', dataKey: 'invoiceNumber' },
     { header: 'Nº Série', dataKey: 'serialNumber' },
     { header: 'Categoria', dataKey: 'categoryName' },
@@ -107,7 +108,6 @@ export const exportToPDF = (
     const row: { [key: string]: any } = {};
     tableColumnsToUse.forEach(col => {
       let value: any;
-      // Handle specific dataKeys that might not directly exist on AssetWithCalculatedValues
       if (col.dataKey === 'modelName') {
         value = asset.modelName;
       } else if (col.dataKey === 'categoryName') {
@@ -120,8 +120,9 @@ export const exportToPDF = (
          value = asset[col.dataKey as keyof AssetWithCalculatedValues];
       }
 
-
-      if (col.dataKey === 'purchaseValue' || col.dataKey === 'depreciatedValue' || col.dataKey === 'calculatedCurrentValue' || col.dataKey === 'previouslyDepreciatedValue') {
+      if (col.dataKey === 'aplicarRegrasDepreciacao') {
+        row[col.dataKey] = value ? 'Sim' : 'Não';
+      } else if (col.dataKey === 'purchaseValue' || col.dataKey === 'depreciatedValue' || col.dataKey === 'calculatedCurrentValue' || col.dataKey === 'previouslyDepreciatedValue') {
         row[col.dataKey] = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value as number);
       } else if (col.dataKey === 'purchaseDate' && typeof value === 'string') {
          try {
@@ -148,21 +149,22 @@ export const exportToPDF = (
     headStyles: { fillColor: [63, 81, 181] },
     styles: { fontSize: 5, cellPadding: 1, overflow: 'linebreak' },
     columnStyles: {
-      id: { cellWidth: 8 },
-      purchaseDate: { cellWidth: 12 },
-      name: { cellWidth: 20 },
-      modelName: { cellWidth: 15 }, // Changed from model to modelName
-      assetTag: {cellWidth: 12},
-      invoiceNumber: {cellWidth: 12},
-      serialNumber: {cellWidth: 12},
-      categoryName: {cellWidth: 15},
-      supplierName: {cellWidth: 15},
-      locationName: {cellWidth: 15},
-      purchaseValue: {cellWidth: 15, halign: 'right'},
-      previouslyDepreciatedValue: {cellWidth: 15, halign: 'right'},
-      depreciatedValue: {cellWidth: 15, halign: 'right'},
-      calculatedCurrentValue: {cellWidth: 15, halign: 'right'},
-      additionalInfo: { cellWidth: 20}
+      id: { cellWidth: 7 },
+      purchaseDate: { cellWidth: 11 },
+      name: { cellWidth: 18 },
+      modelName: { cellWidth: 13 }, 
+      assetTag: {cellWidth: 11},
+      aplicarRegrasDepreciacao: { cellWidth: 9, halign: 'center' }, // Nova coluna
+      invoiceNumber: {cellWidth: 11},
+      serialNumber: {cellWidth: 11},
+      categoryName: {cellWidth: 13},
+      supplierName: {cellWidth: 13},
+      locationName: {cellWidth: 13},
+      purchaseValue: {cellWidth: 13, halign: 'right'},
+      previouslyDepreciatedValue: {cellWidth: 13, halign: 'right'},
+      depreciatedValue: {cellWidth: 13, halign: 'right'},
+      calculatedCurrentValue: {cellWidth: 13, halign: 'right'},
+      additionalInfo: { cellWidth: 18}
     },
     didDrawPage: (dataHook) => {
         doc.setFontSize(16);

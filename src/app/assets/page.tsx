@@ -4,7 +4,7 @@
 import React, { useMemo, useCallback, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { RowSelectionState, VisibilityState } from '@tanstack/react-table'; // Adicionado VisibilityState
+import type { RowSelectionState, VisibilityState } from '@tanstack/react-table'; 
 import { AssetDataTable } from '@/components/assets/AssetDataTable';
 import { getColumns } from '@/components/assets/columns';
 import type { Asset } from '@/components/assets/types';
@@ -23,7 +23,7 @@ import { useAssetModels } from '@/contexts/AssetModelContext';
 import { AssetDetailsDialog } from '@/components/assets/AssetDetailsDialog';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { useBranding } from '@/contexts/BrandingContext';
-import useLocalStorage from '@/lib/hooks/use-local-storage'; // Importar o hook useLocalStorage
+import useLocalStorage from '@/lib/hooks/use-local-storage'; 
 
 const initialFilters: AssetFiltersState = {
   name: '',
@@ -34,6 +34,7 @@ const initialFilters: AssetFiltersState = {
   modelId: '', 
   purchaseDateFrom: undefined,
   purchaseDateTo: undefined,
+  filtroDepreciavel: 'todos', // Novo filtro
 };
 
 const formatCurrency = (amount: number) => {
@@ -47,6 +48,7 @@ export interface AssetWithCalculatedValues extends Asset {
   supplierName?: string;
   locationName?: string;
   modelName?: string;
+  // aplicarRegrasDepreciacao já está em Asset
 }
 
 export default function AssetsPage() {
@@ -66,19 +68,18 @@ export default function AssetsPage() {
   const [assetToDelete, setAssetToDelete] = useState<AssetWithCalculatedValues | null>(null);
   const [isConfirmDeleteAssetDialogOpen, setIsConfirmDeleteAssetDialogOpen] = useState(false);
 
-  // Usar useLocalStorage para columnVisibility
   const [columnVisibility, setColumnVisibility] = useLocalStorage<VisibilityState>(
     'assetTableColumnVisibility', 
-    { // Valor inicial: define quais colunas começam visíveis se não houver nada salvo
-      'select': true, // Coluna de seleção é geralmente sempre visível
+    { 
+      'select': true, 
       'purchaseDate': true,
       'name': true,
       'modelName': true,
       'assetTag': true,
       'categoryName': true,
+      'aplicarRegrasDepreciacao': true, // Nova coluna visível por padrão
       'calculatedCurrentValue': true,
       'actions': true,
-      // Outras colunas começam ocultas por padrão, mas podem ser ativadas pelo usuário
       'invoiceNumber': false,
       'serialNumber': false,
       'supplierName': false,
@@ -164,23 +165,28 @@ export default function AssetsPage() {
           : true;
 
         const modelMatch = filters.modelId ? asset.modelId === filters.modelId : true; 
-
         const supplierMatch = filters.supplier ? asset.supplier === filters.supplier : true;
         const invoiceMatch = asset.invoiceNumber.toLowerCase().includes(filters.invoiceNumber.toLowerCase());
         const categoryMatch = filters.categoryId ? asset.categoryId === filters.categoryId : true;
         const locationMatch = filters.locationId ? asset.locationId === filters.locationId : true;
-
         const dateFromMatch = dateFrom && isValid(purchaseDate) ? purchaseDate >= dateFrom : true;
         const dateToMatch = dateTo && isValid(purchaseDate) ? purchaseDate <= dateTo : true;
+        
+        let depreciableMatch = true;
+        if (filters.filtroDepreciavel === 'sim') {
+          depreciableMatch = asset.aplicarRegrasDepreciacao === true;
+        } else if (filters.filtroDepreciavel === 'nao') {
+          depreciableMatch = asset.aplicarRegrasDepreciacao === false;
+        }
 
-        return searchTermMatch && modelMatch && supplierMatch && invoiceMatch && categoryMatch && locationMatch && dateFromMatch && dateToMatch;
+        return searchTermMatch && modelMatch && supplierMatch && invoiceMatch && categoryMatch && locationMatch && dateFromMatch && dateToMatch && depreciableMatch;
       })
       .map(asset => {
         const category = getCategoryById(asset.categoryId);
         let finalDepreciatedValue = asset.previouslyDepreciatedValue || 0;
         let calculatedCurrentValue = asset.purchaseValue - finalDepreciatedValue;
 
-        if (category) {
+        if (asset.aplicarRegrasDepreciacao && category) {
           const purchaseDateObj = parseISO(asset.purchaseDate);
           if (isValid(purchaseDateObj)) {
             const depreciationStartDate = addDays(purchaseDateObj, 30);
@@ -189,7 +195,6 @@ export default function AssetsPage() {
               const actualPurchaseValue = asset.purchaseValue;
               const residualAmount = actualPurchaseValue * (category.residualValuePercentage / 100);
               const totalDepreciableOverAssetLife = Math.max(0, actualPurchaseValue - residualAmount);
-
               let newlyCalculatedDepreciation = 0;
               const assetAgeInMonthsForSystemDepreciation = differenceInCalendarMonths(today, depreciationStartDate);
 
@@ -213,13 +218,18 @@ export default function AssetsPage() {
                   newlyCalculatedDepreciation = monthlyDepreciationAmount * assetAgeInMonthsForSystemDepreciation;
                 }
               }
-
               const combinedDepreciation = (asset.previouslyDepreciatedValue || 0) + newlyCalculatedDepreciation;
               finalDepreciatedValue = Math.max(0, Math.min(combinedDepreciation, totalDepreciableOverAssetLife));
               calculatedCurrentValue = actualPurchaseValue - finalDepreciatedValue;
             }
           }
+        } else if (!asset.aplicarRegrasDepreciacao) {
+           // Se não aplicar regras, o valor depreciado é apenas o informado anteriormente
+           // e o valor atual é o de compra menos essa depreciação anterior.
+           finalDepreciatedValue = asset.previouslyDepreciatedValue || 0;
+           calculatedCurrentValue = asset.purchaseValue - finalDepreciatedValue;
         }
+
         return {
           ...asset,
           depreciatedValue: finalDepreciatedValue,
@@ -253,6 +263,7 @@ export default function AssetsPage() {
       'Categoria': asset.categoryName,
       'Fornecedor': asset.supplierName,
       'Local Alocado': asset.locationName || 'N/A',
+      'Depreciável?': asset.aplicarRegrasDepreciacao ? 'Sim' : 'Não', // Nova coluna
       'Valor Compra': asset.purchaseValue,
       'Valor Já Depreciado (Inicial)': asset.previouslyDepreciatedValue || 0,
       'Valor Depreciado Total': asset.depreciatedValue,
@@ -280,6 +291,7 @@ export default function AssetsPage() {
       category: asset.categoryName,
       supplier: asset.supplierName,
       location: asset.locationName || 'N/A',
+      aplicarRegrasDepreciacao: asset.aplicarRegrasDepreciacao, // Incluir para PDF
       purchaseValue: asset.purchaseValue,
       previouslyDepreciatedValue: asset.previouslyDepreciatedValue || 0,
       depreciatedValue: asset.depreciatedValue,
@@ -361,8 +373,8 @@ export default function AssetsPage() {
             data={assetsWithCalculatedValues}
             rowSelection={rowSelection}
             onRowSelectionChange={setRowSelection}
-            columnVisibility={columnVisibility} // Passar o estado de visibilidade
-            onColumnVisibilityChange={setColumnVisibility} // Passar a função para atualizar
+            columnVisibility={columnVisibility} 
+            onColumnVisibilityChange={setColumnVisibility} 
           />
         </CardContent>
         {(assetsWithCalculatedValues.length > 0 || hasSelectedItems) && (

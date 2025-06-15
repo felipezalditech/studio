@@ -16,6 +16,7 @@ import { ArrowUpDown, MoreHorizontal, Eye, Edit2, Archive, Trash2 } from "lucide
 import { Checkbox } from "@/components/ui/checkbox";
 import { parseISO, format as formatDateFn } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Badge } from "@/components/ui/badge"; // Importado
 
 export const formatCurrency = (amount: number) => {
   if (typeof amount !== 'number' || isNaN(amount)) {
@@ -83,7 +84,7 @@ export const getColumns = (
     header: ({ column }) => <SortableHeader column={column} title="Nome do ativo" />,
   },
   {
-    accessorKey: "modelName", // Changed from model to modelName
+    accessorKey: "modelName", 
     header: ({ column }) => <SortableHeader column={column} title="Modelo" />,
     cell: ({ row }) => row.original.modelName || "N/A",
   },
@@ -105,6 +106,18 @@ export const getColumns = (
     header: ({ column }) => <SortableHeader column={column} title="Categoria" />,
     cell: ({ row }) => {
       return row.original.categoryName || "Desconhecida";
+    },
+  },
+   {
+    accessorKey: "aplicarRegrasDepreciacao",
+    header: ({ column }) => <SortableHeader column={column} title="Depreciável?" />,
+    cell: ({ row }) => {
+      const isDepreciable = row.getValue("aplicarRegrasDepreciacao");
+      return (
+        <Badge variant={isDepreciable ? "default" : "secondary"}>
+          {isDepreciable ? "Sim" : "Não"}
+        </Badge>
+      );
     },
   },
   {
@@ -187,6 +200,6 @@ export const getColumns = (
       );
     },
     enableSorting: false,
-    enableHiding: true, // A coluna Ações pode ser escondida, mas não a de seleção
+    enableHiding: true, 
   },
 ];

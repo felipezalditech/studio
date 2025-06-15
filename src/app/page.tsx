@@ -104,7 +104,7 @@ export default function DashboardPage() {
       let finalDepreciatedValue = asset.previouslyDepreciatedValue || 0;
       let calculatedCurrentValue = asset.purchaseValue - finalDepreciatedValue;
 
-      if (category) {
+      if (asset.aplicarRegrasDepreciacao && category) { // Verifica aplicarRegrasDepreciacao
         const purchaseDateObj = parseISO(asset.purchaseDate);
         if (isValid(purchaseDateObj)) {
           const depreciationStartDate = addDays(purchaseDateObj, 30);
@@ -140,6 +140,11 @@ export default function DashboardPage() {
             calculatedCurrentValue = actualPurchaseValue - finalDepreciatedValue;
           }
         }
+      } else if (!asset.aplicarRegrasDepreciacao) {
+        // Se não aplicar regras, o valor depreciado é apenas o informado anteriormente
+        // e o valor atual é o de compra menos essa depreciação anterior.
+        finalDepreciatedValue = asset.previouslyDepreciatedValue || 0;
+        calculatedCurrentValue = asset.purchaseValue - finalDepreciatedValue;
       }
       return { ...asset, calculatedCurrentValue, finalDepreciatedValue, categoryName: category?.name || 'Desconhecida', modelName };
     });
@@ -298,7 +303,7 @@ export default function DashboardPage() {
     } as ChartConfig;
 
     const modelBarChartConfig = {
-      count: { label: "Quantidade", color: "hsl(var(--chart-4))" }, // Usando chart-4
+      count: { label: "Quantidade", color: "hsl(var(--chart-4))" }, 
       modelName: { label: "Modelo" },
     } as ChartConfig;
 
@@ -555,7 +560,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 lg:col-span-1"> {/* Ajustado para ocupar 2 colunas em md se for o último ou único na linha md */}
+        <Card className="md:col-span-2 lg:col-span-1"> 
           <CardHeader>
             <CardTitle>Destaques</CardTitle>
             <CardDescription>Informações importantes sobre seus ativos {selectedDateFilter !== 'allTime' && '(no período selecionado)'}.</CardDescription>
@@ -619,5 +624,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-      

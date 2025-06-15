@@ -52,7 +52,7 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  // columnVisibility é agora uma prop
+  
 
   const table = useReactTable({
     data,
@@ -63,23 +63,21 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: onColumnVisibilityChange, // Usar a prop
+    onColumnVisibilityChange: onColumnVisibilityChange, 
     onRowSelectionChange: onRowSelectionChange,
     state: {
       sorting,
       columnFilters,
-      columnVisibility, // Usar a prop
+      columnVisibility, 
       rowSelection,
     },
     initialState: {
         pagination: {
             pageSize: 10,
         },
-        // columnVisibility inicial foi removido daqui, será controlado pela página
     }
   })
 
-  // Mapeamento de IDs de coluna para nomes de exibição amigáveis
   const columnDisplayNames: Record<string, string> = {
     select: "Seleção",
     purchaseDate: "Data compra",
@@ -89,10 +87,11 @@ export function AssetDataTable<TData extends AssetWithCalculatedValues, TValue>(
     invoiceNumber: "Nota fiscal",
     serialNumber: "Nº de série",
     categoryName: "Categoria",
+    aplicarRegrasDepreciacao: "Depreciável?", // Novo
     supplierName: "Fornecedor",
     locationName: "Local alocado",
     purchaseValue: "Valor de compra",
-    previouslyDepreciatedValue: "Valor já depreciado (inicial)", // Novo
+    previouslyDepreciatedValue: "Valor já depreciado (inicial)", 
     depreciatedValue: "Valor depreciado (total)",
     calculatedCurrentValue: "Valor atual",
     actions: "Ações",

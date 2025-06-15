@@ -3,16 +3,17 @@ export interface Asset {
   id: string;
   purchaseDate: string;
   name: string;
-  modelId?: string; // Alterado de model para modelId
+  modelId?: string; 
   invoiceNumber: string;
   serialNumber: string;
   assetTag: string;
-  supplier: string; // Supplier ID
+  supplier: string; 
   categoryId: string;
-  locationId?: string; // Novo: ID do local alocado
+  locationId?: string; 
   purchaseValue: number;
-  currentValue: number;
+  currentValue: number; // Este será recalculado com base na regra de depreciação
   imageDateUris?: string[];
   previouslyDepreciatedValue?: number;
-  additionalInfo?: string; // Novo campo para informações adicionais
+  additionalInfo?: string; 
+  aplicarRegrasDepreciacao: boolean; // Novo campo
 }

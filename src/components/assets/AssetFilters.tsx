@@ -20,13 +20,14 @@ import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox';
 
 export interface AssetFiltersState {
   name: string;
-  supplier: string; // Mantém como string (ID do fornecedor)
+  supplier: string; 
   invoiceNumber: string;
   categoryId: string;
   locationId: string;
   modelId: string;
   purchaseDateFrom: Date | undefined;
   purchaseDateTo: Date | undefined;
+  filtroDepreciavel: 'todos' | 'sim' | 'nao'; // Novo campo
 }
 
 interface AssetFiltersProps {
@@ -47,6 +48,10 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
 
   const handleSelectChange = (name: keyof AssetFiltersState) => (value: string) => {
     setFilters(prev => ({ ...prev, [name]: value === ALL_ITEMS_SENTINEL_VALUE ? "" : value }));
+  };
+
+   const handleDepreciableFilterChange = (value: 'todos' | 'sim' | 'nao') => {
+    setFilters(prev => ({ ...prev, filtroDepreciavel: value }));
   };
 
   const handleComboboxChange = (name: keyof AssetFiltersState) => (value: string | undefined) => {
@@ -81,7 +86,7 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
            <SupplierCombobox
             value={filters.supplier}
             onChange={handleComboboxChange('supplier')}
-            disableQuickAdd={true} // Adicionado aqui
+            disableQuickAdd={true} 
           />
           <Select value={filters.categoryId || ALL_ITEMS_SENTINEL_VALUE} onValueChange={handleSelectChange('categoryId')}>
             <SelectTrigger className="text-sm">
@@ -104,6 +109,16 @@ export function AssetFilters({ filters, setFilters, onResetFilters }: AssetFilte
             onChange={handleComboboxChange('modelId')}
             disableQuickAdd={true}
           />
+           <Select value={filters.filtroDepreciavel} onValueChange={handleDepreciableFilterChange}>
+            <SelectTrigger className="text-sm">
+              <SelectValue placeholder="Depreciável?" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Depreciável: Todos</SelectItem>
+              <SelectItem value="sim">Depreciável: Sim</SelectItem>
+              <SelectItem value="nao">Depreciável: Não</SelectItem>
+            </SelectContent>
+          </Select>
 
           <Popover>
             <PopoverTrigger asChild>

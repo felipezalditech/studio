@@ -7,7 +7,7 @@ import type { Asset } from '@/components/assets/types';
 import { mockAssets as initialMockAssets } from '@/components/assets/data'; 
 import { useCategories } from './CategoryContext';
 import { useLocations } from './LocationContext';
-import { useAssetModels } from './AssetModelContext'; // Import useAssetModels
+import { useAssetModels } from './AssetModelContext'; 
 
 interface AssetContextType {
   assets: Asset[];
@@ -18,7 +18,7 @@ interface AssetContextType {
   setAssets: Dispatch<SetStateAction<Asset[]>>;
   getCategoryNameById: (categoryId: string) => string | undefined;
   getLocationNameById: (locationId?: string) => string | undefined;
-  getAssetModelNameById: (modelId?: string) => string | undefined; // Added
+  getAssetModelNameById: (modelId?: string) => string | undefined; 
 }
 
 const AssetContext = createContext<AssetContextType | undefined>(undefined);
@@ -27,32 +27,41 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
   const [assets, setAssets] = useLocalStorage<Asset[]>('assets', initialMockAssets);
   const { getCategoryById } = useCategories();
   const { getLocationById } = useLocations();
-  const { getAssetModelById: getModelCtxById } = useAssetModels(); // Renamed for clarity
+  const { getAssetModelById: getModelCtxById } = useAssetModels(); 
 
-  const addAsset = (assetData: Omit<Asset, 'id'>) => {
+  const addAsset = (assetData: Omit<Asset, 'id' | 'currentValue'> & { aplicarRegrasDepreciacao: boolean }) => {
+    const currentValue = assetData.aplicarRegrasDepreciacao 
+        ? assetData.purchaseValue - (assetData.previouslyDepreciatedValue || 0) // Valor inicial se depreciavel, lógica mais complexa será na consulta
+        : assetData.purchaseValue - (assetData.previouslyDepreciatedValue || 0); // Se não depreciável, valor atual não muda pelo sistema
+
     const newAsset: Asset = {
       ...assetData,
       id: `asset-${Date.now().toString()}-${Math.random().toString(36).substring(2, 7)}`,
-      modelId: assetData.modelId || undefined, // Use modelId
+      modelId: assetData.modelId || undefined, 
       serialNumber: assetData.serialNumber || undefined,
       imageDateUris: assetData.imageDateUris || [],
       locationId: assetData.locationId || undefined,
       additionalInfo: assetData.additionalInfo || undefined,
       previouslyDepreciatedValue: assetData.previouslyDepreciatedValue || 0, 
-      currentValue: assetData.purchaseValue - (assetData.previouslyDepreciatedValue || 0),
+      currentValue: currentValue, 
+      // aplicarRegrasDepreciacao já vem de assetData
     };
     setAssets(prevAssets => [...prevAssets, newAsset]);
   };
 
   const updateAsset = (updatedAsset: Asset) => {
+     const currentValue = updatedAsset.aplicarRegrasDepreciacao
+        ? updatedAsset.purchaseValue - (updatedAsset.previouslyDepreciatedValue || 0) // Recalcula para consistência, mas o cálculo dinâmico é na consulta
+        : updatedAsset.purchaseValue - (updatedAsset.previouslyDepreciatedValue || 0);
+
     setAssets(prevAssets =>
       prevAssets.map(asset => (asset.id === updatedAsset.id ? { 
         ...asset, 
         ...updatedAsset,
-        modelId: updatedAsset.modelId || undefined, // Use modelId
+        modelId: updatedAsset.modelId || undefined, 
         serialNumber: updatedAsset.serialNumber || undefined, 
         previouslyDepreciatedValue: updatedAsset.previouslyDepreciatedValue || 0,
-        currentValue: updatedAsset.purchaseValue - (updatedAsset.previouslyDepreciatedValue || 0),
+        currentValue: currentValue, // Usar o currentValue calculado
        } : asset))
     );
   };
@@ -76,9 +85,9 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
     return location?.name;
   };
 
-  const getAssetModelNameById = (modelId?: string): string | undefined => { // Added
+  const getAssetModelNameById = (modelId?: string): string | undefined => { 
     if (!modelId) return undefined;
-    const model = getModelCtxById(modelId); // Use renamed function
+    const model = getModelCtxById(modelId); 
     return model?.name;
   };
 
