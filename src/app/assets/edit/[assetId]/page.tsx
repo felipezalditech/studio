@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef, use } from 'react';
+import React, { useEffect, use, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -63,10 +63,10 @@ export default function EditAssetPage() {
   const actualParams = use(paramsFromHook);
   const assetId = actualParams?.assetId as string | undefined;
 
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = React.useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [assetNotFound, setAssetNotFound] = useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [assetNotFound, setAssetNotFound] = React.useState(false);
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
@@ -254,9 +254,9 @@ export default function EditAssetPage() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <Tabs defaultValue="general" className="w-full">
                   <TabsList className="grid w-full grid-cols-3 mb-6">
-                    <TabsTrigger value="general">Dados Gerais</TabsTrigger>
-                    <TabsTrigger value="purchase">Compra e Valores</TabsTrigger>
-                    <TabsTrigger value="others">Outros e Fotos</TabsTrigger>
+                    <TabsTrigger value="general" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-primary/80 hover:text-primary hover:bg-primary/10">Dados Gerais</TabsTrigger>
+                    <TabsTrigger value="purchase" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-primary/80 hover:text-primary hover:bg-primary/10">Compra e Valores</TabsTrigger>
+                    <TabsTrigger value="others" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-primary/80 hover:text-primary hover:bg-primary/10">Outros e Fotos</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="general" className="space-y-6">

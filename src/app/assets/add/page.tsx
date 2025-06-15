@@ -60,7 +60,7 @@ export default function AddAssetPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
@@ -196,9 +196,9 @@ export default function AddAssetPage() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <Tabs defaultValue="general" className="w-full">
                   <TabsList className="grid w-full grid-cols-3 mb-6">
-                    <TabsTrigger value="general">Dados Gerais</TabsTrigger>
-                    <TabsTrigger value="purchase">Compra e Valores</TabsTrigger>
-                    <TabsTrigger value="others">Outros e Fotos</TabsTrigger>
+                    <TabsTrigger value="general" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-primary/80 hover:text-primary hover:bg-primary/10">Dados Gerais</TabsTrigger>
+                    <TabsTrigger value="purchase" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-primary/80 hover:text-primary hover:bg-primary/10">Compra e Valores</TabsTrigger>
+                    <TabsTrigger value="others" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-primary/80 hover:text-primary hover:bg-primary/10">Outros e Fotos</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="general" className="space-y-6">
@@ -615,5 +615,3 @@ export default function AddAssetPage() {
     </>
   );
 }
-
-    
