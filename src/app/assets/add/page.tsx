@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription as CardDesc }
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useToast } from '@/hooks/use-toast';
@@ -207,7 +208,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="aplicarRegrasDepreciacao"
                         render={({ field }) => (
-                          <FormItem className="col-span-full">
+                          <FormItem>
                             <div className="flex items-center space-x-2">
                               <FormLabel className="flex items-center">Depreciável? *
                                 <TooltipProvider>
@@ -227,11 +228,12 @@ export default function AddAssetPage() {
                                 <Switch
                                   checked={field.value}
                                   onCheckedChange={field.onChange}
+                                  id="aplicarRegrasDepreciacao"
                                 />
                               </FormControl>
-                              <span className="text-sm text-muted-foreground">
+                              <label htmlFor="aplicarRegrasDepreciacao" className="text-sm text-muted-foreground cursor-pointer">
                                 {field.value ? "Sim" : "Não"}
-                              </span>
+                              </label>
                             </div>
                             <FormMessage />
                           </FormItem>
