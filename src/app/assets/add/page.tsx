@@ -33,7 +33,7 @@ import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox
 const MAX_PHOTOS = 10;
 
 const assetFormSchema = z.object({
-  aplicarRegrasDepreciacao: z.boolean().default(true),
+  aplicarRegrasDepreciacao: z.boolean({ required_error: "O campo 'Depreciável?' é obrigatório." }),
   name: z.string().min(1, "Nome do ativo é obrigatório."),
   modelId: z.string().optional(),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
@@ -208,7 +208,7 @@ export default function AddAssetPage() {
                         render={({ field }) => (
                           <FormItem>
                             <div className="flex items-center">
-                              <FormLabel>Depreciável?</FormLabel>
+                              <FormLabel>Depreciável? *</FormLabel>
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -223,6 +223,7 @@ export default function AddAssetPage() {
                             <Select
                               onValueChange={(value) => field.onChange(value === 'true')}
                               value={field.value ? 'true' : 'false'}
+                              defaultValue={field.value ? 'true' : 'false'}
                             >
                               <FormControl>
                                 <SelectTrigger>
