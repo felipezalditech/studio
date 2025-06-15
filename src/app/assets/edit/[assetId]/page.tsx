@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, use, useRef } from 'react';
+import React, { useEffect, use, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -10,11 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as CardDesc } from '@/components/ui/card';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useToast } from '@/hooks/use-toast';
@@ -63,10 +64,10 @@ export default function EditAssetPage() {
   const actualParams = use(paramsFromHook);
   const assetId = actualParams?.assetId as string | undefined;
 
-  const [imagePreviews, setImagePreviews] = React.useState<string[]>([]);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [assetNotFound, setAssetNotFound] = React.useState(false);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [assetNotFound, setAssetNotFound] = useState(false);
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
@@ -261,12 +262,12 @@ export default function EditAssetPage() {
 
                   <TabsContent value="general">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-                      <FormField
+                    <FormField
                         control={form.control}
                         name="aplicarRegrasDepreciacao"
                         render={({ field }) => (
-                           <FormItem className="col-span-full">
-                            <div className="flex items-center space-x-2">
+                          <FormItem>
+                            <div className="flex items-center">
                               <FormLabel className="flex items-center">Depreciável? *
                                 <TooltipProvider>
                                   <Tooltip>
@@ -281,15 +282,18 @@ export default function EditAssetPage() {
                                   </Tooltip>
                                 </TooltipProvider>
                               </FormLabel>
+                            </div>
+                            <div className="flex items-center space-x-2">
                               <FormControl>
                                 <Switch
                                   checked={field.value}
                                   onCheckedChange={field.onChange}
+                                  id="aplicarRegrasDepreciacao"
                                 />
                               </FormControl>
-                               <span className="text-sm text-muted-foreground">
+                              <label htmlFor="aplicarRegrasDepreciacao" className="text-sm text-muted-foreground cursor-pointer">
                                 {field.value ? "Sim" : "Não"}
-                              </span>
+                              </label>
                             </div>
                             <FormMessage />
                           </FormItem>
@@ -634,9 +638,6 @@ export default function EditAssetPage() {
                                     disabled={(form.getValues('imageDateUris')?.length || 0) >= MAX_PHOTOS}
                                   />
                                 </FormControl>
-                                <FormDescription>
-                                  Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/{MAX_PHOTOS}.
-                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -663,6 +664,9 @@ export default function EditAssetPage() {
                               </div>
                             </div>
                           )}
+                           <p className="text-sm text-muted-foreground">
+                            Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/{MAX_PHOTOS}.
+                          </p>
                         </div>
                       </div>
                   </TabsContent>
@@ -684,4 +688,3 @@ export default function EditAssetPage() {
     </>
   );
 }
-

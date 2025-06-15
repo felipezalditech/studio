@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as CardDesc } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -204,12 +204,12 @@ export default function AddAssetPage() {
 
                   <TabsContent value="general">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-                      <FormField
+                    <FormField
                         control={form.control}
                         name="aplicarRegrasDepreciacao"
                         render={({ field }) => (
                           <FormItem>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center">
                               <FormLabel className="flex items-center">Depreciável? *
                                 <TooltipProvider>
                                   <Tooltip>
@@ -224,6 +224,8 @@ export default function AddAssetPage() {
                                   </Tooltip>
                                 </TooltipProvider>
                               </FormLabel>
+                            </div>
+                            <div className="flex items-center space-x-2">
                               <FormControl>
                                 <Switch
                                   checked={field.value}
@@ -577,9 +579,6 @@ export default function AddAssetPage() {
                                   disabled={(form.getValues('imageDateUris')?.length || 0) >= MAX_PHOTOS}
                                 />
                               </FormControl>
-                              <FormDescription>
-                                Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/{MAX_PHOTOS}.
-                              </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -606,6 +605,9 @@ export default function AddAssetPage() {
                             </div>
                           </div>
                         )}
+                         <p className="text-sm text-muted-foreground">
+                           Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/{MAX_PHOTOS}.
+                         </p>
                       </div>
                     </div>
                   </TabsContent>
@@ -628,4 +630,3 @@ export default function AddAssetPage() {
     </>
   );
 }
-
