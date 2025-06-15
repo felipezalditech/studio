@@ -43,7 +43,7 @@ export type ExtractNFeDataInput = z.infer<typeof ExtractNFeDataInputSchema>;
 const ExtractNFeDataOutputSchema = z.object({
   supplierCNPJ: z.string().optional().describe("CNPJ do emitente da NF-e (localizado em infNFe.emit.CNPJ). Retorne apenas os números, sem máscara. Se não houver, retorne string vazia."),
   supplierName: z.string().optional().describe("Razão Social ou Nome do emitente da NF-e (localizado em infNFe.emit.xNome). Se não houver, retorne string vazia."),
-  supplierEmail: z.string().email().optional().describe("E-mail do emitente da NF-e (localizado em infNFe.emit.email). Se não houver, omita o campo ou retorne undefined."),
+  supplierEmail: z.string().optional().describe("E-mail do emitente da NF-e (localizado em infNFe.emit.email). Se não houver, omita o campo ou retorne undefined."),
   invoiceNumber: z.string().optional().describe("Número da NF-e (localizado em infNFe.ide.nNF). Se não houver, retorne string vazia."),
   emissionDate: z.string().optional().describe("Data e hora de emissão da NF-e (localizada em infNFe.ide.dhEmi), no formato ISO 8601 (ex: YYYY-MM-DDTHH:MM:SSZ ou YYYY-MM-DDTHH:MM:SS-03:00). Se não houver, retorne string vazia."),
   nfeTotalValue: z.number().optional().describe("Valor Total da NF-e (localizado em infNFe.total.ICMSTot.vNF). Se não houver, retorne 0."),
