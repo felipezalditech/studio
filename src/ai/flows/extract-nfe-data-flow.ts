@@ -13,10 +13,10 @@ import { z } from 'genkit';
 
 // Define o schema para um único produto dentro da NF-e
 const NFeProductSchema = z.object({
-  description: z.string().optional().describe("Descrição do produto (localizada em infNFe.det[nItem].prod.xProd). Se não houver, retorne string vazia."),
-  quantity: z.number().optional().describe("Quantidade comercial (localizada em infNFe.det[nItem].prod.qCom). Se não houver, retorne 0."),
-  unitValue: z.number().optional().describe("Valor unitário de comercialização (localizado em infNFe.det[nItem].prod.vUnCom). Se não houver, retorne 0."),
-  totalValue: z.number().optional().describe("Valor total bruto do produto (localizado em infNFe.det[nItem].prod.vProd). Se não houver, retorne 0."),
+  description: z.string().optional().describe("Descrição do produto (localizada em infNFe.det[nItem].prod.xProd). Se não houver, retorne uma string vazia."),
+  quantity: z.number().optional().describe("Quantidade comercial (localizada em infNFe.det[nItem].prod.qCom). Retorne um número. Se o valor não for encontrado ou não for numérico, retorne 0."),
+  unitValue: z.number().optional().describe("Valor unitário de comercialização (localizado em infNFe.det[nItem].prod.vUnCom). Retorne um número. Se o valor não for encontrado ou não for numérico, retorne 0."),
+  totalValue: z.number().optional().describe("Valor total bruto do produto (localizado em infNFe.det[nItem].prod.vProd). Retorne um número. Se o valor não for encontrado ou não for numérico, retorne 0."),
 });
 export type NFeProduct = z.infer<typeof NFeProductSchema>;
 
@@ -90,10 +90,10 @@ const nfeExtractorPrompt = ai.definePrompt({
     7.  **nfeTotalValue**: Encontre o valor total da NF-e. Geralmente está em \`infNFe > total > ICMSTot > vNF\`. Retorne como número.
     8.  **shippingValue**: Encontre o valor total do frete. Geralmente está em \`infNFe > total > ICMSTot > vFrete\`. Se não existir ou for zero, retorne 0. Retorne como número.
     9.  **products**: Para cada item (tag \`<det>\`) dentro de \`<infNFe>\`:
-        *   **description**: Descrição do produto, de \`det > prod > xProd\`. Retorne como string.
-        *   **quantity**: Quantidade comercial, de \`det > prod > qCom\`. Retorne como número.
-        *   **unitValue**: Valor unitário de comercialização, de \`det > prod > vUnCom\`. Retorne como número.
-        *   **totalValue**: Valor total bruto do produto, de \`det > prod > vProd\`. Retorne como número.
+        *   **description**: Descrição do produto, de \`det > prod > xProd\`. Retorne como string. Se não houver, retorne uma string vazia.
+        *   **quantity**: Quantidade comercial, de \`det > prod > qCom\`. Retorne como número. Se não houver ou não for numérico, retorne 0.
+        *   **unitValue**: Valor unitário de comercialização, de \`det > prod > vUnCom\`. Retorne como número. Se não houver ou não for numérico, retorne 0.
+        *   **totalValue**: Valor total bruto do produto, de \`det > prod > vProd\`. Retorne como número. Se não houver ou não for numérico, retorne 0.
         Se não houver itens, retorne um array vazio para 'products'.
     10. **supplierAddress**: Extraia o endereço do emitente de \`infNFe > emit > enderEmit\`:
         *   **street**: Logradouro (\`xLgr\`).
