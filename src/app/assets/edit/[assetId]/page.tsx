@@ -9,17 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
-import { Checkbox } from '@/components/ui/checkbox'; // Importado
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription as CardDesc } from '@/components/ui/card'; // Renomeado
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
-import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle, TrendingDown } from 'lucide-react';
+import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -32,9 +31,9 @@ import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox
 const MAX_PHOTOS = 10;
 
 const assetFormSchema = z.object({
-  aplicarRegrasDepreciacao: z.boolean().default(true), // Novo campo
+  aplicarRegrasDepreciacao: z.boolean().default(true),
   name: z.string().min(1, "Nome do ativo é obrigatório."),
-  modelId: z.string().optional(), 
+  modelId: z.string().optional(),
   assetTag: z.string().min(1, "Número de patrimônio é obrigatório."),
   categoryId: z.string().min(1, "Categoria é obrigatória."),
   supplier: z.string().min(1, "Fornecedor é obrigatório."),
@@ -58,9 +57,9 @@ export default function EditAssetPage() {
   const { categories } = useCategories();
   const { toast } = useToast();
   const router = useRouter();
-  
+
   const paramsFromHook = useParams();
-  const actualParams = use(paramsFromHook); 
+  const actualParams = use(paramsFromHook);
   const assetId = actualParams?.assetId as string | undefined;
 
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -136,10 +135,9 @@ export default function EditAssetPage() {
     const assetDataToUpdate: Asset = {
       id: assetId,
       ...data,
-      modelId: data.modelId || undefined, 
+      modelId: data.modelId || undefined,
       purchaseDate: format(data.purchaseDate, 'yyyy-MM-dd'),
-      // currentValue será recalculado no contexto/consulta
-      currentValue: 0, // Placeholder, será definido no contexto
+      currentValue: 0, 
       imageDateUris: data.imageDateUris || [],
       previouslyDepreciatedValue: data.previouslyDepreciatedValue,
       locationId: data.locationId || undefined,
@@ -244,36 +242,39 @@ export default function EditAssetPage() {
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Detalhes do ativo</CardTitle>
-            <CardDescription>Atualize as informações relevantes sobre o ativo.</CardDescription>
+            <CardDesc>Atualize as informações relevantes sobre o ativo.</CardDesc>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <FormField
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 <FormField
                     control={form.control}
                     name="aplicarRegrasDepreciacao"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-muted/30">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            id="aplicarRegrasDepreciacao"
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel htmlFor="aplicarRegrasDepreciacao" className="flex items-center font-semibold cursor-pointer">
-                            <TrendingDown className="mr-2 h-5 w-5 text-primary"/>
-                            Aplicar regras de depreciação para este ativo?
-                          </FormLabel>
-                          <FormDescription>
-                            Desmarque esta opção se o ativo não deve ser depreciado (ex: já totalmente depreciado, controle apenas patrimonial).
-                          </FormDescription>
-                        </div>
+                      <FormItem>
+                        <FormLabel>Depreciável?</FormLabel>
+                        <Select
+                          onValueChange={(value) => field.onChange(value === 'true')}
+                          value={field.value ? 'true' : 'false'}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione Sim ou Não" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="true">Sim</SelectItem>
+                            <SelectItem value="false">Não</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Selecione "Não" se o ativo não deve ser depreciado (ex: já totalmente depreciado, controle apenas patrimonial).
+                        </FormDescription>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <FormField
                     control={form.control}
                     name="name"
@@ -291,7 +292,7 @@ export default function EditAssetPage() {
                   />
                   <FormField
                     control={form.control}
-                    name="modelId" 
+                    name="modelId"
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
