@@ -10,11 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as CardDesc } from '@/components/ui/card';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useToast } from '@/hooks/use-toast';
@@ -265,37 +265,32 @@ export default function EditAssetPage() {
                         control={form.control}
                         name="aplicarRegrasDepreciacao"
                         render={({ field }) => (
-                           <FormItem>
-                            <div className="flex items-center">
-                              <FormLabel>Depreciável? *</FormLabel>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
-                                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Selecione "Não" se o ativo não deve ser depreciado (ex: já totalmente depreciado, controle apenas patrimonial).</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                            <Select
-                              onValueChange={(value) => field.onChange(value === 'true')}
-                              value={field.value ? 'true' : 'false'}
-                              defaultValue={field.value ? 'true' : 'false'}
-                            >
+                           <FormItem className="col-span-full">
+                            <div className="flex items-center space-x-2">
+                              <FormLabel className="flex items-center">Depreciável? *
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Selecione "Não" se o ativo não deve ser depreciado (ex: já totalmente depreciado, controle apenas patrimonial).</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </FormLabel>
                               <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione Sim ou Não" />
-                                </SelectTrigger>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
                               </FormControl>
-                              <SelectContent>
-                                <SelectItem value="true">Sim</SelectItem>
-                                <SelectItem value="false">Não</SelectItem>
-                              </SelectContent>
-                            </Select>
+                               <span className="text-sm text-muted-foreground">
+                                {field.value ? "Sim" : "Não"}
+                              </span>
+                            </div>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -689,3 +684,4 @@ export default function EditAssetPage() {
     </>
   );
 }
+
