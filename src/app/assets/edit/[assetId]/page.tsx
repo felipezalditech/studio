@@ -263,16 +263,51 @@ export default function EditAssetPage() {
                     <TabsTrigger value="others" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-foreground hover:text-primary hover:bg-primary/10">Outros e Fotos</TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="general">
-                    <div className="space-y-6">
-                       <div className="flex flex-row flex-wrap gap-x-6 gap-y-4 items-start">
-                        <FormField
-                          control={form.control}
-                          name="aplicarRegrasDepreciacao"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center mb-1">
-                                <FormLabel>Depreciável? *</FormLabel>
+                  <TabsContent value="general" className="space-y-6">
+                    <div className="flex flex-row flex-wrap gap-x-6 gap-y-4 items-start">
+                      <FormField
+                        control={form.control}
+                        name="aplicarRegrasDepreciacao"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center mb-1">
+                              <FormLabel>Depreciável *</FormLabel>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Selecione "Não" se o ativo não deve ser depreciado (ex: já totalmente depreciado, controle apenas patrimonial).</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                            <FormControl>
+                               <div className="flex items-center space-x-2">
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  id="aplicarRegrasDepreciacao"
+                                />
+                                <label htmlFor="aplicarRegrasDepreciacao" className="text-sm text-muted-foreground cursor-pointer">
+                                  {field.value ? "Sim" : "Não"}
+                                </label>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="arquivado"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center mb-1">
+                              <FormLabel>Arquivar *</FormLabel>
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
@@ -281,210 +316,146 @@ export default function EditAssetPage() {
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>Selecione "Não" se o ativo não deve ser depreciado (ex: já totalmente depreciado, controle apenas patrimonial).</p>
+                                      <p>Marque "Sim" para arquivar o ativo. Ativos arquivados geralmente não são incluídos em cálculos ou relatórios operacionais, mas permanecem registrados para fins históricos.</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                    id="aplicarRegrasDepreciacao"
-                                  />
-                                </FormControl>
-                                <label htmlFor="aplicarRegrasDepreciacao" className="text-sm text-muted-foreground cursor-pointer">
+                            </div>
+                            <FormControl>
+                               <div className="flex items-center space-x-2">
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  id="arquivado"
+                                />
+                                <label htmlFor="arquivado" className="text-sm text-muted-foreground cursor-pointer">
                                   {field.value ? "Sim" : "Não"}
                                 </label>
                               </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                      <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome do ativo *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Ex: Notebook Dell XPS 15" {...field} />
+                              </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                         <FormField
                           control={form.control}
-                          name="arquivado"
+                          name="modelId"
                           render={({ field }) => (
                             <FormItem>
-                              <div className="flex items-center mb-1">
-                                <FormLabel>Arquivar? *</FormLabel>
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
-                                          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Marque "Sim" para arquivar o ativo. Ativos arquivados geralmente não são incluídos em cálculos ou relatórios operacionais, mas permanecem registrados para fins históricos.</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
+                              <div className="flex items-center">
+                                <FormLabel>Modelo</FormLabel>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Digite para buscar. Se o modelo não existir, a opção para cadastrá-lo aparecerá. Clique no campo para ver todos os modelos.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                    id="arquivado"
-                                  />
-                                </FormControl>
-                                <label htmlFor="arquivado" className="text-sm text-muted-foreground cursor-pointer">
-                                  {field.value ? "Sim" : "Não"}
-                                </label>
-                              </div>
+                              <AssetModelCombobox
+                                value={field.value}
+                                onChange={field.onChange}
+                              />
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                         <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nome do ativo *</FormLabel>
+                          control={form.control}
+                          name="assetTag"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nº de patrimônio *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Ex: ZDI-00123" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="serialNumber"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nº de série</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Ex: SN-ABC123XYZ" {...field} value={field.value ?? ''}/>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="categoryId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center">
+                                <FormLabel>Categoria *</FormLabel>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Cadastre categorias na tela de "Configurações". A categoria define as regras de depreciação se aplicável.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                              <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
-                                  <Input placeholder="Ex: Notebook Dell XPS 15" {...field} />
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Selecione uma categoria" />
+                                  </SelectTrigger>
                                 </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="modelId"
-                            render={({ field }) => (
-                              <FormItem>
-                                <div className="flex items-center">
-                                  <FormLabel>Modelo</FormLabel>
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
-                                          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Digite para buscar. Se o modelo não existir, a opção para cadastrá-lo aparecerá. Clique no campo para ver todos os modelos.</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                </div>
-                                <AssetModelCombobox
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                />
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="assetTag"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nº de patrimônio *</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Ex: ZDI-00123" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="serialNumber"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nº de série</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Ex: SN-ABC123XYZ" {...field} value={field.value ?? ''}/>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="categoryId"
-                            render={({ field }) => (
-                              <FormItem>
-                                <div className="flex items-center">
-                                  <FormLabel>Categoria *</FormLabel>
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
-                                          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Cadastre categorias na tela de "Configurações". A categoria define as regras de depreciação se aplicável.</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                </div>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Selecione uma categoria" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {categories.length === 0 ? (
-                                      <SelectItem value="no-categories" disabled>Nenhuma categoria cadastrada</SelectItem>
-                                    ) : (
-                                      categories.map((category) => (
-                                        <SelectItem key={category.id} value={category.id}>
-                                          {category.name}
-                                        </SelectItem>
-                                      ))
-                                    )}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                                <SelectContent>
+                                  {categories.length === 0 ? (
+                                    <SelectItem value="no-categories" disabled>Nenhuma categoria cadastrada</SelectItem>
+                                  ) : (
+                                    categories.map((category) => (
+                                      <SelectItem key={category.id} value={category.id}>
+                                        {category.name}
+                                      </SelectItem>
+                                    ))
+                                  )}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                          <FormField
-                            control={form.control}
-                            name="supplier"
-                            render={({ field }) => (
-                              <FormItem>
-                                <div className="flex items-center">
-                                    <FormLabel>Fornecedor *</FormLabel>
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
-                                            <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>Digite para buscar. Se o fornecedor não existir, a opção para cadastrá-lo aparecerá. Clique no campo para ver todos os fornecedores.</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  </div>
-                                <SupplierCombobox
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                />
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="locationId"
-                            render={({ field }) => (
-                              <FormItem className="md:col-span-2">
-                                <div className="flex items-center">
-                                  <FormLabel>Local alocado</FormLabel>
+                        <FormField
+                          control={form.control}
+                          name="supplier"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center">
+                                  <FormLabel>Fornecedor *</FormLabel>
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
@@ -493,24 +464,51 @@ export default function EditAssetPage() {
                                         </Button>
                                       </TooltipTrigger>
                                       <TooltipContent>
-                                        <p>Digite para buscar ou clique para ver opções. Se não encontrar, pode cadastrar um novo local. Cadastre locais na tela de "Configurações".</p>
+                                        <p>Digite para buscar. Se o fornecedor não existir, a opção para cadastrá-lo aparecerá. Clique no campo para ver todos os fornecedores.</p>
                                       </TooltipContent>
                                     </Tooltip>
                                   </TooltipProvider>
                                 </div>
-                                <LocationCombobox
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                />
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                      </div>
+                              <SupplierCombobox
+                                value={field.value}
+                                onChange={field.onChange}
+                              />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="locationId"
+                          render={({ field }) => (
+                            <FormItem className="md:col-span-2">
+                              <div className="flex items-center">
+                                <FormLabel>Local alocado</FormLabel>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Digite para buscar ou clique para ver opções. Se não encontrar, pode cadastrar um novo local. Cadastre locais na tela de "Configurações".</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                              <LocationCombobox
+                                value={field.value}
+                                onChange={field.onChange}
+                              />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="purchase">
+                  <TabsContent value="purchase" className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                       <FormField
                         control={form.control}
@@ -611,7 +609,7 @@ export default function EditAssetPage() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="others">
+                  <TabsContent value="others" className="space-y-6">
                      <div className="grid grid-cols-1 gap-6 items-start">
                         <FormField
                             control={form.control}
