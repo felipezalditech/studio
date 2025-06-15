@@ -18,7 +18,6 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
-import { useSuppliers } from '@/contexts/SupplierContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle, FileText, AlertTriangle } from 'lucide-react';
@@ -30,8 +29,9 @@ import Image from 'next/image';
 import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox';
 import { LocationCombobox } from '@/components/locations/LocationCombobox';
 import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox';
-import { extractNFeData, type ExtractNFeDataOutput } from '@/ai/flows/extract-nfe-data-flow';
+import { extractNFeData, type ExtractNFeDataOutput, type NFeProduct } from '@/ai/flows/extract-nfe-data-flow';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { NFePreviewDialog } from '@/components/nfe/NFePreviewDialog';
 
 
 const MAX_PHOTOS = 10;
@@ -62,7 +62,6 @@ type AssetFormValues = z.infer<typeof assetFormSchema>;
 export default function AddAssetPage() {
   const { addAsset } = useAssets();
   const { categories } = useCategories();
-  const { suppliers, getSupplierByDocument } = useSuppliers();
   const { toast } = useToast();
   const router = useRouter();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -70,6 +69,9 @@ export default function AddAssetPage() {
   const nfeFileInputRef = useRef<HTMLInputElement>(null);
   const [isProcessingNFe, setIsProcessingNFe] = useState(false);
   const [nfeImportError, setNfeImportError] = useState<string | null>(null);
+  const [extractedNFeData, setExtractedNFeData] = useState<ExtractNFeDataOutput | null>(null);
+  const [isNFePreviewOpen, setIsNFePreviewOpen] = useState(false);
+
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
@@ -194,76 +196,12 @@ export default function AddAssetPage() {
         const xmlContent = e.target?.result as string;
         try {
           const extractedData: ExtractNFeDataOutput = await extractNFeData(xmlContent);
-          
-          if (extractedData.supplierCNPJ) {
-            const supplier = getSupplierByDocument(extractedData.supplierCNPJ);
-            if (supplier) {
-              form.setValue('supplier', supplier.id);
-            } else {
-              toast({
-                title: "Fornecedor não encontrado",
-                description: `O fornecedor ${extractedData.supplierName || ''} (CNPJ: ${extractedData.supplierCNPJ}) não foi encontrado. Cadastre-o manualmente ou verifique o CNPJ.`,
-                variant: "default",
-                duration: 8000,
-              });
-              form.setValue('supplier', ''); 
-            }
-          } else {
-            form.setValue('supplier', '');
-          }
-
-          if (extractedData.products && extractedData.products.length > 0) {
-            const firstProduct = extractedData.products[0];
-            // Adicionada verificação para garantir que firstProduct é um objeto antes de acessar suas propriedades
-            if (firstProduct && typeof firstProduct === 'object') { 
-              if (firstProduct.description) {
-                form.setValue('name', firstProduct.description);
-              }
-              if (firstProduct.totalValue !== undefined) { // totalValue pode ser 0
-                form.setValue('purchaseValue', firstProduct.totalValue);
-              }
-            }
-            if (extractedData.products.length > 1) {
-              toast({
-                title: "Múltiplos produtos na NF-e",
-                description: `Esta NF-e contém ${extractedData.products.length} produtos. Os dados do primeiro produto ("${firstProduct?.description || 'Produto 1'}") foram usados para preencher o formulário. Os demais podem ser cadastrados manualmente.`,
-                variant: "default",
-                duration: 10000, // Aumentado para dar tempo de ler
-              });
-            }
-          } else if (extractedData.nfeTotalValue) { // Se não há produtos detalhados, mas há valor total
-            form.setValue('purchaseValue', extractedData.nfeTotalValue);
-            toast({
-                title: "Valor da NF-e utilizado",
-                description: "Nenhum produto detalhado foi extraído. O valor total da NF-e foi usado como valor de compra do ativo.",
-                variant: "default",
-                duration: 8000,
-            });
-          }
-
-
-          if (extractedData.invoiceNumber) form.setValue('invoiceNumber', extractedData.invoiceNumber);
-          
-          if (extractedData.emissionDate) {
-            const parsedDate = parseISO(extractedData.emissionDate);
-            if (isValidDate(parsedDate)) {
-              form.setValue('purchaseDate', parsedDate);
-            }
-          }
-          
+          setExtractedNFeData(extractedData);
+          setIsNFePreviewOpen(true); // Abre o modal de pré-visualização
           toast({
-            title: "Dados da NF-e importados!",
-            description: "Verifique os campos preenchidos e complete o restante.",
+            title: "NF-e carregada para pré-visualização",
+            description: "Selecione os itens para importar.",
           });
-
-          if (extractedData.shippingValue && extractedData.shippingValue > 0) {
-            toast({
-              title: "Informação de Frete",
-              description: `Esta NF-e contém um valor de frete de R$ ${extractedData.shippingValue.toFixed(2)}. Considere adicionar este valor ao custo do ativo, se aplicável.`,
-              variant: "default",
-              duration: 9000,
-            });
-          }
 
         } catch (error) {
           console.error("Erro ao processar NF-e:", error);
@@ -274,7 +212,7 @@ export default function AddAssetPage() {
           setNfeImportError(errorMessage);
           toast({
             title: "Erro na Importação da NF-e",
-            description: errorMessage.substring(0,150), // Limita tamanho da descrição no toast
+            description: errorMessage.substring(0,150),
             variant: "destructive",
             duration: 10000,
           });
@@ -297,6 +235,57 @@ export default function AddAssetPage() {
         nfeFileInputRef.current.value = '';
       }
     }
+  };
+
+  const handleImportSelectedItems = (selectedProducts: NFeProduct[], supplierId: string | undefined, nfeDetails: ExtractNFeDataOutput) => {
+    if (selectedProducts.length === 0) {
+      toast({ title: "Nenhum item selecionado", description: "Nenhum item foi selecionado para importação.", variant: "default" });
+      setIsNFePreviewOpen(false);
+      return;
+    }
+
+    const firstProductToImport = selectedProducts[0];
+
+    if (supplierId) {
+      form.setValue('supplier', supplierId);
+    } else {
+      toast({ title: "Fornecedor não definido", description: "Não foi possível definir o fornecedor. Verifique os dados da NF-e.", variant: "destructive" });
+      form.setValue('supplier', '');
+    }
+    
+    if (firstProductToImport.description) {
+      form.setValue('name', firstProductToImport.description);
+    }
+    if (firstProductToImport.totalValue !== undefined) {
+      form.setValue('purchaseValue', firstProductToImport.totalValue);
+    }
+    
+    if (nfeDetails.invoiceNumber) {
+      form.setValue('invoiceNumber', nfeDetails.invoiceNumber);
+    }
+    if (nfeDetails.emissionDate) {
+      const parsedDate = parseISO(nfeDetails.emissionDate);
+      if (isValidDate(parsedDate)) {
+        form.setValue('purchaseDate', parsedDate);
+      }
+    }
+
+    let toastMessage = `Dados do produto "${firstProductToImport.description}" carregados no formulário.`;
+    if (selectedProducts.length > 1) {
+      toastMessage += ` ${selectedProducts.length -1} outro(s) item(ns) selecionado(s) pode(m) ser cadastrado(s) em seguida.`;
+    }
+    if (nfeDetails.shippingValue && nfeDetails.shippingValue > 0) {
+      toastMessage += ` Lembre-se de considerar o valor do frete (R$ ${nfeDetails.shippingValue.toFixed(2)}) no custo do ativo, se aplicável.`;
+    }
+
+    toast({
+      title: "Item(s) pronto(s) para cadastro!",
+      description: toastMessage,
+      duration: 10000,
+    });
+    
+    setIsNFePreviewOpen(false); // Fecha o modal após a "importação" para o formulário
+    // Poderia haver uma lógica aqui para lidar com múltiplos itens (ex: guardar em um estado para cadastros sequenciais)
   };
 
 
@@ -810,6 +799,15 @@ export default function AddAssetPage() {
           </CardContent>
         </Card>
       </div>
+      {extractedNFeData && (
+        <NFePreviewDialog
+          open={isNFePreviewOpen}
+          onOpenChange={setIsNFePreviewOpen}
+          nfeData={extractedNFeData}
+          onImportItems={handleImportSelectedItems}
+        />
+      )}
     </>
   );
 }
+
