@@ -12,23 +12,27 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as CardDesc } from '@/components/ui/card';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
+import { useSuppliers } from '@/contexts/SupplierContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle } from 'lucide-react';
+import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle, FileText, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, parseISO, isValid as isValidDate } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Asset } from '@/components/assets/types';
 import Image from 'next/image';
 import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox';
 import { LocationCombobox } from '@/components/locations/LocationCombobox';
 import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox';
+import { extractNFeData, type ExtractNFeDataOutput } from '@/ai/flows/extract-nfe-data-flow';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 
 const MAX_PHOTOS = 10;
 
@@ -58,10 +62,14 @@ type AssetFormValues = z.infer<typeof assetFormSchema>;
 export default function AddAssetPage() {
   const { addAsset } = useAssets();
   const { categories } = useCategories();
+  const { suppliers, getSupplierByDocument } = useSuppliers();
   const { toast } = useToast();
   const router = useRouter();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const nfeFileInputRef = useRef<HTMLInputElement>(null);
+  const [isProcessingNFe, setIsProcessingNFe] = useState(false);
+  const [nfeImportError, setNfeImportError] = useState<string | null>(null);
 
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetFormSchema),
@@ -176,6 +184,103 @@ export default function AddAssetPage() {
     fieldOnChange(currentUris);
   };
 
+  const handleNFeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === "text/xml") {
+      setIsProcessingNFe(true);
+      setNfeImportError(null);
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const xmlContent = e.target?.result as string;
+        try {
+          const extractedData: ExtractNFeDataOutput = await extractNFeData(xmlContent);
+          
+          if (extractedData.supplierCNPJ) {
+            const supplier = getSupplierByDocument(extractedData.supplierCNPJ);
+            if (supplier) {
+              form.setValue('supplier', supplier.id);
+            } else {
+              toast({
+                title: "Fornecedor não encontrado",
+                description: `O fornecedor ${extractedData.supplierName || ''} (CNPJ: ${extractedData.supplierCNPJ}) não foi encontrado. Cadastre-o manualmente.`,
+                variant: "default",
+                duration: 7000,
+              });
+              form.setValue('supplier', ''); 
+            }
+          } else {
+            form.setValue('supplier', '');
+          }
+
+          if (extractedData.products && extractedData.products.length > 0 && extractedData.products[0]) {
+            const firstProduct = extractedData.products[0];
+            if (firstProduct.description) form.setValue('name', firstProduct.description);
+            if (firstProduct.totalValue !== undefined) form.setValue('purchaseValue', firstProduct.totalValue);
+            // Considerar preencher outros campos como serialNumber se disponível na NF-e e no schema de output
+          }
+
+          if (extractedData.invoiceNumber) form.setValue('invoiceNumber', extractedData.invoiceNumber);
+          
+          if (extractedData.emissionDate) {
+            const parsedDate = parseISO(extractedData.emissionDate);
+            if (isValidDate(parsedDate)) {
+              form.setValue('purchaseDate', parsedDate);
+            }
+          }
+          
+          toast({
+            title: "Dados da NF-e importados!",
+            description: "Verifique os campos preenchidos e complete o restante.",
+          });
+
+          if (extractedData.shippingValue && extractedData.shippingValue > 0) {
+            toast({
+              title: "Informação de Frete",
+              description: `Esta NF-e contém um valor de frete de R$ ${extractedData.shippingValue.toFixed(2)}. Considere adicionar este valor ao custo do ativo, se aplicável.`,
+              variant: "default",
+              duration: 9000,
+            });
+          }
+          if ((!extractedData.products || extractedData.products.length === 0) && extractedData.nfeTotalValue) {
+             form.setValue('purchaseValue', extractedData.nfeTotalValue);
+             toast({
+                title: "Valor da NF-e",
+                description: "Nenhum produto detalhado foi extraído, o valor total da NF-e foi usado como valor de compra.",
+                variant: "default",
+             });
+          }
+
+
+        } catch (error) {
+          console.error("Erro ao processar NF-e:", error);
+          setNfeImportError("Não foi possível processar o XML da NF-e. Verifique o arquivo ou tente novamente.");
+          toast({
+            title: "Erro na Importação da NF-e",
+            description: "Não foi possível extrair os dados do XML. Verifique o console para mais detalhes.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsProcessingNFe(false);
+          if (nfeFileInputRef.current) {
+            nfeFileInputRef.current.value = ''; // Limpa o input file
+          }
+        }
+      };
+      reader.readAsText(file);
+    } else if (file) {
+      setNfeImportError("Formato de arquivo inválido. Por favor, selecione um arquivo .xml.");
+      toast({
+        title: "Arquivo Inválido",
+        description: "Por favor, selecione um arquivo XML.",
+        variant: "destructive",
+      });
+      if (nfeFileInputRef.current) {
+        nfeFileInputRef.current.value = '';
+      }
+    }
+  };
+
+
   return (
     <>
       <div className="space-y-6">
@@ -184,7 +289,27 @@ export default function AddAssetPage() {
             <h1 className="text-3xl font-bold">Adicionar novo ativo</h1>
             <p className="text-muted-foreground">Preencha os campos abaixo para cadastrar um novo ativo.</p>
           </div>
+           <div>
+            <Button onClick={() => nfeFileInputRef.current?.click()} disabled={isProcessingNFe} variant="outline">
+              <FileText className="mr-2 h-4 w-4" />
+              {isProcessingNFe ? "Processando NF-e..." : "Importar Dados da NF-e (XML)"}
+            </Button>
+            <Input 
+              type="file" 
+              accept=".xml" 
+              ref={nfeFileInputRef} 
+              onChange={handleNFeUpload} 
+              className="hidden" 
+            />
+          </div>
         </div>
+        {nfeImportError && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Erro na importação</AlertTitle>
+            <AlertDescription>{nfeImportError}</AlertDescription>
+          </Alert>
+        )}
 
         <Card className="shadow-lg">
           <CardHeader>
@@ -656,7 +781,7 @@ export default function AddAssetPage() {
                   <Button type="button" variant="outline" onClick={() => router.back()}>
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                  <Button type="submit" disabled={form.formState.isSubmitting || isProcessingNFe}>
                     <Save className="mr-2 h-4 w-4" />
                     {form.formState.isSubmitting ? "Salvando..." : "Salvar ativo"}
                   </Button>

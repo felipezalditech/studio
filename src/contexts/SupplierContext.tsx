@@ -37,6 +37,7 @@ interface SupplierContextType {
   updateSupplier: (supplierData: Supplier) => void;
   deleteSupplier: (supplierId: string) => void;
   getSupplierById: (supplierId: string) => Supplier | undefined;
+  getSupplierByDocument: (document: string) => Supplier | undefined; // Nova função
   setSuppliers: Dispatch<SetStateAction<Supplier[]>>;
 }
 
@@ -129,8 +130,16 @@ export const SupplierProvider = ({ children }: { children: ReactNode }) => {
     return suppliers.find(s => s.id === supplierId);
   };
 
+  const getSupplierByDocument = (document: string): Supplier | undefined => {
+    const cleanedDocument = document.replace(/\D/g, ''); // Remove non-digits
+    return suppliers.find(s => 
+      (s.cnpj && s.cnpj.replace(/\D/g, '') === cleanedDocument) ||
+      (s.cpf && s.cpf.replace(/\D/g, '') === cleanedDocument)
+    );
+  };
+
   return (
-    <SupplierContext.Provider value={{ suppliers, addSupplier, updateSupplier, deleteSupplier, getSupplierById, setSuppliers }}>
+    <SupplierContext.Provider value={{ suppliers, addSupplier, updateSupplier, deleteSupplier, getSupplierById, getSupplierByDocument, setSuppliers }}>
       {children}
     </SupplierContext.Provider>
   );
