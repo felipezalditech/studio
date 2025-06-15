@@ -253,7 +253,19 @@ export default function EditAssetPage() {
                     name="aplicarRegrasDepreciacao"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Depreciável?</FormLabel>
+                        <div className="flex items-center">
+                          <FormLabel>Depreciável?</FormLabel>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Selecione "Não" se o ativo não deve ser depreciado (ex: já totalmente depreciado, controle apenas patrimonial).</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                         <Select
                           onValueChange={(value) => field.onChange(value === 'true')}
                           value={field.value ? 'true' : 'false'}
@@ -268,9 +280,6 @@ export default function EditAssetPage() {
                             <SelectItem value="false">Não</SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormDescription>
-                          Selecione "Não" se o ativo não deve ser depreciado (ex: já totalmente depreciado, controle apenas patrimonial).
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
