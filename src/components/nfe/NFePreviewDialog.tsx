@@ -33,17 +33,21 @@ interface ItemActionQuantities {
   patrimonyQty: number;
 }
 
+interface NFePreviewDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  nfeData: ExtractNFeDataOutput | null;
+  onImportItems: (tasks: AssetImportTask[], supplierId: string | undefined, nfeDetails: ExtractNFeDataOutput) => void;
+}
+
+
 export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }: NFePreviewDialogProps) {
   const [supplierOnRecord, setSupplierOnRecord] = useState<Supplier | null | undefined>(undefined);
   const [isSupplierFormOpen, setIsSupplierFormOpen] = useState(false);
   
-  // Estado para os produtos que serão exibidos e potencialmente modificados (exclusão)
   const [displayableProducts, setDisplayableProducts] = useState<NFeProduct[]>([]);
-  // Estado para rastrear as quantidades de "Depreciável" e "Patrimônio" para cada item em displayableProducts
   const [itemActions, setItemActions] = useState<Map<number, ItemActionQuantities>>(new Map());
-  // Estado para os itens selecionados para exclusão
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
-  // Estado para o diálogo de confirmação de exclusão
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
 
 
@@ -62,7 +66,6 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
         setSupplierOnRecord(null);
       }
 
-      // Inicializa/reseta itemActions e selectedItems para os produtos atuais
       const initialActions = new Map<number, ItemActionQuantities>();
       products.forEach((_, index) => {
         initialActions.set(index, { depreciableQty: 0, patrimonyQty: 0 });
@@ -71,7 +74,6 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
       setSelectedItems(new Set());
 
     } else if (!open) {
-      // Reset states when dialog closes to ensure fresh state on reopen
       setDisplayableProducts([]);
       setItemActions(new Map());
       setSelectedItems(new Set());
@@ -227,7 +229,6 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     const newDisplayableProducts = displayableProducts.filter((_, index) => !selectedItems.has(index));
     setDisplayableProducts(newDisplayableProducts);
   
-    // Reset itemActions for the remaining products
     const newActions = new Map<number, ItemActionQuantities>();
     newDisplayableProducts.forEach((_, index) => {
       newActions.set(index, { depreciableQty: 0, patrimonyQty: 0 });
@@ -235,7 +236,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     setItemActions(newActions);
     
     toast({ title: "Itens removidos", description: `${selectedItems.size} item(ns) foram removidos da lista de importação.` });
-    setSelectedItems(new Set()); // Clear selection
+    setSelectedItems(new Set());
     setIsConfirmDeleteDialogOpen(false);
   };
 
@@ -316,7 +317,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
                 </Button>
             )}
           </div>
-          <ScrollArea className="flex-grow border rounded-md">
+          <ScrollArea className="flex-grow border rounded-md min-h-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -435,5 +436,3 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     </>
   );
 }
-
-    
