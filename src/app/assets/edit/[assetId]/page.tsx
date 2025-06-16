@@ -712,12 +712,13 @@ export default function EditAssetPage() {
                                   type="button"
                                   variant="outline"
                                   onClick={() => invoiceFileInputRef.current?.click()}
+                                  className="h-10"
                                 >
                                   <UploadCloud className="mr-2 h-4 w-4" />
                                   Selecionar arquivo
                                 </Button>
                               ) : (
-                                <div className="flex items-center space-x-2 p-2 border rounded-md bg-muted/30">
+                                <div className="flex items-center space-x-2 p-2 border rounded-md bg-muted/30 h-10">
                                   <FileText className="h-5 w-5 text-muted-foreground" />
                                   <span className="text-sm text-foreground truncate flex-1" title={watchedInvoiceFileName}>
                                     {watchedInvoiceFileName}
