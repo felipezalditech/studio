@@ -859,7 +859,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="invoiceFileDataUri" 
                         render={({ field }) => (
-                          <FormItem className="md:col-span-3 space-y-0.5">
+                          <FormItem className="space-y-0.5"> {/* Removido md:col-span-3 */}
                             <div className="flex items-center h-8">
                               <FormLabel className="flex items-center">
                                 <Paperclip className="mr-2 h-5 w-5" />
