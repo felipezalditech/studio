@@ -712,7 +712,7 @@ export default function EditAssetPage() {
                                   type="button"
                                   variant="outline"
                                   onClick={() => invoiceFileInputRef.current?.click()}
-                                  className="h-10"
+                                  className="h-10 w-full"
                                 >
                                   <UploadCloud className="mr-2 h-4 w-4" />
                                   Selecionar arquivo

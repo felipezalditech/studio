@@ -328,7 +328,7 @@ export default function AddAssetPage() {
   const handleNFePreviewDialogClose = (openState: boolean) => {
     setIsNFePreviewOpen(openState);
     if (!openState) { 
-      if (assetImportQueue.length === 0) { // Only reset if queue is empty (meaning user cancelled/closed without importing)
+      if (assetImportQueue.length === 0) { 
         setExtractedNFeData(null);
         setCurrentSupplierIdForQueue(undefined);
         if (nfeFileInputRef.current) {
@@ -881,7 +881,7 @@ export default function AddAssetPage() {
                                   type="button"
                                   variant="outline"
                                   onClick={() => invoiceFileInputRef.current?.click()}
-                                  className="h-10"
+                                  className="h-10 w-full"
                                 >
                                   <UploadCloud className="mr-2 h-4 w-4" />
                                   Selecionar arquivo
