@@ -37,6 +37,8 @@ import {
   MapPin,
   PlusCircle,
   Shapes, // Ícone para Modelos de Ativos
+  FileCog, // Ícone para Regras de Importação
+  Building2, // Ícone para Dados da Empresa (substituindo Settings genérico)
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -83,7 +85,15 @@ const menuItems: MenuItemType[] = [
   },
   { href: '/reports', label: 'Relatórios', icon: BarChart3 },
   { href: '/users', label: 'Gerenciar usuários', icon: UsersRound },
-  { href: '/settings', label: 'Configurações', icon: Settings },
+  {
+    label: 'Configurações',
+    icon: Settings, // Ícone pai genérico
+    isSubmenuParent: true,
+    subItems: [
+      { href: '/settings', label: 'Dados da Empresa', icon: Building2 },
+      { href: '/settings/import-rules', label: 'Regras de Importação', icon: FileCog },
+    ],
+  },
 ];
 
 const getInitials = (name: string) => {
