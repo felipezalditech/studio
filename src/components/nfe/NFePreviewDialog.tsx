@@ -5,11 +5,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import type { z } from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input'; // Importado
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as UITableFooter } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Building, CheckCircle, Info, PlusCircle, ShoppingCart, Tag } from 'lucide-react';
+import { Building, CheckCircle, Info, PlusCircle, ShoppingCart, Tag, Trash2 } from 'lucide-react';
 import type { ExtractNFeDataOutput, NFeProduct } from '@/ai/flows/extract-nfe-data-flow';
 import type { Supplier, Endereco } from '@/contexts/SupplierContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
@@ -17,22 +17,15 @@ import { SupplierFormDialog, type SupplierFormValues } from '@/components/suppli
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/components/assets/columns';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { maskCEP, maskCNPJ } from '@/lib/utils';
-// ConfirmationDialog não é mais usado aqui para exclusão de itens da NFe preview
-// import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 
 
 export interface AssetImportTask {
   nfeProduct: NFeProduct;
   assetType: 'depreciable' | 'patrimony';
   nfeDetails: ExtractNFeDataOutput;
-}
-
-interface NFePreviewDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  nfeData: ExtractNFeDataOutput | null;
-  onImportItems: (tasks: AssetImportTask[], supplierId: string | undefined, nfeDetails: ExtractNFeDataOutput) => void;
 }
 
 interface ItemActionQuantities {
@@ -43,27 +36,46 @@ interface ItemActionQuantities {
 export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }: NFePreviewDialogProps) {
   const [supplierOnRecord, setSupplierOnRecord] = useState<Supplier | null | undefined>(undefined);
   const [isSupplierFormOpen, setIsSupplierFormOpen] = useState(false);
+  
+  // Estado para os produtos que serão exibidos e potencialmente modificados (exclusão)
+  const [displayableProducts, setDisplayableProducts] = useState<NFeProduct[]>([]);
+  // Estado para rastrear as quantidades de "Depreciável" e "Patrimônio" para cada item em displayableProducts
   const [itemActions, setItemActions] = useState<Map<number, ItemActionQuantities>>(new Map());
+  // Estado para os itens selecionados para exclusão
+  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+  // Estado para o diálogo de confirmação de exclusão
+  const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
+
 
   const { getSupplierByDocument } = useSuppliers();
   const { toast } = useToast();
 
-  const displayableProducts = useMemo(() => nfeData?.products || [], [nfeData]);
-
   useEffect(() => {
     if (open && nfeData) {
+      const products = nfeData.products || [];
+      setDisplayableProducts(products);
+
       if (nfeData.supplierCNPJ) {
         const foundSupplier = getSupplierByDocument(nfeData.supplierCNPJ.replace(/\D/g, ''));
         setSupplierOnRecord(foundSupplier || null);
       } else {
         setSupplierOnRecord(null);
       }
-      // Inicializa/reseta itemActions para os produtos atuais
+
+      // Inicializa/reseta itemActions e selectedItems para os produtos atuais
       const initialActions = new Map<number, ItemActionQuantities>();
-      (nfeData.products || []).forEach((_, index) => {
+      products.forEach((_, index) => {
         initialActions.set(index, { depreciableQty: 0, patrimonyQty: 0 });
       });
       setItemActions(initialActions);
+      setSelectedItems(new Set());
+
+    } else if (!open) {
+      // Reset states when dialog closes to ensure fresh state on reopen
+      setDisplayableProducts([]);
+      setItemActions(new Map());
+      setSelectedItems(new Set());
+      setSupplierOnRecord(undefined);
     }
   }, [open, nfeData, getSupplierByDocument]);
 
@@ -90,7 +102,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
       } else { // patrimonyQty
         updatedAction.patrimonyQty = Math.min(numValue, (product.quantity || 0) - updatedAction.depreciableQty);
       }
-      // Garante que a soma não exceda a quantidade original
+      
       if (updatedAction.depreciableQty + updatedAction.patrimonyQty > (product.quantity || 0)) {
         if (type === 'depreciableQty') {
             updatedAction.depreciableQty = (product.quantity || 0) - updatedAction.patrimonyQty;
@@ -112,9 +124,9 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     }
 
     const tasks: AssetImportTask[] = [];
-    itemActions.forEach((actions, productIndex) => {
-      const product = displayableProducts[productIndex];
-      if (!product) return;
+    displayableProducts.forEach((product, index) => {
+      const actions = itemActions.get(index);
+      if (!actions || !product) return;
 
       for (let i = 0; i < actions.depreciableQty; i++) {
         tasks.push({ nfeProduct: product, assetType: 'depreciable', nfeDetails: nfeData });
@@ -144,7 +156,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
       setIsSupplierFormOpen(true);
       return;
     }
-
+    
     if (!supplierOnRecord && !nfeData.supplierCNPJ) {
         toast({ title: "Fornecedor Inválido", description: "Não foi possível identificar o fornecedor da NF-e.", variant: "destructive" });
         return;
@@ -179,12 +191,53 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
       nomeFantasia: nfeData.supplierName || '',
       cnpj: nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : '',
       inscricaoEstadual: nfeData.supplierIE || '',
-      situacaoIcms: nfeData.supplierIE && nfeData.supplierIE.toUpperCase() !== "ISENTO" && nfeData.supplierIE.trim() !== "" ? 'contribuinte' : 'nao_contribuinte',
+      situacaoIcms: (nfeData.supplierIE && nfeData.supplierIE.toUpperCase() !== "ISENTO" && nfeData.supplierIE.trim() !== "") ? 'contribuinte' : 'nao_contribuinte',
       responsavelNome: '',
       emailFaturamento: nfeData.supplierEmail || '',
       endereco: initialEndereco,
     };
   }, [nfeData]);
+
+
+  const handleToggleSelectItem = (index: number) => {
+    setSelectedItems(prev => {
+      const newSelection = new Set(prev);
+      if (newSelection.has(index)) {
+        newSelection.delete(index);
+      } else {
+        newSelection.add(index);
+      }
+      return newSelection;
+    });
+  };
+
+  const handleToggleSelectAllItems = () => {
+    if (selectedItems.size === displayableProducts.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(displayableProducts.map((_, i) => i)));
+    }
+  };
+
+  const handleDeleteSelectedItems = () => {
+    setIsConfirmDeleteDialogOpen(true);
+  };
+  
+  const confirmDeleteSelectedItems = () => {
+    const newDisplayableProducts = displayableProducts.filter((_, index) => !selectedItems.has(index));
+    setDisplayableProducts(newDisplayableProducts);
+  
+    // Reset itemActions for the remaining products
+    const newActions = new Map<number, ItemActionQuantities>();
+    newDisplayableProducts.forEach((_, index) => {
+      newActions.set(index, { depreciableQty: 0, patrimonyQty: 0 });
+    });
+    setItemActions(newActions);
+    
+    toast({ title: "Itens removidos", description: `${selectedItems.size} item(ns) foram removidos da lista de importação.` });
+    setSelectedItems(new Set()); // Clear selection
+    setIsConfirmDeleteDialogOpen(false);
+  };
 
 
   if (!nfeData) return null;
@@ -204,6 +257,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
             <DialogTitle>Pré-visualização da NF-e: {nfeData.invoiceNumber || "Número Desconhecido"}</DialogTitle>
             <DialogDescription>
               Revise os dados extraídos da NF-e. Para cada item, defina quantas unidades serão cadastradas como 'Ativo Depreciável' ou 'Patrimônio'.
+              Itens não processados serão ignorados.
             </DialogDescription>
           </DialogHeader>
 
@@ -246,15 +300,34 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
             </Alert>
           )}
 
-          <div className="mb-2">
+          <div className="flex justify-between items-center mb-2">
             <h3 className="text-lg font-semibold flex items-center">
                 <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal
             </h3>
+            {displayableProducts.length > 0 && (
+                 <Button
+                    onClick={handleDeleteSelectedItems}
+                    variant="destructive"
+                    size="sm"
+                    disabled={selectedItems.size === 0}
+                >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir Selecionados ({selectedItems.size})
+                </Button>
+            )}
           </div>
           <ScrollArea className="flex-grow border rounded-md">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedItems.size > 0 && selectedItems.size === displayableProducts.length}
+                      onCheckedChange={handleToggleSelectAllItems}
+                      disabled={displayableProducts.length === 0}
+                      aria-label="Selecionar todos os itens"
+                    />
+                  </TableHead>
                   <TableHead className="min-w-[250px]">Produto (Descrição)</TableHead>
                   <TableHead className="text-right w-24">Qtde. NF</TableHead>
                   <TableHead className="text-right w-32">Vlr. Unit.</TableHead>
@@ -269,7 +342,14 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
                     const actions = itemActions.get(index) || { depreciableQty: 0, patrimonyQty: 0 };
                     const remainingToIgnore = (product.quantity || 0) - actions.depreciableQty - actions.patrimonyQty;
                     return (
-                      <TableRow key={index}>
+                      <TableRow key={`product-${index}`} data-state={selectedItems.has(index) && "selected"}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedItems.has(index)}
+                            onCheckedChange={() => handleToggleSelectItem(index)}
+                            aria-label={`Selecionar item ${index + 1}`}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{product.description || "Produto sem descrição"}</TableCell>
                         <TableCell className="text-right">{product.quantity?.toFixed(2) || "0.00"}</TableCell>
                         <TableCell className="text-right">{formatCurrency(product.unitValue || 0)}</TableCell>
@@ -299,7 +379,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       Nenhum produto para exibir.
                     </TableCell>
                   </TableRow>
@@ -308,7 +388,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
                {displayableProducts.length > 0 && (
                 <UITableFooter>
                   <TableRow>
-                    <TableHead className="text-left font-semibold" colSpan={3}>TOTAIS:</TableHead>
+                    <TableHead className="text-left font-semibold" colSpan={4}>TOTAIS:</TableHead>
                     <TableHead className="text-center font-semibold">{totalDepreciableQty.toFixed(2)}</TableHead>
                     <TableHead className="text-center font-semibold">{totalPatrimonyQty.toFixed(2)}</TableHead>
                     <TableHead className="text-right font-semibold">{totalIgnoredQty.toFixed(2)}</TableHead>
@@ -318,7 +398,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
             </Table>
           </ScrollArea>
           <div className="text-sm text-muted-foreground mt-2">
-              Total de itens da NF-e: {displayableProducts.length}.
+              Total de itens na NF-e (após exclusões): {displayableProducts.length}.
               Serão processados {totalProcessedQty} unidade(s) como ativo(s).
           </div>
 
@@ -342,6 +422,18 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
           onSupplierAdded={handleSupplierAdded}
         />
       )}
+
+      <ConfirmationDialog
+        open={isConfirmDeleteDialogOpen}
+        onOpenChange={setIsConfirmDeleteDialogOpen}
+        onConfirm={confirmDeleteSelectedItems}
+        title="Confirmar Exclusão de Itens"
+        description={`Tem certeza que deseja remover os ${selectedItems.size} itens selecionados da lista de importação? Esta ação não pode ser desfeita para esta sessão de pré-visualização e as quantidades definidas para os itens remanescentes serão zeradas.`}
+        confirmButtonText="Sim, Remover"
+        confirmButtonVariant="destructive"
+      />
     </>
   );
 }
+
+    
