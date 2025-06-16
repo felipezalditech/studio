@@ -213,18 +213,23 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
             </Alert>
           )}
           
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-semibold flex items-center"><ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal</h3>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleDeleteSelectedItemsRequest}
-              disabled={selectedProductIndexes.length === 0}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/50"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Excluir Itens ({selectedProductIndexes.length})
-            </Button>
+          <div className="mb-2">
+            <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold flex items-center">
+                    <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal
+                </h3>
+            </div>
+            <div className="flex justify-end mt-1">
+                <Button 
+                variant="destructive"
+                size="sm" 
+                onClick={handleDeleteSelectedItemsRequest}
+                disabled={selectedProductIndexes.length === 0}
+                >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir Itens ({selectedProductIndexes.length})
+                </Button>
+            </div>
           </div>
           <ScrollArea className="flex-grow border rounded-md">
             <Table>
