@@ -5,16 +5,19 @@ export interface Asset {
   name: string;
   modelId?: string; 
   invoiceNumber: string;
-  serialNumber?: string; // Já era opcional
+  serialNumber?: string; 
   assetTag: string;
   supplier: string; 
   categoryId: string;
   locationId?: string; 
   purchaseValue: number;
-  currentValue: number; // Este será recalculado com base na regra de depreciação
+  currentValue: number; 
   imageDateUris?: string[];
   previouslyDepreciatedValue?: number;
   additionalInfo?: string; 
   aplicarRegrasDepreciacao: boolean;
-  arquivado: boolean; // Novo campo
+  arquivado: boolean;
+  invoiceFileDataUri?: string; // Novo campo para Data URI do arquivo da nota fiscal
+  invoiceFileName?: string; // Novo campo para nome do arquivo da nota fiscal
 }
+

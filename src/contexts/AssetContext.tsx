@@ -44,7 +44,9 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
       additionalInfo: assetData.additionalInfo || undefined,
       previouslyDepreciatedValue: assetData.previouslyDepreciatedValue || 0, 
       currentValue: currentValue, 
-      arquivado: assetData.arquivado, // Incluído
+      arquivado: assetData.arquivado,
+      invoiceFileDataUri: assetData.invoiceFileDataUri || undefined,
+      invoiceFileName: assetData.invoiceFileName || undefined,
     };
     setAssets(prevAssets => [...prevAssets, newAsset]);
   };
@@ -62,7 +64,9 @@ export const AssetProvider = ({ children }: { children: ReactNode }) => {
         serialNumber: updatedAsset.serialNumber || undefined, 
         previouslyDepreciatedValue: updatedAsset.previouslyDepreciatedValue || 0,
         currentValue: currentValue, 
-        arquivado: updatedAsset.arquivado, // Incluído
+        arquivado: updatedAsset.arquivado,
+        invoiceFileDataUri: updatedAsset.invoiceFileDataUri || undefined,
+        invoiceFileName: updatedAsset.invoiceFileName || undefined,
        } : asset))
     );
   };
@@ -107,3 +111,4 @@ export const useAssets = (): AssetContextType => {
   }
   return context;
 };
+

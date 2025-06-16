@@ -17,10 +17,10 @@ import { Textarea } from "@/components/ui/textarea";
 import type { AssetWithCalculatedValues } from "@/app/assets/page";
 import { useAssets } from "@/contexts/AssetContext";
 import { formatDate, formatCurrency } from "@/components/assets/columns";
-import { Trash2, Download } from 'lucide-react';
+import { Trash2, Download, Eye, FileText, Paperclip, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
-import { useAssetModels } from '@/contexts/AssetModelContext'; // Import useAssetModels
+import { useAssetModels } from '@/contexts/AssetModelContext'; 
 
 interface AssetDetailsDialogProps {
   asset: AssetWithCalculatedValues | null;
@@ -30,11 +30,12 @@ interface AssetDetailsDialogProps {
 
 export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDialogProps) {
   const { updateAsset } = useAssets();
-  const { getAssetModelNameById } = useAssetModels(); // Get model name function
+  const { getAssetModelNameById } = useAssetModels(); 
   const { toast } = useToast();
 
   const [imageIndexToDelete, setImageIndexToDelete] = useState<number | null>(null);
   const [isConfirmDeleteImageDialogOpen, setIsConfirmDeleteImageDialogOpen] = useState(false);
+  const [isConfirmDeleteInvoiceDialogOpen, setIsConfirmDeleteInvoiceDialogOpen] = useState(false);
 
   if (!asset) return null;
 
@@ -59,21 +60,55 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
     setImageIndexToDelete(null);
   };
 
-
-  const handleDownloadImage = (imageDataUri: string, index: number) => {
+  const handleDownloadFile = (dataUri: string | undefined, fileName: string | undefined) => {
+    if (!dataUri || !fileName) return;
     const link = document.createElement('a');
-    link.href = imageDataUri;
-    const mimeTypeMatch = imageDataUri.match(/data:image\/([^;]+);/);
-    const extension = mimeTypeMatch ? mimeTypeMatch[1] : 'png';
-    link.download = `foto_ativo_${asset.assetTag || asset.id}_${index + 1}.${extension}`;
+    link.href = dataUri;
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleViewFile = (dataUri: string | undefined, fileName: string | undefined) => {
+    if (!dataUri || !fileName) return;
+    const newWindow = window.open();
+    if (newWindow) {
+      if (dataUri.startsWith('data:application/pdf')) {
+        newWindow.document.write(
+          `<iframe src="${dataUri}" width="100%" height="100%" title="Visualizar ${fileName}"></iframe>`
+        );
+      } else if (dataUri.startsWith('data:image/')) {
+        newWindow.document.write(
+          `<img src="${dataUri}" alt="Visualizar ${fileName}" style="max-width:100%; max-height:100vh; margin:auto; display:block;" />`
+        );
+      } else {
+         newWindow.document.write(`<p>Não é possível visualizar este tipo de arquivo diretamente. Faça o download.</p><p><a href="${dataUri}" download="${fileName}">Baixar ${fileName}</a></p>`);
+      }
+      newWindow.document.title = `Visualizar: ${fileName}`;
+    } else {
+      toast({
+        title: "Bloqueio de Pop-up",
+        description: "Por favor, desabilite o bloqueador de pop-ups para visualizar o arquivo.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleRemoveInvoiceRequest = () => {
+    setIsConfirmDeleteInvoiceDialogOpen(true);
+  };
+
+  const confirmRemoveInvoice = () => {
+    if (!asset) return;
+    const { depreciatedValue, calculatedCurrentValue, categoryName, supplierName, locationName, modelName: _modelName, ...baseAsset } = asset;
+    updateAsset({ ...baseAsset, invoiceFileDataUri: undefined, invoiceFileName: undefined });
     toast({
-      title: "Download iniciado",
-      description: "O download da foto do ativo foi iniciado.",
+      title: "Anexo da nota fiscal removido",
+      description: "O arquivo da nota fiscal foi removido com sucesso.",
     });
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -89,7 +124,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
             <h3 className="font-semibold mb-2 text-lg">Informações gerais</h3>
             <div className="space-y-1.5 text-sm">
               <p><strong>Nome:</strong> {asset.name}</p>
-              <p><strong>Modelo:</strong> {modelName}</p> {/* Use resolved modelName */}
+              <p><strong>Modelo:</strong> {modelName}</p> 
               <p><strong>Patrimônio:</strong> {asset.assetTag}</p>
               <p><strong>Categoria:</strong> {asset.categoryName || asset.categoryId}</p>
               <p><strong>Fornecedor:</strong> {asset.supplierName || asset.supplier}</p>
@@ -124,6 +159,47 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
           </div>
         )}
 
+        <div className="mt-2">
+          <h3 className="font-semibold mb-3 text-lg flex items-center">
+            <Paperclip className="mr-2 h-5 w-5" /> Anexo da Nota Fiscal
+          </h3>
+          {asset.invoiceFileName && asset.invoiceFileDataUri ? (
+             <div className="flex items-center space-x-2 p-2 border rounded-md bg-muted/10">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm text-foreground truncate flex-1" title={asset.invoiceFileName}>
+                {asset.invoiceFileName}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleViewFile(asset.invoiceFileDataUri, asset.invoiceFileName)}
+                title="Visualizar anexo"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDownloadFile(asset.invoiceFileDataUri, asset.invoiceFileName)}
+                title="Baixar anexo"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleRemoveInvoiceRequest}
+                title="Remover anexo"
+                className="text-destructive hover:text-destructive"
+              >
+                <XCircle className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhum arquivo de nota fiscal anexado.</p>
+          )}
+        </div>
+
 
         <div className="mt-2">
           <h3 className="font-semibold mb-3 text-lg">Fotos do ativo</h3>
@@ -143,7 +219,7 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
                       variant="outline"
                       size="icon"
                       className="h-7 w-7 border-gray-300 text-gray-300 hover:bg-white/20 hover:text-white"
-                      onClick={() => handleDownloadImage(uri, index)}
+                      onClick={() => handleDownloadFile(uri, `foto_ativo_${asset.assetTag || asset.id}_${index + 1}.${uri.split(';')[0].split('/')[1] || 'png'}`)}
                       title="Baixar foto"
                     >
                       <Download className="h-4 w-4" />
@@ -184,6 +260,16 @@ export function AssetDetailsDialog({ asset, open, onOpenChange }: AssetDetailsDi
           description={`Tem certeza que deseja remover esta foto do ativo ${asset.name}?`}
         />
       )}
+       {asset.id && (
+        <ConfirmationDialog
+          open={isConfirmDeleteInvoiceDialogOpen}
+          onOpenChange={setIsConfirmDeleteInvoiceDialogOpen}
+          onConfirm={confirmRemoveInvoice}
+          title="Confirmar exclusão do anexo da nota fiscal"
+          description={`Tem certeza que deseja remover o arquivo da nota fiscal do ativo ${asset.name}?`}
+        />
+      )}
     </Dialog>
   );
 }
+

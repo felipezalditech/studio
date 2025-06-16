@@ -20,7 +20,7 @@ import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
-import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle } from 'lucide-react';
+import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle, Paperclip, Download, Eye, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -51,6 +51,8 @@ const assetFormSchema = z.object({
   previouslyDepreciatedValue: z.coerce.number().min(0, "Valor já depreciado não pode ser negativo.").optional(),
   additionalInfo: z.string().optional(),
   imageDateUris: z.array(z.string()).max(MAX_PHOTOS, `Máximo de ${MAX_PHOTOS} fotos permitidas.`).optional(),
+  invoiceFileDataUri: z.string().optional(),
+  invoiceFileName: z.string().optional(),
 });
 
 type AssetFormValues = z.infer<typeof assetFormSchema>;
@@ -67,6 +69,7 @@ export default function EditAssetPage() {
 
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const invoiceFileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [assetNotFound, setAssetNotFound] = useState(false);
 
@@ -88,6 +91,8 @@ export default function EditAssetPage() {
       previouslyDepreciatedValue: undefined,
       additionalInfo: '',
       imageDateUris: [],
+      invoiceFileDataUri: undefined,
+      invoiceFileName: undefined,
     },
   });
 
@@ -112,6 +117,8 @@ export default function EditAssetPage() {
           locationId: assetToEdit.locationId || undefined,
           additionalInfo: assetToEdit.additionalInfo || '',
           imageDateUris: assetToEdit.imageDateUris || [],
+          invoiceFileDataUri: assetToEdit.invoiceFileDataUri || undefined,
+          invoiceFileName: assetToEdit.invoiceFileName || undefined,
         });
         setImagePreviews(assetToEdit.imageDateUris || []);
         setIsLoading(false);
@@ -149,6 +156,8 @@ export default function EditAssetPage() {
       locationId: data.locationId || undefined,
       additionalInfo: data.additionalInfo || undefined,
       serialNumber: data.serialNumber || undefined,
+      invoiceFileDataUri: data.invoiceFileDataUri || undefined,
+      invoiceFileName: data.invoiceFileName || undefined,
     };
     updateAsset(assetDataToUpdate);
     toast({
@@ -221,6 +230,65 @@ export default function EditAssetPage() {
     setImagePreviews(currentPreviews);
     fieldOnChange(currentUris);
   };
+
+  const handleInvoiceFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        form.setValue('invoiceFileDataUri', reader.result as string);
+        form.setValue('invoiceFileName', file.name);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveInvoiceFile = () => {
+    form.setValue('invoiceFileDataUri', undefined);
+    form.setValue('invoiceFileName', undefined);
+    if (invoiceFileInputRef.current) {
+      invoiceFileInputRef.current.value = '';
+    }
+  };
+
+  const handleDownloadFile = (dataUri: string | undefined, fileName: string | undefined) => {
+    if (!dataUri || !fileName) return;
+    const link = document.createElement('a');
+    link.href = dataUri;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleViewFile = (dataUri: string | undefined, fileName: string | undefined) => {
+    if (!dataUri || !fileName) return;
+    const newWindow = window.open();
+    if (newWindow) {
+       if (dataUri.startsWith('data:application/pdf')) {
+        newWindow.document.write(
+          `<iframe src="${dataUri}" width="100%" height="100%" title="Visualizar ${fileName}"></iframe>`
+        );
+      } else if (dataUri.startsWith('data:image/')) {
+        newWindow.document.write(
+          `<img src="${dataUri}" alt="Visualizar ${fileName}" style="max-width:100%; max-height:100vh; margin:auto; display:block;" />`
+        );
+      } else {
+        newWindow.document.write(`<p>Não é possível visualizar este tipo de arquivo diretamente. Faça o download.</p><p><a href="${dataUri}" download="${fileName}">Baixar ${fileName}</a></p>`);
+      }
+      newWindow.document.title = `Visualizar: ${fileName}`;
+    } else {
+      toast({
+        title: "Bloqueio de Pop-up",
+        description: "Por favor, desabilite o bloqueador de pop-ups para visualizar o arquivo.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const watchedInvoiceFileName = form.watch('invoiceFileName');
+  const watchedInvoiceFileDataUri = form.watch('invoiceFileDataUri');
+
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen"><p>Carregando dados do ativo...</p></div>;
@@ -618,6 +686,76 @@ export default function EditAssetPage() {
                           </FormItem>
                         )}
                       />
+                       <FormField
+                        control={form.control}
+                        name="invoiceFileDataUri" 
+                        render={({ field }) => (
+                          <FormItem className="md:col-span-3 space-y-0.5">
+                            <div className="flex items-center h-8">
+                              <FormLabel className="flex items-center">
+                                <Paperclip className="mr-2 h-5 w-5" />
+                                Anexo da Nota Fiscal (PDF ou Imagem)
+                              </FormLabel>
+                            </div>
+                            <FormControl>
+                              <Input
+                                type="file"
+                                accept="application/pdf,image/*"
+                                ref={invoiceFileInputRef}
+                                onChange={handleInvoiceFileChange}
+                                className="hidden"
+                                disabled={!!watchedInvoiceFileName}
+                              />
+                            </FormControl>
+                             {!watchedInvoiceFileName ? (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => invoiceFileInputRef.current?.click()}
+                                >
+                                  <UploadCloud className="mr-2 h-4 w-4" />
+                                  Selecionar arquivo
+                                </Button>
+                              ) : (
+                                <div className="flex items-center space-x-2 p-2 border rounded-md bg-muted/30">
+                                  <FileText className="h-5 w-5 text-muted-foreground" />
+                                  <span className="text-sm text-foreground truncate flex-1" title={watchedInvoiceFileName}>
+                                    {watchedInvoiceFileName}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleViewFile(watchedInvoiceFileDataUri, watchedInvoiceFileName)}
+                                    title="Visualizar anexo"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDownloadFile(watchedInvoiceFileDataUri, watchedInvoiceFileName)}
+                                    title="Baixar anexo"
+                                  >
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={handleRemoveInvoiceFile}
+                                    title="Remover anexo"
+                                    className="text-destructive hover:text-destructive"
+                                  >
+                                    <XCircle className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
                   </TabsContent>
 
@@ -728,3 +866,4 @@ export default function EditAssetPage() {
     </>
   );
 }
+
