@@ -14,6 +14,7 @@ import type { ExtractNFeDataOutput, NFeProduct } from '@/ai/flows/extract-nfe-da
 import type { Supplier, Endereco } from '@/contexts/SupplierContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { SupplierFormDialog, type SupplierFormValues } from '@/components/suppliers/SupplierFormDialog';
+import { useImportSettings } from '@/contexts/ImportSettingsContext'; // New import
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/components/assets/columns';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +24,7 @@ import { maskCEP, maskCNPJ } from '@/lib/utils';
 
 
 export interface AssetImportTask {
-  nfeProduct: NFeProduct;
+  nfeProduct: NFeProduct; // unitValue aqui será o valor de compra da unidade individual (já com frete, se aplicável)
   assetType: 'depreciable' | 'patrimony';
   nfeDetails: ExtractNFeDataOutput;
 }
@@ -52,6 +53,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
 
 
   const { getSupplierByDocument } = useSuppliers();
+  const { importSettings } = useImportSettings(); // Get import settings
   const { toast } = useToast();
 
   useEffect(() => {
@@ -125,16 +127,16 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
       return;
     }
 
-    const tasks: AssetImportTask[] = [];
+    let tasks: AssetImportTask[] = [];
     displayableProducts.forEach((product, index) => {
       const actions = itemActions.get(index);
       if (!actions || !product) return;
 
       for (let i = 0; i < actions.depreciableQty; i++) {
-        tasks.push({ nfeProduct: product, assetType: 'depreciable', nfeDetails: nfeData });
+        tasks.push({ nfeProduct: { ...product }, assetType: 'depreciable', nfeDetails: nfeData });
       }
       for (let i = 0; i < actions.patrimonyQty; i++) {
-        tasks.push({ nfeProduct: product, assetType: 'patrimony', nfeDetails: nfeData });
+        tasks.push({ nfeProduct: { ...product }, assetType: 'patrimony', nfeDetails: nfeData });
       }
     });
 
@@ -164,7 +166,72 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
         return;
     }
 
-    onImportItems(tasks, supplierOnRecord?.id, nfeData);
+    // Freight Allocation Logic
+    let finalTasks: AssetImportTask[] = [];
+    const shippingValue = nfeData.shippingValue || 0;
+
+    if (importSettings.allocateFreight && shippingValue > 0 && nfeData.products && nfeData.products.length > 0) {
+      if (importSettings.freightDilutionScope === 'all_nfe_items') {
+        const totalOriginalNFeProductValue = (nfeData.products || []).reduce((sum, p) => sum + (p.totalValue || 0), 0);
+        
+        finalTasks = tasks.map(task => {
+          const product = task.nfeProduct; // This is a copy from displayableProducts
+          let freightPerUnit = 0;
+          if (totalOriginalNFeProductValue > 0 && product.totalValue && product.quantity && product.quantity > 0) {
+            const productLineFreightShare = (product.totalValue / totalOriginalNFeProductValue) * shippingValue;
+            freightPerUnit = productLineFreightShare / product.quantity;
+          }
+          return {
+            ...task,
+            nfeProduct: {
+              ...product,
+              unitValue: (product.unitValue || 0) + freightPerUnit,
+            },
+          };
+        });
+      } else { // freightDilutionScope === 'imported_items_only'
+        const productLinesBeingImported = displayableProducts.filter((_p, index) => {
+          const actions = itemActions.get(index);
+          return actions && (actions.depreciableQty > 0 || actions.patrimonyQty > 0);
+        });
+
+        const totalValueOfProductLinesBeingImported = productLinesBeingImported.reduce((sum, p) => sum + (p.totalValue || 0), 0);
+
+        finalTasks = tasks.map(task => {
+          const product = task.nfeProduct;
+          let freightPerUnit = 0;
+
+          const isProductLineImported = productLinesBeingImported.some(
+            p => p.description === product.description && 
+                 p.unitValue === product.unitValue && // Use original unitValue for comparison
+                 p.quantity === product.quantity
+          );
+
+          if (isProductLineImported && totalValueOfProductLinesBeingImported > 0 && product.totalValue && product.quantity && product.quantity > 0) {
+            const productLineFreightShare = (product.totalValue / totalValueOfProductLinesBeingImported) * shippingValue;
+            freightPerUnit = productLineFreightShare / product.quantity;
+          }
+          return {
+            ...task,
+            nfeProduct: {
+              ...product,
+              unitValue: (product.unitValue || 0) + freightPerUnit,
+            },
+          };
+        });
+      }
+    } else {
+      // No freight allocation, or no shipping value, or no products
+      finalTasks = tasks.map(task => ({
+        ...task,
+        nfeProduct: {
+          ...task.nfeProduct,
+          unitValue: task.nfeProduct.unitValue || 0, // Ensure it's a number
+        },
+      }));
+    }
+
+    onImportItems(finalTasks, supplierOnRecord?.id, nfeData);
     onOpenChange(false);
   };
 
@@ -193,7 +260,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
       nomeFantasia: nfeData.supplierName || '',
       cnpj: nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : '',
       inscricaoEstadual: nfeData.supplierIE || '',
-      situacaoIcms: (nfeData.supplierIE && nfeData.supplierIE.toUpperCase() !== "ISENTO" && nfeData.supplierIE.trim() !== "") ? 'contribuinte' : 'nao_contribuinte',
+      situacaoIcms: (nfeData.supplierIE && nfeData.supplierIE.toUpperCase() !== "ISENTO" && nfeData.supplierIE.trim() !== "" && nfeData.supplierIE.toUpperCase() !== "NAO CONTRIBUINTE") ? 'contribuinte' : 'nao_contribuinte',
       responsavelNome: '',
       emailFaturamento: nfeData.supplierEmail || '',
       endereco: initialEndereco,
@@ -231,6 +298,8 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
   
     const newActions = new Map<number, ItemActionQuantities>();
     newDisplayableProducts.forEach((_, index) => {
+      // Reset quantities for remaining items, or try to preserve if mapping old to new index is feasible
+      // For simplicity, resetting:
       newActions.set(index, { depreciableQty: 0, patrimonyQty: 0 });
     });
     setItemActions(newActions);
@@ -262,7 +331,6 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
             </DialogDescription>
           </DialogHeader>
 
-          {/* Main body wrapper for flex control */}
           <div className="flex-1 flex flex-col min-h-0">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-1 text-sm border-b pb-3 mb-3">
               <div><strong>Fornecedor:</strong> {nfeData.supplierName || "Não informado"}</div>
@@ -319,13 +387,13 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
                   </Button>
               )}
             </div>
-            <ScrollArea className="flex-grow border rounded-md min-h-0"> {/* min-h-0 aqui pode ser benéfico */}
+            <ScrollArea className="flex-grow border rounded-md min-h-0">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12">
                       <Checkbox
-                        checked={selectedItems.size > 0 && selectedItems.size === displayableProducts.length}
+                        checked={selectedItems.size > 0 && selectedItems.size === displayableProducts.length && displayableProducts.length > 0}
                         onCheckedChange={handleToggleSelectAllItems}
                         disabled={displayableProducts.length === 0}
                         aria-label="Selecionar todos os itens"
@@ -345,7 +413,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
                       const actions = itemActions.get(index) || { depreciableQty: 0, patrimonyQty: 0 };
                       const remainingToIgnore = (product.quantity || 0) - actions.depreciableQty - actions.patrimonyQty;
                       return (
-                        <TableRow key={`product-${index}`} data-state={selectedItems.has(index) && "selected"}>
+                        <TableRow key={`product-${index}-${product.description}`} data-state={selectedItems.has(index) && "selected"}>
                           <TableCell>
                             <Checkbox
                               checked={selectedItems.has(index)}
@@ -404,9 +472,9 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
                 Total de itens na NF-e (após exclusões): {displayableProducts.length}.
                 Serão processados {totalProcessedQty} unidade(s) como ativo(s).
             </div>
-          </div> {/* End of main body wrapper */}
+          </div>
 
-          <DialogFooter className="mt-auto pt-4 border-t"> {/* mt-auto aqui pode não ser mais necessário se o wrapper acima já o empurra */}
+          <DialogFooter className="mt-auto pt-4 border-t">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button
               onClick={handleImport}
@@ -439,4 +507,3 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     </>
   );
 }
-
