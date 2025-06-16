@@ -262,148 +262,151 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-1 text-sm border-b pb-3 mb-3">
-            <div><strong>Fornecedor:</strong> {nfeData.supplierName || "Não informado"}</div>
-            <div><strong>CNPJ:</strong> {nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : "Não informado"}</div>
-            <div><strong>IE:</strong> {nfeData.supplierIE || "Não informada"}</div>
-            <div><strong>E-mail:</strong> {nfeData.supplierEmail || "Não informado"}</div>
-            <div><strong>Data Emissão:</strong> {nfeData.emissionDate ? new Date(nfeData.emissionDate).toLocaleDateString('pt-BR') : "Não informada"}</div>
-            <div><strong>Valor Total NF-e:</strong> {formatCurrency(nfeData.nfeTotalValue || 0)}</div>
-            <div><strong>Valor Frete:</strong> {formatCurrency(nfeData.shippingValue || 0)}</div>
-          </div>
+          {/* Main body wrapper for flex control */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-1 text-sm border-b pb-3 mb-3">
+              <div><strong>Fornecedor:</strong> {nfeData.supplierName || "Não informado"}</div>
+              <div><strong>CNPJ:</strong> {nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : "Não informado"}</div>
+              <div><strong>IE:</strong> {nfeData.supplierIE || "Não informada"}</div>
+              <div><strong>E-mail:</strong> {nfeData.supplierEmail || "Não informado"}</div>
+              <div><strong>Data Emissão:</strong> {nfeData.emissionDate ? new Date(nfeData.emissionDate).toLocaleDateString('pt-BR') : "Não informada"}</div>
+              <div><strong>Valor Total NF-e:</strong> {formatCurrency(nfeData.nfeTotalValue || 0)}</div>
+              <div><strong>Valor Frete:</strong> {formatCurrency(nfeData.shippingValue || 0)}</div>
+            </div>
 
-          {supplierOnRecord === undefined && (
-            <Alert variant="default" className="mb-3">
-              <Info className="h-4 w-4" />
-              <AlertTitle>Verificando Fornecedor</AlertTitle>
-              <AlertDescription>Aguarde enquanto verificamos se o fornecedor já está cadastrado...</AlertDescription>
-            </Alert>
-          )}
-          {supplierOnRecord === null && nfeData.supplierCNPJ && (
-            <Alert variant="default" className="mb-3 border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300 [&>svg]:text-yellow-500 dark:[&>svg]:text-yellow-400">
-              <Building className="h-4 w-4" />
-              <AlertTitle>Fornecedor não cadastrado</AlertTitle>
-              <AlertDescription className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                <span>O fornecedor <Badge variant="secondary">{nfeData.supplierName || maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, ''))}</Badge> não foi encontrado no sistema.</span>
-                <Button onClick={() => setIsSupplierFormOpen(true)} size="sm" variant="outline" className="shrink-0 border-yellow-500 hover:bg-yellow-50 text-yellow-700 dark:border-yellow-400 dark:hover:bg-yellow-700/20 dark:text-yellow-300">
-                  <PlusCircle className="mr-2 h-4 w-4" /> Cadastrar Fornecedor
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-          {supplierOnRecord && (
-             <Alert variant="default" className="mb-3 border-green-500 text-green-700 dark:border-green-400 dark:text-green-300 [&>svg]:text-green-500 dark:[&>svg]:text-green-400">
-              <CheckCircle className="h-4 w-4" />
-              <AlertTitle>Fornecedor Localizado</AlertTitle>
-              <AlertDescription>
-                Fornecedor: <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{supplierOnRecord.nomeFantasia || supplierOnRecord.razaoSocial}</Badge> (CNPJ: {supplierOnRecord.cnpj ? maskCNPJ(supplierOnRecord.cnpj.replace(/\D/g, '')) : 'N/A'}).
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-semibold flex items-center">
-                <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal
-            </h3>
-            {displayableProducts.length > 0 && (
-                 <Button
-                    onClick={handleDeleteSelectedItems}
-                    variant="destructive"
-                    size="sm"
-                    disabled={selectedItems.size === 0}
-                >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Excluir Selecionados ({selectedItems.size})
-                </Button>
+            {supplierOnRecord === undefined && (
+              <Alert variant="default" className="mb-3">
+                <Info className="h-4 w-4" />
+                <AlertTitle>Verificando Fornecedor</AlertTitle>
+                <AlertDescription>Aguarde enquanto verificamos se o fornecedor já está cadastrado...</AlertDescription>
+              </Alert>
             )}
-          </div>
-          <ScrollArea className="flex-grow border rounded-md min-h-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={selectedItems.size > 0 && selectedItems.size === displayableProducts.length}
-                      onCheckedChange={handleToggleSelectAllItems}
-                      disabled={displayableProducts.length === 0}
-                      aria-label="Selecionar todos os itens"
-                    />
-                  </TableHead>
-                  <TableHead className="min-w-[250px]">Produto (Descrição)</TableHead>
-                  <TableHead className="text-right w-24">Qtde. NF</TableHead>
-                  <TableHead className="text-right w-32">Vlr. Unit.</TableHead>
-                  <TableHead className="text-center w-40">Qtde. Depreciável</TableHead>
-                  <TableHead className="text-center w-40">Qtde. Patrimônio</TableHead>
-                  <TableHead className="text-right w-32">Qtde. Ignorar</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {displayableProducts.length > 0 ? (
-                  displayableProducts.map((product, index) => {
-                    const actions = itemActions.get(index) || { depreciableQty: 0, patrimonyQty: 0 };
-                    const remainingToIgnore = (product.quantity || 0) - actions.depreciableQty - actions.patrimonyQty;
-                    return (
-                      <TableRow key={`product-${index}`} data-state={selectedItems.has(index) && "selected"}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedItems.has(index)}
-                            onCheckedChange={() => handleToggleSelectItem(index)}
-                            aria-label={`Selecionar item ${index + 1}`}
-                          />
-                        </TableCell>
-                        <TableCell className="font-medium">{product.description || "Produto sem descrição"}</TableCell>
-                        <TableCell className="text-right">{product.quantity?.toFixed(2) || "0.00"}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(product.unitValue || 0)}</TableCell>
-                        <TableCell className="px-1">
-                          <Input
-                            type="number"
-                            min="0"
-                            max={(product.quantity || 0) - actions.patrimonyQty}
-                            value={actions.depreciableQty.toString()}
-                            onChange={(e) => handleQuantityChange(index, 'depreciableQty', e.target.value)}
-                            className="h-8 text-sm text-center"
-                          />
-                        </TableCell>
-                        <TableCell className="px-1">
-                          <Input
-                            type="number"
-                            min="0"
-                            max={(product.quantity || 0) - actions.depreciableQty}
-                            value={actions.patrimonyQty.toString()}
-                            onChange={(e) => handleQuantityChange(index, 'patrimonyQty', e.target.value)}
-                            className="h-8 text-sm text-center"
-                          />
-                        </TableCell>
-                        <TableCell className="text-right">{remainingToIgnore.toFixed(2)}</TableCell>
-                      </TableRow>
-                    );
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      Nenhum produto para exibir.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-               {displayableProducts.length > 0 && (
-                <UITableFooter>
-                  <TableRow>
-                    <TableHead className="text-left font-semibold" colSpan={4}>TOTAIS:</TableHead>
-                    <TableHead className="text-center font-semibold">{totalDepreciableQty.toFixed(2)}</TableHead>
-                    <TableHead className="text-center font-semibold">{totalPatrimonyQty.toFixed(2)}</TableHead>
-                    <TableHead className="text-right font-semibold">{totalIgnoredQty.toFixed(2)}</TableHead>
-                  </TableRow>
-                </UITableFooter>
-              )}
-            </Table>
-          </ScrollArea>
-          <div className="text-sm text-muted-foreground mt-2">
-              Total de itens na NF-e (após exclusões): {displayableProducts.length}.
-              Serão processados {totalProcessedQty} unidade(s) como ativo(s).
-          </div>
+            {supplierOnRecord === null && nfeData.supplierCNPJ && (
+              <Alert variant="default" className="mb-3 border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300 [&>svg]:text-yellow-500 dark:[&>svg]:text-yellow-400">
+                <Building className="h-4 w-4" />
+                <AlertTitle>Fornecedor não cadastrado</AlertTitle>
+                <AlertDescription className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <span>O fornecedor <Badge variant="secondary">{nfeData.supplierName || maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, ''))}</Badge> não foi encontrado no sistema.</span>
+                  <Button onClick={() => setIsSupplierFormOpen(true)} size="sm" variant="outline" className="shrink-0 border-yellow-500 hover:bg-yellow-50 text-yellow-700 dark:border-yellow-400 dark:hover:bg-yellow-700/20 dark:text-yellow-300">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Cadastrar Fornecedor
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+            {supplierOnRecord && (
+              <Alert variant="default" className="mb-3 border-green-500 text-green-700 dark:border-green-400 dark:text-green-300 [&>svg]:text-green-500 dark:[&>svg]:text-green-400">
+                <CheckCircle className="h-4 w-4" />
+                <AlertTitle>Fornecedor Localizado</AlertTitle>
+                <AlertDescription>
+                  Fornecedor: <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{supplierOnRecord.nomeFantasia || supplierOnRecord.razaoSocial}</Badge> (CNPJ: {supplierOnRecord.cnpj ? maskCNPJ(supplierOnRecord.cnpj.replace(/\D/g, '')) : 'N/A'}).
+                </AlertDescription>
+              </Alert>
+            )}
 
-          <DialogFooter className="mt-auto pt-4 border-t">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-semibold flex items-center">
+                  <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal
+              </h3>
+              {displayableProducts.length > 0 && (
+                  <Button
+                      onClick={handleDeleteSelectedItems}
+                      variant="destructive"
+                      size="sm"
+                      disabled={selectedItems.size === 0}
+                  >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir Selecionados ({selectedItems.size})
+                  </Button>
+              )}
+            </div>
+            <ScrollArea className="flex-grow border rounded-md min-h-0"> {/* min-h-0 aqui pode ser benéfico */}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedItems.size > 0 && selectedItems.size === displayableProducts.length}
+                        onCheckedChange={handleToggleSelectAllItems}
+                        disabled={displayableProducts.length === 0}
+                        aria-label="Selecionar todos os itens"
+                      />
+                    </TableHead>
+                    <TableHead className="min-w-[250px]">Produto (Descrição)</TableHead>
+                    <TableHead className="text-right w-24">Qtde. NF</TableHead>
+                    <TableHead className="text-right w-32">Vlr. Unit.</TableHead>
+                    <TableHead className="text-center w-40">Qtde. Depreciável</TableHead>
+                    <TableHead className="text-center w-40">Qtde. Patrimônio</TableHead>
+                    <TableHead className="text-right w-32">Qtde. Ignorar</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {displayableProducts.length > 0 ? (
+                    displayableProducts.map((product, index) => {
+                      const actions = itemActions.get(index) || { depreciableQty: 0, patrimonyQty: 0 };
+                      const remainingToIgnore = (product.quantity || 0) - actions.depreciableQty - actions.patrimonyQty;
+                      return (
+                        <TableRow key={`product-${index}`} data-state={selectedItems.has(index) && "selected"}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedItems.has(index)}
+                              onCheckedChange={() => handleToggleSelectItem(index)}
+                              aria-label={`Selecionar item ${index + 1}`}
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">{product.description || "Produto sem descrição"}</TableCell>
+                          <TableCell className="text-right">{product.quantity?.toFixed(2) || "0.00"}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(product.unitValue || 0)}</TableCell>
+                          <TableCell className="px-1">
+                            <Input
+                              type="number"
+                              min="0"
+                              max={(product.quantity || 0) - actions.patrimonyQty}
+                              value={actions.depreciableQty.toString()}
+                              onChange={(e) => handleQuantityChange(index, 'depreciableQty', e.target.value)}
+                              className="h-8 text-sm text-center"
+                            />
+                          </TableCell>
+                          <TableCell className="px-1">
+                            <Input
+                              type="number"
+                              min="0"
+                              max={(product.quantity || 0) - actions.depreciableQty}
+                              value={actions.patrimonyQty.toString()}
+                              onChange={(e) => handleQuantityChange(index, 'patrimonyQty', e.target.value)}
+                              className="h-8 text-sm text-center"
+                            />
+                          </TableCell>
+                          <TableCell className="text-right">{remainingToIgnore.toFixed(2)}</TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center">
+                        Nenhum produto para exibir.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+                {displayableProducts.length > 0 && (
+                  <UITableFooter>
+                    <TableRow>
+                      <TableHead className="text-left font-semibold" colSpan={4}>TOTAIS:</TableHead>
+                      <TableHead className="text-center font-semibold">{totalDepreciableQty.toFixed(2)}</TableHead>
+                      <TableHead className="text-center font-semibold">{totalPatrimonyQty.toFixed(2)}</TableHead>
+                      <TableHead className="text-right font-semibold">{totalIgnoredQty.toFixed(2)}</TableHead>
+                    </TableRow>
+                  </UITableFooter>
+                )}
+              </Table>
+            </ScrollArea>
+            <div className="text-sm text-muted-foreground mt-2">
+                Total de itens na NF-e (após exclusões): {displayableProducts.length}.
+                Serão processados {totalProcessedQty} unidade(s) como ativo(s).
+            </div>
+          </div> {/* End of main body wrapper */}
+
+          <DialogFooter className="mt-auto pt-4 border-t"> {/* mt-auto aqui pode não ser mais necessário se o wrapper acima já o empurra */}
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button
               onClick={handleImport}
@@ -436,3 +439,4 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     </>
   );
 }
+
