@@ -105,8 +105,9 @@ interface CompanyFormDialogProps {
   initialData?: ClientCompany | null;
 }
 
+const defaultEndereco: EnderecoEmpresa = { cep: '', estado: '', cidade: '', bairro: '', rua: '', numero: '', complemento: '' };
+
 export function CompanyFormDialog({ open, onOpenChange, onSubmitAction, initialData }: CompanyFormDialogProps) {
-  const defaultEndereco: EnderecoEmpresa = { cep: '', estado: '', cidade: '', bairro: '', rua: '', numero: '', complemento: '' };
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
     defaultValues: initialData ? {
@@ -168,7 +169,7 @@ export function CompanyFormDialog({ open, onOpenChange, onSubmitAction, initialD
         });
       }
     }
-  }, [initialData, form, open, defaultEndereco]);
+  }, [initialData, form, open]); // Removed defaultEndereco from here
 
   useEffect(() => {
     if (selectedType === 'fisica') {
