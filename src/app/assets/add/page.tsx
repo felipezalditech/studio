@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react'; // Adicionado useEffect
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,7 +20,7 @@ import { useAssets } from '@/contexts/AssetContext';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle, FileText, AlertTriangle } from 'lucide-react';
+import { CalendarIcon, Save, UploadCloud, XCircle, HelpCircle, FileText, AlertTriangle, ListChecks, Forward } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO, isValid as isValidDate } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -31,7 +31,7 @@ import { LocationCombobox } from '@/components/locations/LocationCombobox';
 import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox';
 import { extractNFeData, type ExtractNFeDataOutput, type NFeProduct } from '@/ai/flows/extract-nfe-data-flow';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { NFePreviewDialog } from '@/components/nfe/NFePreviewDialog';
+import { NFePreviewDialog, type AssetImportTask } from '@/components/nfe/NFePreviewDialog';
 
 
 const MAX_PHOTOS = 10;
@@ -71,6 +71,8 @@ export default function AddAssetPage() {
   const [nfeImportError, setNfeImportError] = useState<string | null>(null);
   const [extractedNFeData, setExtractedNFeData] = useState<ExtractNFeDataOutput | null>(null);
   const [isNFePreviewOpen, setIsNFePreviewOpen] = useState(false);
+  const [assetImportQueue, setAssetImportQueue] = useState<AssetImportTask[]>([]);
+  const [currentSupplierIdForQueue, setCurrentSupplierIdForQueue] = useState<string | undefined>(undefined);
 
 
   const form = useForm<AssetFormValues>({
@@ -93,6 +95,60 @@ export default function AddAssetPage() {
       imageDateUris: [],
     },
   });
+
+  const resetFormForNewAsset = () => {
+    form.reset({
+      aplicarRegrasDepreciacao: true,
+      arquivado: false,
+      name: '',
+      modelId: undefined,
+      assetTag: '', // Idealmente, poderia ser sugerido um novo ou limpo
+      serialNumber: '',
+      categoryId: '', // Poderia manter o último usado ou limpar
+      supplier: currentSupplierIdForQueue || '', // Mantém o fornecedor da NF-e
+      locationId: undefined,
+      purchaseDate: undefined, // Será preenchido pela próxima task
+      invoiceNumber: '', // Será preenchido pela próxima task
+      purchaseValue: 0, // Será preenchido pela próxima task
+      previouslyDepreciatedValue: 0,
+      additionalInfo: '',
+      imageDateUris: [],
+    });
+    setImagePreviews([]);
+  };
+
+  const processNextAssetInQueue = () => {
+    if (assetImportQueue.length > 0) {
+      const nextTask = assetImportQueue[0];
+      setAssetImportQueue(prev => prev.slice(1));
+
+      resetFormForNewAsset(); // Limpa o formulário antes de preencher
+
+      form.setValue('name', nextTask.nfeProduct.description || '');
+      form.setValue('purchaseValue', nextTask.nfeProduct.unitValue || 0);
+      form.setValue('invoiceNumber', nextTask.nfeDetails.invoiceNumber || '');
+      if (nextTask.nfeDetails.emissionDate) {
+        const parsedDate = parseISO(nextTask.nfeDetails.emissionDate);
+        if (isValidDate(parsedDate)) {
+          form.setValue('purchaseDate', parsedDate);
+        }
+      }
+      if (currentSupplierIdForQueue) {
+         form.setValue('supplier', currentSupplierIdForQueue);
+      }
+      form.setValue('aplicarRegrasDepreciacao', nextTask.assetType === 'depreciable');
+      form.setValue('previouslyDepreciatedValue', 0); // Novo ativo da NF-e
+
+      toast({
+        title: `Preparando Ativo ${assetImportQueue.length} de ${assetImportQueue.length + (assetImportQueue.length > 0 ? 0 : -1) + 1}`,
+        description: `Preencha os dados para: ${nextTask.nfeProduct.description}.`,
+        duration: 7000
+      });
+      return true; // Indica que uma nova tarefa foi carregada
+    }
+    return false; // Indica que a fila está vazia
+  };
+
 
   function onSubmit(data: AssetFormValues) {
     if (!data.aplicarRegrasDepreciacao && (data.purchaseValue - (data.previouslyDepreciatedValue || 0)) < 0) {
@@ -117,10 +173,23 @@ export default function AddAssetPage() {
     addAsset(assetDataToSave as Omit<Asset, 'id'>);
     toast({
       title: "Sucesso!",
-      description: "Ativo adicionado com sucesso.",
+      description: `Ativo "${data.name}" adicionado.`,
     });
-    router.push('/assets');
+
+    if (!processNextAssetInQueue()) {
+      // Fila vazia, redirecionar ou limpar completamente
+      router.push('/assets');
+    }
   }
+  
+  // Efeito para processar a primeira tarefa quando a fila é populada
+  useEffect(() => {
+    if (assetImportQueue.length > 0 && form.formState.isSubmitSuccessful === false) { // Evita reprocessar se o form já foi submetido
+      processNextAssetInQueue();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assetImportQueue, form.formState.isSubmitSuccessful]); // Dependência controlada
+
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string[]) => void) => {
     const files = event.target.files;
@@ -197,12 +266,8 @@ export default function AddAssetPage() {
         try {
           const extractedData: ExtractNFeDataOutput = await extractNFeData(xmlContent);
           setExtractedNFeData(extractedData);
-          setIsNFePreviewOpen(true); // Abre o modal de pré-visualização
-          toast({
-            title: "NF-e carregada para pré-visualização",
-            description: "Selecione os itens para importar.",
-          });
-
+          setIsNFePreviewOpen(true);
+          // Não preenche mais o formulário aqui, espera a seleção do NFePreviewDialog
         } catch (error) {
           console.error("Erro ao processar NF-e:", error);
           let errorMessage = "Não foi possível processar o XML da NF-e. Verifique o arquivo ou tente novamente.";
@@ -219,7 +284,7 @@ export default function AddAssetPage() {
         } finally {
           setIsProcessingNFe(false);
           if (nfeFileInputRef.current) {
-            nfeFileInputRef.current.value = ''; 
+            nfeFileInputRef.current.value = '';
           }
         }
       };
@@ -237,55 +302,17 @@ export default function AddAssetPage() {
     }
   };
 
-  const handleImportSelectedItems = (selectedProducts: NFeProduct[], supplierId: string | undefined, nfeDetails: ExtractNFeDataOutput) => {
-    if (selectedProducts.length === 0) {
-      toast({ title: "Nenhum item selecionado", description: "Nenhum item foi selecionado para importação.", variant: "default" });
+  const handleImportTasksFromNFe = (tasks: AssetImportTask[], supplierId: string | undefined, nfeDetails: ExtractNFeDataOutput) => {
+    if (tasks.length === 0) {
+      toast({ title: "Nenhum item selecionado da NF-e", description: "Nenhum item foi marcado para importação.", variant: "default" });
       setIsNFePreviewOpen(false);
       return;
     }
-
-    const firstProductToImport = selectedProducts[0];
-
-    if (supplierId) {
-      form.setValue('supplier', supplierId);
-    } else {
-      toast({ title: "Fornecedor não definido", description: "Não foi possível definir o fornecedor. Verifique os dados da NF-e.", variant: "destructive" });
-      form.setValue('supplier', '');
-    }
-    
-    if (firstProductToImport.description) {
-      form.setValue('name', firstProductToImport.description);
-    }
-    if (firstProductToImport.totalValue !== undefined) {
-      form.setValue('purchaseValue', firstProductToImport.totalValue);
-    }
-    
-    if (nfeDetails.invoiceNumber) {
-      form.setValue('invoiceNumber', nfeDetails.invoiceNumber);
-    }
-    if (nfeDetails.emissionDate) {
-      const parsedDate = parseISO(nfeDetails.emissionDate);
-      if (isValidDate(parsedDate)) {
-        form.setValue('purchaseDate', parsedDate);
-      }
-    }
-
-    let toastMessage = `Dados do produto "${firstProductToImport.description}" carregados no formulário.`;
-    if (selectedProducts.length > 1) {
-      toastMessage += ` ${selectedProducts.length -1} outro(s) item(ns) selecionado(s) pode(m) ser cadastrado(s) em seguida.`;
-    }
-    if (nfeDetails.shippingValue && nfeDetails.shippingValue > 0) {
-      toastMessage += ` Lembre-se de considerar o valor do frete (R$ ${nfeDetails.shippingValue.toFixed(2)}) no custo do ativo, se aplicável.`;
-    }
-
-    toast({
-      title: "Item(s) pronto(s) para cadastro!",
-      description: toastMessage,
-      duration: 10000,
-    });
-    
-    setIsNFePreviewOpen(false); // Fecha o modal após a "importação" para o formulário
-    // Poderia haver uma lógica aqui para lidar com múltiplos itens (ex: guardar em um estado para cadastros sequenciais)
+    setAssetImportQueue(tasks);
+    setCurrentSupplierIdForQueue(supplierId);
+    // A lógica para processar a primeira tarefa agora está no useEffect
+    setIsNFePreviewOpen(false);
+    // A primeira notificação de "Preparando Ativo X de Y" será dada por processNextAssetInQueue
   };
 
 
@@ -294,20 +321,25 @@ export default function AddAssetPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Adicionar novo ativo</h1>
-            <p className="text-muted-foreground">Preencha os campos abaixo para cadastrar um novo ativo.</p>
+            <h1 className="text-3xl font-bold">
+              {assetImportQueue.length > 0 ? `Cadastrando Ativo (Restam ${assetImportQueue.length + 1})` : 'Adicionar novo ativo'}
+            </h1>
+            <p className="text-muted-foreground">
+              {assetImportQueue.length > 0 ? `Preencha os dados para o ativo atual. Nome na NF-e: ${form.getValues('name') || 'Carregando...'}` : 'Preencha os campos abaixo para cadastrar um novo ativo.'}
+            </p>
           </div>
            <div>
-            <Button onClick={() => nfeFileInputRef.current?.click()} disabled={isProcessingNFe} variant="default">
+            <Button onClick={() => nfeFileInputRef.current?.click()} disabled={isProcessingNFe || assetImportQueue.length > 0} variant="default">
               <FileText className="mr-2 h-4 w-4" />
               {isProcessingNFe ? "Processando NF-e..." : "Importar Dados da NF-e (XML)"}
             </Button>
-            <Input 
-              type="file" 
-              accept=".xml" 
-              ref={nfeFileInputRef} 
-              onChange={handleNFeUpload} 
-              className="hidden" 
+            <Input
+              type="file"
+              accept=".xml"
+              ref={nfeFileInputRef}
+              onChange={handleNFeUpload}
+              className="hidden"
+              disabled={assetImportQueue.length > 0}
             />
           </div>
         </div>
@@ -419,10 +451,10 @@ export default function AddAssetPage() {
                         render={({ field }) => (
                           <FormItem className="space-y-0.5">
                              <div className="flex items-center h-8">
-                              <FormLabel>Nome do ativo *</FormLabel>
+                              <FormLabel>Nome do ativo (no sistema) *</FormLabel>
                             </div>
                             <FormControl>
-                              <Input placeholder="Ex: Notebook Dell XPS 15" {...field} />
+                              <Input placeholder="Ex: Notebook Dell XPS 15 (Sala Reunião)" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -506,7 +538,7 @@ export default function AddAssetPage() {
                                 </Tooltip>
                               </TooltipProvider>
                             </div>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecione uma categoria" />
@@ -543,7 +575,7 @@ export default function AddAssetPage() {
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>Digite para buscar. Se o fornecedor não existir, a opção para cadastrá-lo aparecerá. Clique no campo para ver todos os fornecedores.</p>
+                                      <p>Este campo é preenchido pela NF-e. Se precisar alterar, cancele a importação e ajuste manualmente.</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -551,6 +583,7 @@ export default function AddAssetPage() {
                             <SupplierCombobox
                               value={field.value}
                               onChange={field.onChange}
+                              disabled={assetImportQueue.length > 0 || !!currentSupplierIdForQueue}
                             />
                             <FormMessage />
                           </FormItem>
@@ -596,6 +629,18 @@ export default function AddAssetPage() {
                           <FormItem className="space-y-0.5">
                              <div className="flex items-center h-8">
                               <FormLabel>Data da compra *</FormLabel>
+                               <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Preenchido automaticamente pela NF-e durante a importação.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                             </div>
                             <Popover>
                               <PopoverTrigger asChild>
@@ -604,8 +649,10 @@ export default function AddAssetPage() {
                                     variant={"outline"}
                                     className={cn(
                                       "w-full pl-3 text-left font-normal",
-                                      !field.value && "text-muted-foreground"
+                                      !field.value && "text-muted-foreground",
+                                      (assetImportQueue.length > 0 || !!extractedNFeData) && "bg-muted/50 cursor-not-allowed"
                                     )}
+                                    disabled={assetImportQueue.length > 0 || !!extractedNFeData}
                                   >
                                     {field.value ? (
                                       format(field.value, "PPP", { locale: ptBR })
@@ -640,15 +687,32 @@ export default function AddAssetPage() {
                           <FormItem className="space-y-0.5">
                             <div className="flex items-center h-8">
                               <FormLabel>Nº da nota fiscal *</FormLabel>
+                               <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Preenchido automaticamente pela NF-e durante a importação.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                             </div>
                             <FormControl>
-                              <Input placeholder="Ex: NF-000123456" {...field} />
+                              <Input
+                                placeholder="Ex: NF-000123456"
+                                {...field}
+                                readOnly={assetImportQueue.length > 0 || !!extractedNFeData}
+                                className={(assetImportQueue.length > 0 || !!extractedNFeData) ? "bg-muted/50 cursor-not-allowed" : ""}
+                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                     
+
                       <FormField
                         control={form.control}
                         name="purchaseValue"
@@ -656,9 +720,28 @@ export default function AddAssetPage() {
                           <FormItem className="space-y-0.5">
                             <div className="flex items-center h-8">
                               <FormLabel>Valor de compra (R$) *</FormLabel>
+                               <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
+                                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Preenchido automaticamente com o valor unitário do item da NF-e.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                             </div>
                             <FormControl>
-                              <Input type="number" step="0.01" placeholder="Ex: 2500.00" {...field} />
+                              <Input
+                                type="number"
+                                step="0.01"
+                                placeholder="Ex: 2500.00"
+                                {...field}
+                                readOnly={assetImportQueue.length > 0 || !!extractedNFeData}
+                                className={(assetImportQueue.length > 0 || !!extractedNFeData) ? "bg-muted/50 cursor-not-allowed" : ""}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -679,7 +762,7 @@ export default function AddAssetPage() {
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Informe se o ativo foi adquirido usado e já possuía depreciação acumulada. Este valor será subtraído do valor de compra para definir o valor atual inicial.</p>
+                                    <p>Informe se o ativo foi adquirido usado e já possuía depreciação acumulada. Este valor será subtraído do valor de compra para definir o valor atual inicial. Para itens de NF-e, geralmente é 0.</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
@@ -791,23 +874,51 @@ export default function AddAssetPage() {
                   </Button>
                   <Button type="submit" disabled={form.formState.isSubmitting || isProcessingNFe}>
                     <Save className="mr-2 h-4 w-4" />
-                    {form.formState.isSubmitting ? "Salvando..." : "Salvar ativo"}
+                    {form.formState.isSubmitting ? "Salvando..." : (assetImportQueue.length > 0 ? `Salvar Ativo (${assetImportQueue.length + 1} na fila)` : "Salvar ativo")}
                   </Button>
+                   {assetImportQueue.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => {
+                        if (processNextAssetInQueue()) {
+                          toast({ title: "Item pulado", description: "Carregando próximo item da fila de importação."});
+                        } else {
+                          toast({ title: "Fila vazia", description: "Não há mais itens na fila de importação.", variant: "default"});
+                          router.push('/assets'); // ou resetFormForNewAsset() se quiser ficar na tela
+                        }
+                      }}
+                      title="Pular este item e ir para o próximo da NF-e"
+                    >
+                      <Forward className="mr-2 h-4 w-4" />
+                      Pular Item
+                    </Button>
+                  )}
                 </div>
               </form>
             </Form>
           </CardContent>
         </Card>
+         {assetImportQueue.length > 0 && (
+            <Alert>
+              <ListChecks className="h-4 w-4" />
+              <AlertTitle>Fila de Importação da NF-e Ativa</AlertTitle>
+              <AlertDescription>
+                Você está processando itens de uma Nota Fiscal.
+                Restam <Badge variant="secondary">{assetImportQueue.length}</Badge> ativo(s) na fila após este.
+                Complete o cadastro atual e salve para prosseguir, ou pule para o próximo.
+              </AlertDescription>
+            </Alert>
+        )}
       </div>
       {extractedNFeData && (
         <NFePreviewDialog
           open={isNFePreviewOpen}
           onOpenChange={setIsNFePreviewOpen}
           nfeData={extractedNFeData}
-          onImportItems={handleImportSelectedItems}
+          onImportItems={handleImportTasksFromNFe}
         />
       )}
     </>
   );
 }
-
