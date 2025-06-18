@@ -1,0 +1,71 @@
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js build output
+/.next/
+/out/
+
+# Next.js internal files
+.next.europe-west1.a.appspot.com/ # Google App Engine
+.firebase/ # Firebase emulators and hosting
+*.log # Firebase Functions logs
+
+# Production
+/build
+
+# Minified JavaScript and CSS
+*.min.js
+*.min.css
+
+# Local environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# macOS specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in projects that also use PartsKit
+/.partskit-cache/
+
+# Temporary files
+*.swp
+*~
+*.tmp
+
+# Editor directories and files
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+
+# Misc
+.eslintcache
+package-lock.json # If you use yarn.lock, otherwise keep it
+yarn-error.log
