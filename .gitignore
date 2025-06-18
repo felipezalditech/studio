@@ -1,45 +1,88 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-
-# next.js
+# Next.js
 /.next/
 /out/
+/build/
 
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# vercel
-.vercel
-
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
 
-.genkit/*
-.env*
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
 
-# firebase
+# Environment variables
+# .env # Removido para permitir versionamento se desejado, mas .env.local é o padrão para segredos
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Test Reporting
+/coverage
+junit.xml
+TEST_RESULTS.xml
+
+# Editor directories and files
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Firebase
+.firebase/
 firebase-debug.log
+database-debug.log
 firestore-debug.log
+ui-debug.log
+functions/lib/
+functions/.runtimeconfig.json
+functions/.env.*
+
+# Arquivos gerados pelo Genkit (se aplicável, podem ser específicos)
+# .genkit-cache/ # Se o Genkit usar um cache local
+# *.flowstate # Se o Genkit gerar arquivos de estado
+# genkit.log # Logs específicos do Genkit
+
+# Outros
+.npm
+.pnpm-store
+*.tgz
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+dist
+dist-ssr
+.vercel
+.output
+.idx
+
+# Patch-package (se você usa)
+/patches/
