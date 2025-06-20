@@ -31,7 +31,8 @@ import { LocationCombobox } from '@/components/locations/LocationCombobox';
 import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox';
 import { extractNFeData, type ExtractNFeDataOutput } from '@/ai/flows/extract-nfe-data-flow';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { NFePreviewDialog, type AssetImportTask } from '@/components/nfe/NFePreviewDialog';
+import { NFePreviewDialog } from '@/components/nfe/NFePreviewDialog';
+import type { ImportPreparationTask as AssetImportTask } from '@/components/nfe/NFePreviewDialog';
 import { Badge } from '@/components/ui/badge';
 
 
@@ -133,8 +134,8 @@ export default function AddAssetPage() {
   const processNextAssetInQueue = () => {
     if (assetImportQueue.length > 0) {
       const nextTask = assetImportQueue[0];
-
-      // Limpar campos específicos do ativo individual
+  
+      // Limpa campos específicos do ativo individual, incluindo os que não devem persistir
       form.reset({
         // Campos que vêm da tarefa (NF-e)
         name: nextTask.assetData.originalNFeProductDescription || '',
@@ -143,21 +144,27 @@ export default function AddAssetPage() {
         purchaseDate: nextTask.assetData.purchaseDate ? (isValidDate(parseISO(nextTask.assetData.purchaseDate)) ? parseISO(nextTask.assetData.purchaseDate) : undefined) : undefined,
         supplier: nextTask.assetData.supplierId || '',
         aplicarRegrasDepreciacao: nextTask.assetData.aplicarRegrasDepreciacao,
+  
+        // Detalhes "modelo" aplicados a esta tarefa
+        categoryId: nextTask.assetModelDetails?.categoryId || '',
+        modelId: nextTask.assetModelDetails?.modelId,
+        locationId: nextTask.assetModelDetails?.locationId,
+        additionalInfo: nextTask.assetModelDetails?.additionalInfo,
+        
         // Campos a serem zerados ou definidos como padrão para preenchimento manual
-        assetTag: '',
-        serialNumber: '',
-        categoryId: '',
-        modelId: undefined,
-        locationId: undefined,
-        additionalInfo: '',
-        previouslyDepreciatedValue: 0,
+        assetTag: nextTask.assetModelDetails?.assetTagPrefix ? `${nextTask.assetModelDetails.assetTagPrefix}-` : '',
+        serialNumber: nextTask.assetModelDetails?.serialNumberPrefix ? `${nextTask.assetModelDetails.serialNumberPrefix}-` : '',
+        
+        // Campos que sempre devem ser limpos para cada novo ativo
         imageDateUris: [],
-        invoiceFileDataUri: undefined, 
-        invoiceFileName: undefined,   
-        arquivado: false, // Padrão para novo ativo
+        invoiceFileDataUri: undefined,
+        invoiceFileName: undefined,
+        previouslyDepreciatedValue: 0,
+        arquivado: false,
       });
+  
       setImagePreviews([]); // Limpa as pré-visualizações de imagem
-
+  
       const currentItemNumber = totalAssetsInQueue - assetImportQueue.length + 1;
       toast({
         title: `Cadastrando Ativo ${currentItemNumber} de ${totalAssetsInQueue}`,
@@ -575,8 +582,6 @@ export default function AddAssetPage() {
                               <Input
                                 placeholder="Ex: Notebook Dell XPS 15 (Sala Reunião)"
                                 {...field}
-                                readOnly={isImportQueueActive && field.value !== '' && nextTaskUsesNFeName(form.getValues('name'), assetImportQueue)}
-                                className={(isImportQueueActive && field.value !== '' && nextTaskUsesNFeName(form.getValues('name'), assetImportQueue)) ? "bg-muted/50 cursor-not-allowed" : ""}
                               />
                             </FormControl>
                             <FormMessage />
@@ -1109,15 +1114,3 @@ export default function AddAssetPage() {
     </>
   );
 }
-
-// Helper function to determine if the current task name matches the NFe product description
-// This is used to make the name field read-only if it's still the default NFe name
-// and not the first item in a multi-item import from the same product line.
-function nextTaskUsesNFeName(currentFormName: string, queue: AssetImportTask[]): boolean {
-  if (!queue || queue.length === 0) return false;
-  const nextTaskData = queue[0].assetData;
-  return currentFormName === nextTaskData.originalNFeProductDescription;
-}
-    
-
-    
