@@ -155,7 +155,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                        <Link href={item.href} legacyBehavior passHref>
                         <SidebarMenuButton
                           asChild={false}
-                          isActive={isClient ? (isSubmenuOpen || isParentActive || (item.href && pathname.startsWith(item.href))) : false}
+                          isActive={isSubmenuOpen || isParentActive || (item.href && pathname.startsWith(item.href))}
                           className="w-full justify-start"
                           tooltip={{ children: item.label, side: 'right', align: 'center' }}
                           onClick={() => toggleSubmenu(item.label)}
@@ -167,7 +167,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     ) : (
                       <SidebarMenuButton
                         asChild={false}
-                        isActive={isClient ? (isSubmenuOpen || isParentActive) : false}
+                        isActive={isSubmenuOpen || isParentActive}
                         className="w-full justify-start"
                         tooltip={{ children: item.label, side: 'right', align: 'center' }}
                         onClick={() => toggleSubmenu(item.label)}
@@ -185,7 +185,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                               <Link href={subItem.href} legacyBehavior passHref>
                                 <SidebarMenuSubButton
                                   asChild={false}
-                                  isActive={isClient ? pathname.startsWith(subItem.href) : false}
+                                  isActive={pathname.startsWith(subItem.href)}
                                 >
                                   <SubIcon className="h-5 w-5 flex-shrink-0" />
                                   <span className="truncate">{subItem.label}</span>
@@ -206,16 +206,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
                    if (item.href === "/") {
                     isActive = pathname === "/";
                   } else {
-                    const isSubpath = pathname.startsWith(item.href);
-                    // Check if another menu item is a more specific subpath of the current item.
-                    const isMoreSpecificItemActive = menuItems.some(
-                      otherItem =>
-                        'href' in otherItem &&
-                        otherItem.href.startsWith(item.href) && // It's a sub-item
-                        otherItem.href.length > item.href.length && // It's more specific
-                        pathname.startsWith(otherItem.href) // The current path matches that more specific item
+                     const isMoreSpecificItemActive = menuItems.some(
+                      (otherItem) =>
+                        otherItem.href &&
+                        pathname.startsWith(otherItem.href) &&
+                        otherItem.href.length > item.href!.length
                     );
-                    isActive = isSubpath && !isMoreSpecificItemActive;
+
+                    isActive = pathname.startsWith(item.href) && !isMoreSpecificItemActive;
                   }
                 }
 
