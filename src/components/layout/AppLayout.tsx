@@ -195,12 +195,24 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 );
               } else if ('href' in item) {
                 const Icon = item.icon;
+                const isExactMatch = pathname === item.href;
+                const isSubpath = item.href !== "/" && pathname.startsWith(item.href) && !isExactMatch;
+                
+                // Check if another, more specific menu item has an exact match with the current path.
+                // This prevents a parent route (like '/assets') from being active when a more specific 
+                // child route (like '/assets/add') is the current page.
+                const isMoreSpecificItemActive = isSubpath && menuItems.some(
+                  i => 'href' in i && i.href === pathname
+                );
+
+                const isActive = isExactMatch || (isSubpath && !isMoreSpecificItemActive);
+
                 return (
                   <SidebarMenuItem key={item.href}>
                     <Link href={item.href} legacyBehavior passHref>
                       <SidebarMenuButton
                         asChild={false}
-                        isActive={pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))}
+                        isActive={isActive}
                         className="w-full justify-start"
                         tooltip={{ children: item.label, side: 'right', align: 'center' }}
                       >
