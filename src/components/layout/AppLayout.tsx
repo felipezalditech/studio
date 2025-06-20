@@ -3,9 +3,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation'; // Import useRouter
+import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SidebarProvider,
   Sidebar,
@@ -36,9 +36,9 @@ import {
   Layers,
   MapPin,
   PlusCircle,
-  Shapes, // Ícone para Modelos de Ativos
-  FileCog, // Ícone para Regras de Importação
-  Building2, // Ícone para Dados da Empresa (substituindo Settings genérico)
+  Shapes,
+  FileCog,
+  Building2,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -87,7 +87,7 @@ const menuItems: MenuItemType[] = [
   { href: '/users', label: 'Gerenciar usuários', icon: UsersRound },
   {
     label: 'Configurações',
-    icon: Settings, // Ícone pai genérico
+    icon: Settings,
     isSubmenuParent: true,
     subItems: [
       { href: '/settings', label: 'Dados da Empresa', icon: Building2 },
@@ -108,9 +108,14 @@ const getInitials = (name: string) => {
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
   const { brandingConfig } = useBranding();
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const toggleSubmenu = (label: string) => {
     setOpenSubmenus(prev => ({ ...prev, [label]: !prev[label] }));
@@ -118,12 +123,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const handleLogout = () => {
     localStorage.removeItem('userLoggedIn');
-    localStorage.removeItem('adminLoggedIn'); // Ensure both are cleared
-    router.push('/admin/login'); // Redirect to the unified login page
+    localStorage.removeItem('adminLoggedIn');
+    router.push('/admin/login');
   };
 
   if (pathname.startsWith('/admin')) {
-    return <>{children}</>; // AdminLayout will take over for admin routes
+    return <>{children}</>;
   }
 
   return (
@@ -136,11 +141,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </span>
           </Link>
         </SidebarHeader>
-        <SidebarContent className="p-2"> {/* Este é flex-1 e overflow-y-auto */}
+        <SidebarContent className="p-2">
           <SidebarMenu>
             {menuItems.map((item) => {
               if (item.isSubmenuParent && item.subItems) {
-                const isParentActive = item.subItems.some(subItem => pathname.startsWith(subItem.href));
+                const isParentActive = isClient ? item.subItems.some(subItem => pathname.startsWith(subItem.href)) : false;
                 const ParentIcon = item.icon;
                 const isSubmenuOpen = openSubmenus[item.label] || false;
 
@@ -150,7 +155,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                        <Link href={item.href} legacyBehavior passHref>
                         <SidebarMenuButton
                           asChild={false}
-                          isActive={isSubmenuOpen || isParentActive || (item.href && pathname.startsWith(item.href))}
+                          isActive={isClient ? (isSubmenuOpen || isParentActive || (item.href && pathname.startsWith(item.href))) : false}
                           className="w-full justify-start"
                           tooltip={{ children: item.label, side: 'right', align: 'center' }}
                           onClick={() => toggleSubmenu(item.label)}
@@ -162,7 +167,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     ) : (
                       <SidebarMenuButton
                         asChild={false}
-                        isActive={isSubmenuOpen || isParentActive}
+                        isActive={isClient ? (isSubmenuOpen || isParentActive) : false}
                         className="w-full justify-start"
                         tooltip={{ children: item.label, side: 'right', align: 'center' }}
                         onClick={() => toggleSubmenu(item.label)}
@@ -180,7 +185,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                               <Link href={subItem.href} legacyBehavior passHref>
                                 <SidebarMenuSubButton
                                   asChild={false}
-                                  isActive={pathname.startsWith(subItem.href)}
+                                  isActive={isClient ? pathname.startsWith(subItem.href) : false}
                                 >
                                   <SubIcon className="h-5 w-5 flex-shrink-0" />
                                   <span className="truncate">{subItem.label}</span>
@@ -195,17 +200,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 );
               } else if ('href' in item) {
                 const Icon = item.icon;
-                const isExactMatch = pathname === item.href;
-                const isSubpath = item.href !== "/" && pathname.startsWith(item.href) && !isExactMatch;
                 
-                // Check if another, more specific menu item has an exact match with the current path.
-                // This prevents a parent route (like '/assets') from being active when a more specific 
-                // child route (like '/assets/add') is the current page.
-                const isMoreSpecificItemActive = isSubpath && menuItems.some(
-                  i => 'href' in i && i.href === pathname
-                );
+                let isActive = false;
+                if (isClient) {
+                  const isExactMatch = pathname === item.href;
+                  const isSubpath = item.href !== "/" && pathname.startsWith(item.href);
+                  
+                  const isMoreSpecificItemActive = isSubpath && menuItems.some(
+                    i => 'href' in i && i.href === pathname
+                  );
 
-                const isActive = isExactMatch || (isSubpath && !isMoreSpecificItemActive);
+                  isActive = isExactMatch || (isSubpath && !isMoreSpecificItemActive);
+                }
+
 
                 return (
                   <SidebarMenuItem key={item.href}>
@@ -227,7 +234,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
             })}
           </SidebarMenu>
         </SidebarContent>
-        {/* Wrapper para o ThemeToggleButton, posicionado no rodapé do Sidebar e fora da área de rolagem do SidebarContent */}
         <div className="p-2 mt-auto border-t border-sidebar-border">
             <ThemeToggleButton />
         </div>
@@ -264,7 +270,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleLogout}> {/* Updated onClick handler */}
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
                 </DropdownMenuItem>
