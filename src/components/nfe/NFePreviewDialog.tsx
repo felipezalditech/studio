@@ -2,13 +2,12 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import type { z } from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as UITableFooter } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Building, CheckCircle, Info, PlusCircle, ShoppingCart, Tag, Trash2 } from 'lucide-react';
+import { Building, CheckCircle, Info, PlusCircle, ShoppingCart, Tag, Trash2, Forward } from 'lucide-react';
 import type { ExtractNFeDataOutput, NFeProduct } from '@/ai/flows/extract-nfe-data-flow';
 import type { Supplier, Endereco } from '@/contexts/SupplierContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
@@ -20,14 +19,22 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { maskCEP, maskCNPJ } from '@/lib/utils';
-import type { Asset } from '@/components/assets/types';
 import { parseISO } from 'date-fns';
 
 
-export interface AssetImportTask {
-  assetData: Partial<Omit<Asset, 'id' | 'currentValue' | 'categoryId' | 'modelId' | 'locationId' | 'assetTag' | 'serialNumber' | 'additionalInfo' | 'imageDateUris' | 'invoiceFileDataUri' | 'invoiceFileName'>>;
-  originalNFeProductDescription: string; // Para usar como nome padrão ou referência
+// Nova estrutura para a tarefa passada para a próxima etapa
+export interface ImportPreparationTask {
+  originalNFeProductDescription: string;
+  purchaseValue: number; // Valor unitário do produto + frete rateado
+  invoiceNumber: string;
+  purchaseDate: string; // Data de emissão da NF-e (ISO string)
+  supplierId: string; // ID do fornecedor já cadastrado/verificado
+  aplicarRegrasDepreciacao: boolean; // Se o ativo a ser criado será depreciável
+  // Opcional: se quisermos propagar o XML da NF-e como anexo para todos os ativos gerados
+  // nfeXmlFileDataUri?: string; 
+  // nfeXmlFileName?: string;
 }
+
 
 interface ItemActionQuantities {
   depreciableQty: number;
@@ -38,7 +45,7 @@ interface NFePreviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   nfeData: ExtractNFeDataOutput | null;
-  onImportItems: (tasks: AssetImportTask[], supplierId: string | undefined, nfeDetails: ExtractNFeDataOutput) => void;
+  onImportItems: (tasks: ImportPreparationTask[], supplierId: string | undefined, nfeDetails: ExtractNFeDataOutput) => void;
 }
 
 
@@ -121,26 +128,26 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     });
   };
 
-  const handleImport = () => {
+  const handleAdvanceToRegistration = () => {
     if (!nfeData) {
       toast({ title: "Erro interno", description: "Dados da NF-e não encontrados.", variant: "destructive" });
       return;
     }
 
-    let rawTasks: { product: NFeProduct, assetType: 'depreciable' | 'patrimony' }[] = [];
+    let rawTasksForPreparation: { product: NFeProduct, assetType: 'depreciable' | 'patrimony' }[] = [];
     displayableProducts.forEach((product, index) => {
       const actions = itemActions.get(index);
       if (!actions || !product) return;
 
       for (let i = 0; i < actions.depreciableQty; i++) {
-        rawTasks.push({ product: { ...product }, assetType: 'depreciable' });
+        rawTasksForPreparation.push({ product: { ...product }, assetType: 'depreciable' });
       }
       for (let i = 0; i < actions.patrimonyQty; i++) {
-        rawTasks.push({ product: { ...product }, assetType: 'patrimony' });
+        rawTasksForPreparation.push({ product: { ...product }, assetType: 'patrimony' });
       }
     });
 
-    if (rawTasks.length === 0) {
+    if (rawTasksForPreparation.length === 0) {
       toast({ title: "Nenhum item para importar", description: "Por favor, defina quantidades para 'Ativo Depreciável' ou 'Patrimônio'.", variant: "default" });
       return;
     }
@@ -166,15 +173,14 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
         return;
     }
 
-    let finalTasks: AssetImportTask[] = [];
+    let finalPreparationTasks: ImportPreparationTask[] = [];
     const shippingValue = nfeData.shippingValue || 0;
     const nfePurchaseDate = nfeData.emissionDate ? parseISO(nfeData.emissionDate) : new Date();
 
-
-    const mapToAssetImportTask = (
-        tasksToProcess: typeof rawTasks,
+    const mapToImportPreparationTask = (
+        tasksToProcess: typeof rawTasksForPreparation,
         totalProductValueForFreightCalc: number
-      ): AssetImportTask[] => {
+      ): ImportPreparationTask[] => {
       return tasksToProcess.map(rawTask => {
         const { product, assetType } = rawTask;
         let freightPerUnit = 0;
@@ -183,38 +189,35 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
           freightPerUnit = productLineFreightShare / product.quantity;
         }
 
-        const assetData: Partial<Omit<Asset, 'id' | 'currentValue'>> = {
-          name: product.description || '', // This will be the default, editable name
+        const task: ImportPreparationTask = {
+          originalNFeProductDescription: product.description || '',
           purchaseValue: (product.unitValue || 0) + freightPerUnit,
           invoiceNumber: nfeData.invoiceNumber || '',
           purchaseDate: nfePurchaseDate.toISOString(), 
-          supplier: supplierOnRecord!.id,
+          supplierId: supplierOnRecord!.id,
           aplicarRegrasDepreciacao: assetType === 'depreciable',
-          arquivado: false, // Default
-          previouslyDepreciatedValue: 0, // Default
         };
-        return { assetData, originalNFeProductDescription: product.description || '' };
+        return task;
       });
     };
-
 
     if (importSettings.allocateFreight && shippingValue > 0 && nfeData.products && nfeData.products.length > 0) {
       if (importSettings.freightDilutionScope === 'all_nfe_items') {
         const totalOriginalNFeProductValue = (nfeData.products || []).reduce((sum, p) => sum + (p.totalValue || 0), 0);
-        finalTasks = mapToAssetImportTask(rawTasks, totalOriginalNFeProductValue);
+        finalPreparationTasks = mapToImportPreparationTask(rawTasksForPreparation, totalOriginalNFeProductValue);
       } else { 
         const productLinesBeingImported = displayableProducts.filter((_p, index) => {
           const actions = itemActions.get(index);
           return actions && (actions.depreciableQty > 0 || actions.patrimonyQty > 0);
         });
         const totalValueOfProductLinesBeingImported = productLinesBeingImported.reduce((sum, p) => sum + (p.totalValue || 0), 0);
-        finalTasks = mapToAssetImportTask(rawTasks, totalValueOfProductLinesBeingImported);
+        finalPreparationTasks = mapToImportPreparationTask(rawTasksForPreparation, totalValueOfProductLinesBeingImported);
       }
     } else {
-      finalTasks = mapToAssetImportTask(rawTasks, 0); 
+      finalPreparationTasks = mapToImportPreparationTask(rawTasksForPreparation, 0); 
     }
     
-    onImportItems(finalTasks, supplierOnRecord?.id, nfeData);
+    onImportItems(finalPreparationTasks, supplierOnRecord?.id, nfeData);
     onOpenChange(false);
   };
 
@@ -282,10 +285,19 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     const newActions = new Map<number, ItemActionQuantities>();
     
     newDisplayableProducts.forEach((product, newIndex) => {
-        const oldIndex = displayableProducts.findIndex(p => p.description === product.description && p.quantity === product.quantity && p.unitValue === product.unitValue); 
-        if (oldIndex !== -1) {
-            newActions.set(newIndex, itemActions.get(oldIndex) || { depreciableQty: 0, patrimonyQty: 0 });
+        // Tenta encontrar o índice antigo para preservar as ações, se possível
+        // Esta é uma heurística simples; uma solução mais robusta usaria IDs de produto únicos se disponíveis
+        const oldIndex = displayableProducts.findIndex(p => 
+            p.description === product.description && 
+            p.quantity === product.quantity && 
+            p.unitValue === product.unitValue &&
+            p.totalValue === product.totalValue 
+            // Adicione mais verificações se necessário para distinguir produtos
+        ); 
+        if (oldIndex !== -1 && itemActions.has(oldIndex)) {
+            newActions.set(newIndex, itemActions.get(oldIndex)!);
         } else { 
+            // Se não encontrar um correspondente exato ou se as ações não existiam, zera
             newActions.set(newIndex, { depreciableQty: 0, patrimonyQty: 0 });
         }
     });
@@ -311,9 +323,9 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Pré-visualização da NF-e: {nfeData.invoiceNumber || "Número Desconhecido"}</DialogTitle>
+            <DialogTitle>Etapa 1: Seleção de Itens da NF-e: {nfeData.invoiceNumber || "Número Desconhecido"}</DialogTitle>
             <DialogDescription>
-              Revise os dados. Para cada item, defina as quantidades que serão importadas como ativo.
+              Revise os dados da NF-e. Para cada item, defina as quantidades que serão importadas como 'Ativo Depreciável' ou apenas 'Patrimônio'.
             </DialogDescription>
           </DialogHeader>
 
@@ -391,8 +403,8 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
 
           <DialogFooter className="mt-auto pt-4 border-t">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button onClick={handleImport} disabled={totalProcessedQty === 0 || supplierOnRecord === undefined || (!supplierOnRecord && !!nfeData.supplierCNPJ)} >
-              <Tag className="mr-2 h-4 w-4" /> Importar {totalProcessedQty > 0 ? `${totalProcessedQty} Ativo(s)` : "Ativos"}
+            <Button onClick={handleAdvanceToRegistration} disabled={totalProcessedQty === 0 || supplierOnRecord === undefined || (!supplierOnRecord && !!nfeData.supplierCNPJ)} >
+              <Forward className="mr-2 h-4 w-4" /> Avançar para Cadastro ({totalProcessedQty})
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -403,3 +415,4 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     </>
   );
 }
+
