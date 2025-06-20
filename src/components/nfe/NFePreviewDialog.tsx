@@ -30,9 +30,6 @@ export interface ImportPreparationTask {
   purchaseDate: string; // Data de emissão da NF-e (ISO string)
   supplierId: string; // ID do fornecedor já cadastrado/verificado
   aplicarRegrasDepreciacao: boolean; // Se o ativo a ser criado será depreciável
-  // Opcional: se quisermos propagar o XML da NF-e como anexo para todos os ativos gerados
-  // nfeXmlFileDataUri?: string; 
-  // nfeXmlFileName?: string;
 }
 
 
@@ -285,19 +282,15 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     const newActions = new Map<number, ItemActionQuantities>();
     
     newDisplayableProducts.forEach((product, newIndex) => {
-        // Tenta encontrar o índice antigo para preservar as ações, se possível
-        // Esta é uma heurística simples; uma solução mais robusta usaria IDs de produto únicos se disponíveis
         const oldIndex = displayableProducts.findIndex(p => 
             p.description === product.description && 
             p.quantity === product.quantity && 
             p.unitValue === product.unitValue &&
-            p.totalValue === product.totalValue 
-            // Adicione mais verificações se necessário para distinguir produtos
+            p.totalValue === product.totalValue
         ); 
         if (oldIndex !== -1 && itemActions.has(oldIndex)) {
             newActions.set(newIndex, itemActions.get(oldIndex)!);
         } else { 
-            // Se não encontrar um correspondente exato ou se as ações não existiam, zera
             newActions.set(newIndex, { depreciableQty: 0, patrimonyQty: 0 });
         }
     });
@@ -415,4 +408,3 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     </>
   );
 }
-
