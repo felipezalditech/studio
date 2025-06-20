@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as UITableFooter } from '@/components/ui/table';
-import { ScrollArea } from '@/components/ui/scroll-area';
+// Removed ScrollArea import
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Building, CheckCircle, Info, PlusCircle, ShoppingCart, Tag, Trash2, ChevronDown, ChevronUp, Layers, MapPinIcon, TagIcon, Barcode, InfoIcon } from 'lucide-react';
 import type { ExtractNFeDataOutput, NFeProduct } from '@/ai/flows/extract-nfe-data-flow';
@@ -380,7 +380,8 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 flex flex-col min-h-0">
+          {/* This div below is the main scrollable content area */}
+          <div className="flex-1 overflow-y-auto py-1 pr-1"> {/* Changed: Added overflow-y-auto and padding */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-1 text-sm border-b pb-3 mb-3">
               <div><strong>Fornecedor:</strong> {nfeData.supplierName || "Não informado"}</div>
               <div><strong>CNPJ:</strong> {nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : "Não informado"}</div>
@@ -399,7 +400,9 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
               <h3 className="text-lg font-semibold flex items-center"> <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal </h3>
               {displayableProducts.length > 0 && ( <Button onClick={handleDeleteSelectedItems} variant="destructive" size="sm" disabled={selectedItems.size === 0}> <Trash2 className="mr-2 h-4 w-4" /> Excluir Selecionados ({selectedItems.size}) </Button> )}
             </div>
-            <ScrollArea className="flex-grow border rounded-md min-h-0">
+            
+            {/* Table is now directly inside the scrollable div, not ScrollArea component */}
+            <div className="border rounded-md">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -501,7 +504,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
                   </UITableFooter>
                 )}
               </Table>
-            </ScrollArea>
+            </div>
             <div className="text-sm text-muted-foreground mt-2">
                 Total de itens na NF-e: {displayableProducts.length}. Serão processados {totalProcessedQty} unidade(s) como ativo(s).
             </div>
