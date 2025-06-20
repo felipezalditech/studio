@@ -132,24 +132,30 @@ export default function AddAssetPage() {
 
       resetFormForNewAsset(); 
 
-      form.setValue('name', nextTask.nfeProduct.description || '');
-      form.setValue('purchaseValue', nextTask.nfeProduct.unitValue || 0);
-      form.setValue('invoiceNumber', nextTask.nfeDetails.invoiceNumber || '');
-      if (nextTask.nfeDetails.emissionDate) {
-        const parsedDate = parseISO(nextTask.nfeDetails.emissionDate);
+      form.setValue('name', nextTask.assetData.name || '');
+      form.setValue('purchaseValue', nextTask.assetData.purchaseValue || 0);
+      form.setValue('invoiceNumber', nextTask.assetData.invoiceNumber || '');
+      
+      if (nextTask.assetData.purchaseDate) {
+        const parsedDate = parseISO(nextTask.assetData.purchaseDate);
         if (isValidDate(parsedDate)) {
           form.setValue('purchaseDate', parsedDate);
         }
       }
-      if (currentSupplierIdForQueue) {
-         form.setValue('supplier', currentSupplierIdForQueue);
-      }
-      form.setValue('aplicarRegrasDepreciacao', nextTask.assetType === 'depreciable');
-      form.setValue('previouslyDepreciatedValue', 0); 
+      
+      form.setValue('supplier', nextTask.assetData.supplier || currentSupplierIdForQueue || '');
+      form.setValue('categoryId', nextTask.assetData.categoryId || '');
+      form.setValue('modelId', nextTask.assetData.modelId || undefined);
+      form.setValue('locationId', nextTask.assetData.locationId || undefined);
+      form.setValue('assetTag', nextTask.assetData.assetTag || ''); // This is a prefix from NFe details
+      form.setValue('serialNumber', nextTask.assetData.serialNumber || ''); // This is a prefix from NFe details
+      form.setValue('additionalInfo', nextTask.assetData.additionalInfo || '');
+      form.setValue('aplicarRegrasDepreciacao', nextTask.assetData.aplicarRegrasDepreciacao !== undefined ? nextTask.assetData.aplicarRegrasDepreciacao : true);
+      form.setValue('previouslyDepreciatedValue', nextTask.assetData.previouslyDepreciatedValue || 0);
 
       toast({
-        title: `Preparando Ativo ${assetImportQueue.length} de ${assetImportQueue.length + (assetImportQueue.length > 0 ? 0 : -1) + 1}`,
-        description: `Preencha os dados para: ${nextTask.nfeProduct.description}.`,
+        title: `Preparando Ativo ${assetImportQueue.length +1} de ${assetImportQueue.length + (assetImportQueue.length > 0 ? 1 : 0) + 1 -1 }`, // Adjusted count for display
+        description: `Preencha os dados para: ${nextTask.assetData.name}.`,
         duration: 7000
       });
       return true; 
@@ -194,11 +200,11 @@ export default function AddAssetPage() {
   
   
   useEffect(() => {
-    if (assetImportQueue.length > 0 && form.formState.isSubmitSuccessful === false) { 
+    if (assetImportQueue.length > 0 && form.formState.isSubmitSuccessful === false && !form.formState.isSubmitting) { 
       processNextAssetInQueue();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assetImportQueue, form.formState.isSubmitSuccessful]); 
+  }, [assetImportQueue, form.formState.isSubmitSuccessful, form.formState.isSubmitting]); 
 
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string[]) => void) => {
@@ -477,6 +483,7 @@ export default function AddAssetPage() {
                                   checked={field.value}
                                   onCheckedChange={field.onChange}
                                   id="aplicarRegrasDepreciacao"
+                                  disabled={assetImportQueue.length > 0}
                                 />
                                 <label htmlFor="aplicarRegrasDepreciacao" className="text-sm text-muted-foreground cursor-pointer">
                                   {field.value ? "Sim" : "Não"}
@@ -578,7 +585,7 @@ export default function AddAssetPage() {
                               <FormLabel>Nº de patrimônio *</FormLabel>
                             </div>
                             <FormControl>
-                              <Input placeholder="Ex: ZDI-00123" {...field} />
+                              <Input placeholder="Ex: ZDI-00123 (Será completado se houver prefixo da NF-e)" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -593,7 +600,7 @@ export default function AddAssetPage() {
                               <FormLabel>Nº de série</FormLabel>
                             </div>
                             <FormControl>
-                              <Input placeholder="Ex: SN-ABC123XYZ" {...field} value={field.value ?? ''}/>
+                              <Input placeholder="Ex: SN-ABC123XYZ (Será completado se houver prefixo da NF-e)" {...field} value={field.value ?? ''}/>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -960,7 +967,7 @@ export default function AddAssetPage() {
                               <div className="flex items-center h-8">
                                 <FormLabel className="flex items-center">
                                   <UploadCloud className="mr-2 h-5 w-5" />
-                                  Fotos do ativo (Máx. {MAX_PHOTOS})
+                                  Fotos do ativo (Máx. ${MAX_PHOTOS})
                                 </FormLabel>
                                 <TooltipProvider>
                                   <Tooltip>
@@ -970,7 +977,7 @@ export default function AddAssetPage() {
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até {MAX_PHOTOS} fotos.</p>
+                                      <p>Formatos suportados: JPG, PNG, GIF, etc. Você pode adicionar até ${MAX_PHOTOS} fotos.</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -992,7 +999,7 @@ export default function AddAssetPage() {
                         />
                         {imagePreviews.length > 0 && (
                           <div className="mt-4 space-y-2">
-                            <p className="text-sm font-medium text-muted-foreground">Pré-visualização ({imagePreviews.length}/{MAX_PHOTOS}):</p>
+                            <p className="text-sm font-medium text-muted-foreground">Pré-visualização ({imagePreviews.length}/${MAX_PHOTOS}):</p>
                             <div className="flex flex-wrap gap-4 p-2 border rounded-md">
                               {imagePreviews.map((previewUrl, index) => (
                                 <div key={index} className="relative w-32 h-32 border rounded-md overflow-hidden group">
@@ -1013,7 +1020,7 @@ export default function AddAssetPage() {
                           </div>
                         )}
                          <p className="text-sm text-muted-foreground">
-                           Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/{MAX_PHOTOS}.
+                           Fotos adicionadas: {form.getValues('imageDateUris')?.length || 0}/${MAX_PHOTOS}.
                          </p>
                       </div>
                     </div>
