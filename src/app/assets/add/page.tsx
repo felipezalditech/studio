@@ -29,7 +29,7 @@ import Image from 'next/image';
 import { SupplierCombobox } from '@/components/suppliers/SupplierCombobox';
 import { LocationCombobox } from '@/components/locations/LocationCombobox';
 import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox';
-import { extractNFeData, type ExtractNFeDataOutput, type NFeProduct } from '@/ai/flows/extract-nfe-data-flow';
+import { extractNFeData, type ExtractNFeDataOutput } from '@/ai/flows/extract-nfe-data-flow';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { NFePreviewDialog, type AssetImportTask } from '@/components/nfe/NFePreviewDialog';
 import { Badge } from '@/components/ui/badge';
@@ -76,7 +76,8 @@ export default function AddAssetPage() {
   const [extractedNFeData, setExtractedNFeData] = useState<ExtractNFeDataOutput | null>(null);
   const [isNFePreviewOpen, setIsNFePreviewOpen] = useState(false);
   const [assetImportQueue, setAssetImportQueue] = useState<AssetImportTask[]>([]);
-  const [currentSupplierIdForQueue, setCurrentSupplierIdForQueue] = useState<string | undefined>(undefined);
+  
+  const [totalAssetsInQueue, setTotalAssetsInQueue] = useState(0);
 
 
   const form = useForm<AssetFormValues>({
@@ -111,7 +112,7 @@ export default function AddAssetPage() {
       assetTag: '', 
       serialNumber: '',
       categoryId: '', 
-      supplier: currentSupplierIdForQueue || '', 
+      supplier: '', 
       locationId: undefined,
       purchaseDate: undefined, 
       invoiceNumber: '', 
@@ -128,11 +129,12 @@ export default function AddAssetPage() {
   const processNextAssetInQueue = () => {
     if (assetImportQueue.length > 0) {
       const nextTask = assetImportQueue[0];
-      setAssetImportQueue(prev => prev.slice(1));
-
+      // Não remova da fila aqui, remova apenas após o salvamento ou pulo.
+      
       resetFormForNewAsset(); 
 
-      form.setValue('name', nextTask.assetData.name || '');
+      // Preencher apenas os campos que vêm da NF-e ou são definidos pela lógica de importação
+      form.setValue('name', nextTask.assetData.name || nextTask.originalNFeProductDescription || '');
       form.setValue('purchaseValue', nextTask.assetData.purchaseValue || 0);
       form.setValue('invoiceNumber', nextTask.assetData.invoiceNumber || '');
       
@@ -142,24 +144,28 @@ export default function AddAssetPage() {
           form.setValue('purchaseDate', parsedDate);
         }
       }
-      
-      form.setValue('supplier', nextTask.assetData.supplier || currentSupplierIdForQueue || '');
-      form.setValue('categoryId', nextTask.assetData.categoryId || '');
-      form.setValue('modelId', nextTask.assetData.modelId || undefined);
-      form.setValue('locationId', nextTask.assetData.locationId || undefined);
-      form.setValue('assetTag', nextTask.assetData.assetTag || ''); // This is a prefix from NFe details
-      form.setValue('serialNumber', nextTask.assetData.serialNumber || ''); // This is a prefix from NFe details
-      form.setValue('additionalInfo', nextTask.assetData.additionalInfo || '');
+      form.setValue('supplier', nextTask.assetData.supplier || '');
       form.setValue('aplicarRegrasDepreciacao', nextTask.assetData.aplicarRegrasDepreciacao !== undefined ? nextTask.assetData.aplicarRegrasDepreciacao : true);
-      form.setValue('previouslyDepreciatedValue', nextTask.assetData.previouslyDepreciatedValue || 0);
+      
+      // Campos que o usuário deve preencher individualmente
+      form.setValue('categoryId', '');
+      form.setValue('modelId', undefined);
+      form.setValue('locationId', undefined);
+      form.setValue('assetTag', '');
+      form.setValue('serialNumber', '');
+      form.setValue('additionalInfo', '');
+      form.setValue('previouslyDepreciatedValue', 0);
 
+
+      const currentItemNumber = totalAssetsInQueue - assetImportQueue.length + 1;
       toast({
-        title: `Preparando Ativo ${assetImportQueue.length +1} de ${assetImportQueue.length + (assetImportQueue.length > 0 ? 1 : 0) + 1 -1 }`, // Adjusted count for display
-        description: `Preencha os dados para: ${nextTask.assetData.name}.`,
+        title: `Cadastrando Ativo ${currentItemNumber} de ${totalAssetsInQueue}`,
+        description: `Preencha os detalhes para: ${form.getValues('name')}.`,
         duration: 7000
       });
       return true; 
     }
+    setTotalAssetsInQueue(0); // Reseta o contador total se a fila estiver vazia
     return false; 
   };
 
@@ -192,19 +198,28 @@ export default function AddAssetPage() {
       description: `Ativo "${data.name}" adicionado.`,
     });
 
-    if (!processNextAssetInQueue()) {
-      
-      router.push('/assets');
-    }
+    // Remover o item processado da fila
+    setAssetImportQueue(prev => prev.slice(1)); 
   }
   
   
   useEffect(() => {
-    if (assetImportQueue.length > 0 && form.formState.isSubmitSuccessful === false && !form.formState.isSubmitting) { 
+    // Este useEffect agora só processa o próximo item se a fila não estiver vazia
+    // E o form não estiver em processo de submit (para evitar processar antes de salvar)
+    if (assetImportQueue.length > 0 && !form.formState.isSubmitting) { 
       processNextAssetInQueue();
+    } else if (assetImportQueue.length === 0 && totalAssetsInQueue > 0) {
+      // Se a fila esvaziou mas havia itens, significa que todos foram processados
+      toast({
+        title: "Importação Concluída!",
+        description: "Todos os ativos da NF-e foram processados.",
+        duration: 5000,
+      });
+      setTotalAssetsInQueue(0); // Reseta o contador
+      router.push('/assets'); // Redireciona após o último item ser salvo e a fila esvaziar
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assetImportQueue, form.formState.isSubmitSuccessful, form.formState.isSubmitting]); 
+  }, [assetImportQueue.length]); // Depender apenas do tamanho da fila
 
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string[]) => void) => {
@@ -281,8 +296,8 @@ export default function AddAssetPage() {
         const xmlContent = e.target?.result as string;
         try {
           const extractedData: ExtractNFeDataOutput = await extractNFeData(xmlContent);
-          setExtractedNFeData(extractedData);
-          setIsNFePreviewOpen(true);
+          setExtractedNFeData(extractedData); // Armazena os dados extraídos
+          setIsNFePreviewOpen(true); // Abre o diálogo de pré-visualização
           
         } catch (error) {
           console.error("Erro ao processar NF-e:", error);
@@ -300,7 +315,7 @@ export default function AddAssetPage() {
         } finally {
           setIsProcessingNFe(false);
           if (nfeFileInputRef.current) {
-            nfeFileInputRef.current.value = '';
+            nfeFileInputRef.current.value = ''; // Limpa o input de arquivo para permitir nova seleção do mesmo arquivo
           }
         }
       };
@@ -318,28 +333,26 @@ export default function AddAssetPage() {
     }
   };
 
-  const handleImportTasksFromNFe = (tasks: AssetImportTask[], supplierId: string | undefined, nfeDetails: ExtractNFeDataOutput) => {
+  const handleImportTasksFromNFe = (tasks: AssetImportTask[], _supplierId: string | undefined, _nfeDetails: ExtractNFeDataOutput) => {
     if (tasks.length === 0) {
       toast({ title: "Nenhum item selecionado da NF-e", description: "Nenhum item foi marcado para importação.", variant: "default" });
       setIsNFePreviewOpen(false);
       return;
     }
     setAssetImportQueue(tasks);
-    setCurrentSupplierIdForQueue(supplierId);
+    setTotalAssetsInQueue(tasks.length); // Define o número total de ativos na fila
     
     setIsNFePreviewOpen(false);
-    
+    // O useEffect cuidará de chamar processNextAssetInQueue
   };
 
   const handleNFePreviewDialogClose = (openState: boolean) => {
     setIsNFePreviewOpen(openState);
     if (!openState) { 
-      if (assetImportQueue.length === 0) { 
-        setExtractedNFeData(null);
-        setCurrentSupplierIdForQueue(undefined);
-        if (nfeFileInputRef.current) {
-          nfeFileInputRef.current.value = ''; 
-        }
+      // Não limpa mais extractedNFeData aqui para que possa ser usado se o usuário reabrir
+      // se assetImportQueue.length === 0 significa que o usuário cancelou ou não importou nada
+      if (assetImportQueue.length === 0 && nfeFileInputRef.current) {
+         nfeFileInputRef.current.value = ''; 
       }
     }
   };
@@ -399,8 +412,19 @@ export default function AddAssetPage() {
     }
   };
 
+  const handleSkipItem = () => {
+    if (assetImportQueue.length > 0) {
+      const skippedItemName = assetImportQueue[0].assetData.name || assetImportQueue[0].originalNFeProductDescription;
+      setAssetImportQueue(prev => prev.slice(1)); // Remove o item atual e o useEffect vai pegar o próximo
+      toast({ title: "Item pulado", description: `Item "${skippedItemName}" removido da fila de importação.`});
+    }
+  };
+
+
   const watchedInvoiceFileName = form.watch('invoiceFileName');
   const watchedInvoiceFileDataUri = form.watch('invoiceFileDataUri');
+  const isImportQueueActive = assetImportQueue.length > 0;
+  const currentItemInQueue = totalAssetsInQueue - assetImportQueue.length + 1;
 
 
   return (
@@ -409,14 +433,14 @@ export default function AddAssetPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">
-              {assetImportQueue.length > 0 ? `Cadastrando Ativo (Restam ${assetImportQueue.length})` : 'Adicionar novo ativo'}
+              {isImportQueueActive ? `Cadastrando Ativo ${currentItemInQueue} de ${totalAssetsInQueue}` : 'Adicionar novo ativo'}
             </h1>
             <p className="text-muted-foreground">
-              {assetImportQueue.length > 0 ? `Preencha os dados para o ativo atual. Nome na NF-e: ${form.getValues('name') || 'Carregando...'}` : 'Preencha os campos abaixo para cadastrar um novo ativo.'}
+              {isImportQueueActive ? `Preencha os dados para o ativo: ${form.getValues('name') || 'Carregando...'}` : 'Preencha os campos abaixo para cadastrar um novo ativo.'}
             </p>
           </div>
            <div>
-            <Button onClick={() => nfeFileInputRef.current?.click()} disabled={isProcessingNFe || assetImportQueue.length > 0} variant="default">
+            <Button onClick={() => nfeFileInputRef.current?.click()} disabled={isProcessingNFe || isImportQueueActive} variant="default">
               <FileText className="mr-2 h-4 w-4" />
               {isProcessingNFe ? "Processando NF-e..." : "Importar Dados da NF-e (XML)"}
             </Button>
@@ -426,7 +450,7 @@ export default function AddAssetPage() {
               ref={nfeFileInputRef}
               onChange={handleNFeUpload}
               className="hidden"
-              disabled={assetImportQueue.length > 0}
+              disabled={isImportQueueActive}
             />
           </div>
         </div>
@@ -442,7 +466,7 @@ export default function AddAssetPage() {
           <CardHeader>
             <CardTitle>Detalhes do ativo</CardTitle>
             <CardDesc>
-              Preencha as informações nas abas abaixo.
+              Preencha as informações nas abas abaixo. Campos com * são obrigatórios.
             </CardDesc>
           </CardHeader>
           <CardContent>
@@ -483,7 +507,7 @@ export default function AddAssetPage() {
                                   checked={field.value}
                                   onCheckedChange={field.onChange}
                                   id="aplicarRegrasDepreciacao"
-                                  disabled={assetImportQueue.length > 0}
+                                  disabled={isImportQueueActive}
                                 />
                                 <label htmlFor="aplicarRegrasDepreciacao" className="text-sm text-muted-foreground cursor-pointer">
                                   {field.value ? "Sim" : "Não"}
@@ -585,7 +609,7 @@ export default function AddAssetPage() {
                               <FormLabel>Nº de patrimônio *</FormLabel>
                             </div>
                             <FormControl>
-                              <Input placeholder="Ex: ZDI-00123 (Será completado se houver prefixo da NF-e)" {...field} />
+                              <Input placeholder="Ex: ZDI-00123" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -600,7 +624,7 @@ export default function AddAssetPage() {
                               <FormLabel>Nº de série</FormLabel>
                             </div>
                             <FormControl>
-                              <Input placeholder="Ex: SN-ABC123XYZ (Será completado se houver prefixo da NF-e)" {...field} value={field.value ?? ''}/>
+                              <Input placeholder="Ex: SN-ABC123XYZ" {...field} value={field.value ?? ''}/>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -671,7 +695,7 @@ export default function AddAssetPage() {
                             <SupplierCombobox
                               value={field.value}
                               onChange={field.onChange}
-                              disabled={assetImportQueue.length > 0 || !!currentSupplierIdForQueue}
+                              disabled={isImportQueueActive} 
                             />
                             <FormMessage />
                           </FormItem>
@@ -738,9 +762,9 @@ export default function AddAssetPage() {
                                     className={cn(
                                       "w-full pl-3 text-left font-normal",
                                       !field.value && "text-muted-foreground",
-                                      (assetImportQueue.length > 0 || !!extractedNFeData) && "bg-muted/50 cursor-not-allowed"
+                                      isImportQueueActive && "bg-muted/50 cursor-not-allowed"
                                     )}
-                                    disabled={assetImportQueue.length > 0 || !!extractedNFeData}
+                                    disabled={isImportQueueActive}
                                   >
                                     {field.value ? (
                                       format(field.value, "PPP", { locale: ptBR })
@@ -792,8 +816,8 @@ export default function AddAssetPage() {
                               <Input
                                 placeholder="Ex: NF-000123456"
                                 {...field}
-                                readOnly={assetImportQueue.length > 0 || !!extractedNFeData}
-                                className={(assetImportQueue.length > 0 || !!extractedNFeData) ? "bg-muted/50 cursor-not-allowed" : ""}
+                                readOnly={isImportQueueActive}
+                                className={isImportQueueActive ? "bg-muted/50 cursor-not-allowed" : ""}
                                />
                             </FormControl>
                             <FormMessage />
@@ -827,8 +851,8 @@ export default function AddAssetPage() {
                                 step="0.01"
                                 placeholder="Ex: 2500.00"
                                 {...field}
-                                readOnly={assetImportQueue.length > 0 || !!extractedNFeData}
-                                className={(assetImportQueue.length > 0 || !!extractedNFeData) ? "bg-muted/50 cursor-not-allowed" : ""}
+                                readOnly={isImportQueueActive}
+                                className={isImportQueueActive ? "bg-muted/50 cursor-not-allowed" : ""}
                               />
                             </FormControl>
                             <FormMessage />
@@ -866,7 +890,7 @@ export default function AddAssetPage() {
                         control={form.control}
                         name="invoiceFileDataUri" 
                         render={({ field }) => (
-                          <FormItem className="space-y-0.5"> {/* Removido md:col-span-3 */}
+                          <FormItem className="space-y-0.5"> 
                             <div className="flex items-center h-8">
                               <FormLabel className="flex items-center">
                                 <Paperclip className="mr-2 h-5 w-5" />
@@ -1028,25 +1052,18 @@ export default function AddAssetPage() {
                 </Tabs>
 
                 <div className="flex justify-end space-x-2 pt-6">
-                  <Button type="button" variant="outline" onClick={() => router.back()}>
+                  <Button type="button" variant="outline" onClick={() => router.back()} disabled={isImportQueueActive}>
                     Cancelar
                   </Button>
                   <Button type="submit" disabled={form.formState.isSubmitting || isProcessingNFe}>
                     <Save className="mr-2 h-4 w-4" />
-                    {form.formState.isSubmitting ? "Salvando..." : (assetImportQueue.length > 0 ? `Salvar Ativo (${assetImportQueue.length} na fila)` : "Salvar ativo")}
+                    {form.formState.isSubmitting ? "Salvando..." : (isImportQueueActive ? `Salvar Ativo (${assetImportQueue.length} na fila)` : "Salvar ativo")}
                   </Button>
-                   {assetImportQueue.length > 0 && (
+                   {isImportQueueActive && (
                     <Button
                       type="button"
                       variant="secondary"
-                      onClick={() => {
-                        if (processNextAssetInQueue()) {
-                          toast({ title: "Item pulado", description: "Carregando próximo item da fila de importação."});
-                        } else {
-                          toast({ title: "Fila vazia", description: "Não há mais itens na fila de importação.", variant: "default"});
-                          router.push('/assets'); 
-                        }
-                      }}
+                      onClick={handleSkipItem}
                       title="Pular este item e ir para o próximo da NF-e"
                     >
                       <Forward className="mr-2 h-4 w-4" />
@@ -1058,13 +1075,13 @@ export default function AddAssetPage() {
             </Form>
           </CardContent>
         </Card>
-         {assetImportQueue.length > 0 && (
+         {isImportQueueActive && (
             <Alert>
               <ListChecks className="h-4 w-4" />
               <AlertTitle>Fila de Importação da NF-e Ativa</AlertTitle>
               <AlertDescription>
                 Você está processando itens de uma Nota Fiscal.
-                Restam <Badge variant="secondary">{assetImportQueue.length}</Badge> ativo(s) na fila após este.
+                Restam <Badge variant="secondary">{assetImportQueue.length}</Badge> ativo(s) na fila de importação após este.
                 Complete o cadastro atual e salve para prosseguir, ou pule para o próximo.
               </AlertDescription>
             </Alert>
