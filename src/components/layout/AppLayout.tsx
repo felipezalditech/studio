@@ -203,16 +203,21 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 
                 let isActive = false;
                 if (isClient) {
-                  const isExactMatch = pathname === item.href;
-                  const isSubpath = item.href !== "/" && pathname.startsWith(item.href);
-                  
-                  const isMoreSpecificItemActive = isSubpath && menuItems.some(
-                    i => 'href' in i && i.href === pathname
-                  );
-
-                  isActive = isExactMatch || (isSubpath && !isMoreSpecificItemActive);
+                   if (item.href === "/") {
+                    isActive = pathname === "/";
+                  } else {
+                    const isSubpath = pathname.startsWith(item.href);
+                    // Check if another menu item is a more specific subpath of the current item.
+                    const isMoreSpecificItemActive = menuItems.some(
+                      otherItem =>
+                        'href' in otherItem &&
+                        otherItem.href.startsWith(item.href) && // It's a sub-item
+                        otherItem.href.length > item.href.length && // It's more specific
+                        pathname.startsWith(otherItem.href) // The current path matches that more specific item
+                    );
+                    isActive = isSubpath && !isMoreSpecificItemActive;
+                  }
                 }
-
 
                 return (
                   <SidebarMenuItem key={item.href}>
