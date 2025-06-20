@@ -6,27 +6,45 @@ import type { z } from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as UITableFooter } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Building, CheckCircle, Info, PlusCircle, ShoppingCart, Tag, Trash2 } from 'lucide-react';
+import { Building, CheckCircle, Info, PlusCircle, ShoppingCart, Tag, Trash2, ChevronDown, ChevronUp, Layers, MapPinIcon, TagIcon, Barcode, InfoIcon } from 'lucide-react';
 import type { ExtractNFeDataOutput, NFeProduct } from '@/ai/flows/extract-nfe-data-flow';
 import type { Supplier, Endereco } from '@/contexts/SupplierContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { SupplierFormDialog, type SupplierFormValues } from '@/components/suppliers/SupplierFormDialog';
-import { useImportSettings } from '@/contexts/ImportSettingsContext'; // New import
+import { useImportSettings } from '@/contexts/ImportSettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/components/assets/columns';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { maskCEP, maskCNPJ } from '@/lib/utils';
+import type { Asset } from '@/components/assets/types'; // Import Asset type
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox';
+import { LocationCombobox } from '@/components/locations/LocationCombobox';
+import { useCategories } from '@/contexts/CategoryContext';
+import { parseISO } from 'date-fns';
 
+
+// Estrutura para os detalhes modelo por linha de produto
+interface ProductLineAssetDetails {
+  name?: string;
+  categoryId?: string;
+  modelId?: string;
+  locationId?: string;
+  assetTagPrefix?: string;
+  serialNumberPrefix?: string;
+  additionalInfo?: string;
+}
 
 export interface AssetImportTask {
-  nfeProduct: NFeProduct; // unitValue aqui será o valor de compra da unidade individual (já com frete, se aplicável)
+  assetData: Partial<Omit<Asset, 'id' | 'currentValue'>>; // Quase um Asset completo
   assetType: 'depreciable' | 'patrimony';
-  nfeDetails: ExtractNFeDataOutput;
+  // nfeDetails is implicitly part of assetData now (purchaseDate, invoiceNumber, supplier)
 }
 
 interface ItemActionQuantities {
@@ -50,11 +68,13 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
   const [itemActions, setItemActions] = useState<Map<number, ItemActionQuantities>>(new Map());
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
-
+  const [productLineDetailsMap, setProductLineDetailsMap] = useState<Map<number, ProductLineAssetDetails>>(new Map());
+  const [expandedDetails, setExpandedDetails] = useState<Set<number>>(new Set());
 
   const { getSupplierByDocument } = useSuppliers();
-  const { importSettings } = useImportSettings(); // Get import settings
+  const { importSettings } = useImportSettings();
   const { toast } = useToast();
+  const { categories } = useCategories();
 
   useEffect(() => {
     if (open && nfeData) {
@@ -69,17 +89,23 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
       }
 
       const initialActions = new Map<number, ItemActionQuantities>();
-      products.forEach((_, index) => {
+      const initialProductLineDetails = new Map<number, ProductLineAssetDetails>();
+      products.forEach((product, index) => {
         initialActions.set(index, { depreciableQty: 0, patrimonyQty: 0 });
+        initialProductLineDetails.set(index, { name: product.description || '' });
       });
       setItemActions(initialActions);
+      setProductLineDetailsMap(initialProductLineDetails);
       setSelectedItems(new Set());
+      setExpandedDetails(new Set());
 
     } else if (!open) {
       setDisplayableProducts([]);
       setItemActions(new Map());
+      setProductLineDetailsMap(new Map());
       setSelectedItems(new Set());
       setSupplierOnRecord(undefined);
+      setExpandedDetails(new Set());
     }
   }, [open, nfeData, getSupplierByDocument]);
 
@@ -103,7 +129,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
 
       if (type === 'depreciableQty') {
         updatedAction.depreciableQty = Math.min(numValue, (product.quantity || 0) - updatedAction.patrimonyQty);
-      } else { // patrimonyQty
+      } else { 
         updatedAction.patrimonyQty = Math.min(numValue, (product.quantity || 0) - updatedAction.depreciableQty);
       }
       
@@ -114,9 +140,29 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
             updatedAction.patrimonyQty = (product.quantity || 0) - updatedAction.depreciableQty;
         }
       }
-
       newActions.set(productIndex, updatedAction);
       return newActions;
+    });
+  };
+
+  const handleProductLineDetailChange = (productIndex: number, field: keyof ProductLineAssetDetails, value: string | undefined) => {
+    setProductLineDetailsMap(prevMap => {
+      const newMap = new Map(prevMap);
+      const currentDetails = newMap.get(productIndex) || { name: displayableProducts[productIndex]?.description || '' };
+      newMap.set(productIndex, { ...currentDetails, [field]: value });
+      return newMap;
+    });
+  };
+
+  const toggleDetailsSection = (index: number) => {
+    setExpandedDetails(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
     });
   };
 
@@ -127,20 +173,21 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
       return;
     }
 
-    let tasks: AssetImportTask[] = [];
+    let rawTasks: { product: NFeProduct, assetType: 'depreciable' | 'patrimony', lineDetails: ProductLineAssetDetails }[] = [];
     displayableProducts.forEach((product, index) => {
       const actions = itemActions.get(index);
+      const lineDetails = productLineDetailsMap.get(index) || { name: product.description || '' };
       if (!actions || !product) return;
 
       for (let i = 0; i < actions.depreciableQty; i++) {
-        tasks.push({ nfeProduct: { ...product }, assetType: 'depreciable', nfeDetails: nfeData });
+        rawTasks.push({ product: { ...product }, assetType: 'depreciable', lineDetails });
       }
       for (let i = 0; i < actions.patrimonyQty; i++) {
-        tasks.push({ nfeProduct: { ...product }, assetType: 'patrimony', nfeDetails: nfeData });
+        rawTasks.push({ product: { ...product }, assetType: 'patrimony', lineDetails });
       }
     });
 
-    if (tasks.length === 0) {
+    if (rawTasks.length === 0) {
       toast({ title: "Nenhum item para importar", description: "Por favor, defina quantidades para 'Ativo Depreciável' ou 'Patrimônio'.", variant: "default" });
       return;
     }
@@ -166,71 +213,61 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
         return;
     }
 
-    // Freight Allocation Logic
     let finalTasks: AssetImportTask[] = [];
     const shippingValue = nfeData.shippingValue || 0;
+    const nfePurchaseDate = nfeData.emissionDate ? parseISO(nfeData.emissionDate) : new Date();
+
+
+    const applyFreightAndMapToAssetData = (
+        tasksToProcess: typeof rawTasks,
+        totalProductValueForFreightCalc: number
+      ): AssetImportTask[] => {
+      return tasksToProcess.map(rawTask => {
+        const { product, assetType, lineDetails } = rawTask;
+        let freightPerUnit = 0;
+        if (importSettings.allocateFreight && shippingValue > 0 && totalProductValueForFreightCalc > 0 && product.totalValue && product.quantity && product.quantity > 0) {
+          const productLineFreightShare = (product.totalValue / totalProductValueForFreightCalc) * shippingValue;
+          freightPerUnit = productLineFreightShare / product.quantity;
+        }
+
+        const assetData: Partial<Omit<Asset, 'id' | 'currentValue'>> = {
+          name: lineDetails.name || product.description || '',
+          purchaseValue: (product.unitValue || 0) + freightPerUnit,
+          invoiceNumber: nfeData.invoiceNumber || '',
+          purchaseDate: nfePurchaseDate.toISOString(), 
+          supplier: supplierOnRecord!.id,
+          categoryId: lineDetails.categoryId,
+          modelId: lineDetails.modelId,
+          locationId: lineDetails.locationId,
+          assetTag: lineDetails.assetTagPrefix, // Será prefixo, AddAssetPage pode adicionar sufixo
+          serialNumber: lineDetails.serialNumberPrefix, // Será prefixo
+          additionalInfo: lineDetails.additionalInfo,
+          aplicarRegrasDepreciacao: assetType === 'depreciable',
+          arquivado: false,
+          previouslyDepreciatedValue: 0,
+          // imageDateUris e invoiceFileDataUri serão tratados na AddAssetPage
+        };
+        return { assetData, assetType };
+      });
+    };
+
 
     if (importSettings.allocateFreight && shippingValue > 0 && nfeData.products && nfeData.products.length > 0) {
       if (importSettings.freightDilutionScope === 'all_nfe_items') {
         const totalOriginalNFeProductValue = (nfeData.products || []).reduce((sum, p) => sum + (p.totalValue || 0), 0);
-        
-        finalTasks = tasks.map(task => {
-          const product = task.nfeProduct; // This is a copy from displayableProducts
-          let freightPerUnit = 0;
-          if (totalOriginalNFeProductValue > 0 && product.totalValue && product.quantity && product.quantity > 0) {
-            const productLineFreightShare = (product.totalValue / totalOriginalNFeProductValue) * shippingValue;
-            freightPerUnit = productLineFreightShare / product.quantity;
-          }
-          return {
-            ...task,
-            nfeProduct: {
-              ...product,
-              unitValue: (product.unitValue || 0) + freightPerUnit,
-            },
-          };
-        });
+        finalTasks = applyFreightAndMapToAssetData(rawTasks, totalOriginalNFeProductValue);
       } else { // freightDilutionScope === 'imported_items_only'
         const productLinesBeingImported = displayableProducts.filter((_p, index) => {
           const actions = itemActions.get(index);
           return actions && (actions.depreciableQty > 0 || actions.patrimonyQty > 0);
         });
-
         const totalValueOfProductLinesBeingImported = productLinesBeingImported.reduce((sum, p) => sum + (p.totalValue || 0), 0);
-
-        finalTasks = tasks.map(task => {
-          const product = task.nfeProduct;
-          let freightPerUnit = 0;
-
-          const isProductLineImported = productLinesBeingImported.some(
-            p => p.description === product.description && 
-                 p.unitValue === product.unitValue && // Use original unitValue for comparison
-                 p.quantity === product.quantity
-          );
-
-          if (isProductLineImported && totalValueOfProductLinesBeingImported > 0 && product.totalValue && product.quantity && product.quantity > 0) {
-            const productLineFreightShare = (product.totalValue / totalValueOfProductLinesBeingImported) * shippingValue;
-            freightPerUnit = productLineFreightShare / product.quantity;
-          }
-          return {
-            ...task,
-            nfeProduct: {
-              ...product,
-              unitValue: (product.unitValue || 0) + freightPerUnit,
-            },
-          };
-        });
+        finalTasks = applyFreightAndMapToAssetData(rawTasks, totalValueOfProductLinesBeingImported);
       }
     } else {
-      // No freight allocation, or no shipping value, or no products
-      finalTasks = tasks.map(task => ({
-        ...task,
-        nfeProduct: {
-          ...task.nfeProduct,
-          unitValue: task.nfeProduct.unitValue || 0, // Ensure it's a number
-        },
-      }));
+      finalTasks = applyFreightAndMapToAssetData(rawTasks, 0); // No freight to allocate or scope for it
     }
-
+    
     onImportItems(finalTasks, supplierOnRecord?.id, nfeData);
     onOpenChange(false);
   };
@@ -297,15 +334,28 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
     setDisplayableProducts(newDisplayableProducts);
   
     const newActions = new Map<number, ItemActionQuantities>();
-    newDisplayableProducts.forEach((_, index) => {
-      // Reset quantities for remaining items, or try to preserve if mapping old to new index is feasible
-      // For simplicity, resetting:
-      newActions.set(index, { depreciableQty: 0, patrimonyQty: 0 });
+    const newProductLineDetails = new Map<number, ProductLineAssetDetails>();
+    const newExpandedDetails = new Set<number>();
+
+    newDisplayableProducts.forEach((product, newIndex) => {
+        const oldIndex = displayableProducts.findIndex(p => p.description === product.description && p.quantity === product.quantity && p.unitValue === product.unitValue); // Simple match, might need better for identical products
+        if (oldIndex !== -1) {
+            newActions.set(newIndex, itemActions.get(oldIndex) || { depreciableQty: 0, patrimonyQty: 0 });
+            newProductLineDetails.set(newIndex, productLineDetailsMap.get(oldIndex) || { name: product.description || '' });
+            if (expandedDetails.has(oldIndex)) {
+                newExpandedDetails.add(newIndex);
+            }
+        } else { // Should not happen if filter works correctly
+            newActions.set(newIndex, { depreciableQty: 0, patrimonyQty: 0 });
+            newProductLineDetails.set(newIndex, { name: product.description || '' });
+        }
     });
     setItemActions(newActions);
+    setProductLineDetailsMap(newProductLineDetails);
+    setExpandedDetails(newExpandedDetails);
     
     toast({ title: "Itens removidos", description: `${selectedItems.size} item(ns) foram removidos da lista de importação.` });
-    setSelectedItems(new Set());
+    setSelectedItems(new Set()); // Reset selection
     setIsConfirmDeleteDialogOpen(false);
   };
 
@@ -326,8 +376,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
           <DialogHeader>
             <DialogTitle>Pré-visualização da NF-e: {nfeData.invoiceNumber || "Número Desconhecido"}</DialogTitle>
             <DialogDescription>
-              Revise os dados extraídos da NF-e. Para cada item, defina quantas unidades serão cadastradas como 'Ativo Depreciável' ou 'Patrimônio'.
-              Itens não processados serão ignorados.
+              Revise os dados. Para cada item, defina as quantidades e os detalhes modelo para os ativos.
             </DialogDescription>
           </DialogHeader>
 
@@ -342,168 +391,134 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData, onImportItems }:
               <div><strong>Valor Frete:</strong> {formatCurrency(nfeData.shippingValue || 0)}</div>
             </div>
 
-            {supplierOnRecord === undefined && (
-              <Alert variant="default" className="mb-3">
-                <Info className="h-4 w-4" />
-                <AlertTitle>Verificando Fornecedor</AlertTitle>
-                <AlertDescription>Aguarde enquanto verificamos se o fornecedor já está cadastrado...</AlertDescription>
-              </Alert>
-            )}
-            {supplierOnRecord === null && nfeData.supplierCNPJ && (
-              <Alert variant="default" className="mb-3 border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300 [&>svg]:text-yellow-500 dark:[&>svg]:text-yellow-400">
-                <Building className="h-4 w-4" />
-                <AlertTitle>Fornecedor não cadastrado</AlertTitle>
-                <AlertDescription className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                  <span>O fornecedor <Badge variant="secondary">{nfeData.supplierName || maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, ''))}</Badge> não foi encontrado no sistema.</span>
-                  <Button onClick={() => setIsSupplierFormOpen(true)} size="sm" variant="outline" className="shrink-0 border-yellow-500 hover:bg-yellow-50 text-yellow-700 dark:border-yellow-400 dark:hover:bg-yellow-700/20 dark:text-yellow-300">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Cadastrar Fornecedor
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            )}
-            {supplierOnRecord && (
-              <Alert variant="default" className="mb-3 border-green-500 text-green-700 dark:border-green-400 dark:text-green-300 [&>svg]:text-green-500 dark:[&>svg]:text-green-400">
-                <CheckCircle className="h-4 w-4" />
-                <AlertTitle>Fornecedor Localizado</AlertTitle>
-                <AlertDescription>
-                  Fornecedor: <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{supplierOnRecord.nomeFantasia || supplierOnRecord.razaoSocial}</Badge> (CNPJ: {supplierOnRecord.cnpj ? maskCNPJ(supplierOnRecord.cnpj.replace(/\D/g, '')) : 'N/A'}).
-                </AlertDescription>
-              </Alert>
-            )}
+            {supplierOnRecord === undefined && ( <Alert variant="default" className="mb-3"> <Info className="h-4 w-4" /> <AlertTitle>Verificando Fornecedor</AlertTitle> <AlertDescription>Aguarde...</AlertDescription> </Alert> )}
+            {supplierOnRecord === null && nfeData.supplierCNPJ && ( <Alert variant="default" className="mb-3 border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300 [&>svg]:text-yellow-500 dark:[&>svg]:text-yellow-400"> <Building className="h-4 w-4" /> <AlertTitle>Fornecedor não cadastrado</AlertTitle> <AlertDescription className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"> <span>O fornecedor <Badge variant="secondary">{nfeData.supplierName || maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, ''))}</Badge> não foi encontrado.</span> <Button onClick={() => setIsSupplierFormOpen(true)} size="sm" variant="outline" className="shrink-0 border-yellow-500 hover:bg-yellow-50 text-yellow-700 dark:border-yellow-400 dark:hover:bg-yellow-700/20 dark:text-yellow-300"> <PlusCircle className="mr-2 h-4 w-4" /> Cadastrar</Button> </AlertDescription> </Alert> )}
+            {supplierOnRecord && ( <Alert variant="default" className="mb-3 border-green-500 text-green-700 dark:border-green-400 dark:text-green-300 [&>svg]:text-green-500 dark:[&>svg]:text-green-400"> <CheckCircle className="h-4 w-4" /> <AlertTitle>Fornecedor Localizado</AlertTitle> <AlertDescription> Fornecedor: <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{supplierOnRecord.nomeFantasia || supplierOnRecord.razaoSocial}</Badge> (CNPJ: {supplierOnRecord.cnpj ? maskCNPJ(supplierOnRecord.cnpj.replace(/\D/g, '')) : 'N/A'}). </AlertDescription> </Alert> )}
 
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-semibold flex items-center">
-                  <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal
-              </h3>
-              {displayableProducts.length > 0 && (
-                  <Button
-                      onClick={handleDeleteSelectedItems}
-                      variant="destructive"
-                      size="sm"
-                      disabled={selectedItems.size === 0}
-                  >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Excluir Selecionados ({selectedItems.size})
-                  </Button>
-              )}
+              <h3 className="text-lg font-semibold flex items-center"> <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal </h3>
+              {displayableProducts.length > 0 && ( <Button onClick={handleDeleteSelectedItems} variant="destructive" size="sm" disabled={selectedItems.size === 0}> <Trash2 className="mr-2 h-4 w-4" /> Excluir Selecionados ({selectedItems.size}) </Button> )}
             </div>
             <ScrollArea className="flex-grow border rounded-md min-h-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={selectedItems.size > 0 && selectedItems.size === displayableProducts.length && displayableProducts.length > 0}
-                        onCheckedChange={handleToggleSelectAllItems}
-                        disabled={displayableProducts.length === 0}
-                        aria-label="Selecionar todos os itens"
-                      />
-                    </TableHead>
-                    <TableHead className="min-w-[250px]">Produto (Descrição)</TableHead>
-                    <TableHead className="text-right w-24">Qtde. NF</TableHead>
-                    <TableHead className="text-right w-32">Vlr. Unit.</TableHead>
-                    <TableHead className="text-center w-40">Qtde. Depreciável</TableHead>
-                    <TableHead className="text-center w-40">Qtde. Patrimônio</TableHead>
-                    <TableHead className="text-right w-32">Qtde. Ignorar</TableHead>
+                    <TableHead className="w-10 p-1 text-center"> <Checkbox checked={selectedItems.size > 0 && selectedItems.size === displayableProducts.length && displayableProducts.length > 0} onCheckedChange={handleToggleSelectAllItems} disabled={displayableProducts.length === 0} aria-label="Selecionar todos" /> </TableHead>
+                    <TableHead className="min-w-[200px]">Produto (Descrição)</TableHead>
+                    <TableHead className="text-right w-20">Qtde. NF</TableHead>
+                    <TableHead className="text-right w-28">Vlr. Unit.</TableHead>
+                    <TableHead className="text-center w-36">Qtde. Depreciável</TableHead>
+                    <TableHead className="text-center w-36">Qtde. Patrimônio</TableHead>
+                    <TableHead className="text-right w-28">Qtde. Ignorar</TableHead>
+                    <TableHead className="w-10 text-center">Detalhes</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {displayableProducts.length > 0 ? (
-                    displayableProducts.map((product, index) => {
+                    displayableProducts.flatMap((product, index) => {
                       const actions = itemActions.get(index) || { depreciableQty: 0, patrimonyQty: 0 };
+                      const lineDetails = productLineDetailsMap.get(index) || { name: product.description || '' };
                       const remainingToIgnore = (product.quantity || 0) - actions.depreciableQty - actions.patrimonyQty;
-                      return (
+                      const isExpanded = expandedDetails.has(index);
+                      const hasItemsToImport = actions.depreciableQty > 0 || actions.patrimonyQty > 0;
+
+                      return [
                         <TableRow key={`product-${index}-${product.description}`} data-state={selectedItems.has(index) && "selected"}>
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedItems.has(index)}
-                              onCheckedChange={() => handleToggleSelectItem(index)}
-                              aria-label={`Selecionar item ${index + 1}`}
-                            />
-                          </TableCell>
+                          <TableCell className="p-1 text-center"> <Checkbox checked={selectedItems.has(index)} onCheckedChange={() => handleToggleSelectItem(index)} /> </TableCell>
                           <TableCell className="font-medium">{product.description || "Produto sem descrição"}</TableCell>
                           <TableCell className="text-right">{product.quantity?.toFixed(2) || "0.00"}</TableCell>
                           <TableCell className="text-right">{formatCurrency(product.unitValue || 0)}</TableCell>
-                          <TableCell className="px-1">
-                            <Input
-                              type="number"
-                              min="0"
-                              max={(product.quantity || 0) - actions.patrimonyQty}
-                              value={actions.depreciableQty.toString()}
-                              onChange={(e) => handleQuantityChange(index, 'depreciableQty', e.target.value)}
-                              className="h-8 text-sm text-center"
-                            />
-                          </TableCell>
-                          <TableCell className="px-1">
-                            <Input
-                              type="number"
-                              min="0"
-                              max={(product.quantity || 0) - actions.depreciableQty}
-                              value={actions.patrimonyQty.toString()}
-                              onChange={(e) => handleQuantityChange(index, 'patrimonyQty', e.target.value)}
-                              className="h-8 text-sm text-center"
-                            />
-                          </TableCell>
+                          <TableCell className="px-1"> <Input type="number" min="0" max={(product.quantity || 0) - actions.patrimonyQty} value={actions.depreciableQty.toString()} onChange={(e) => handleQuantityChange(index, 'depreciableQty', e.target.value)} className="h-8 text-sm text-center" /> </TableCell>
+                          <TableCell className="px-1"> <Input type="number" min="0" max={(product.quantity || 0) - actions.depreciableQty} value={actions.patrimonyQty.toString()} onChange={(e) => handleQuantityChange(index, 'patrimonyQty', e.target.value)} className="h-8 text-sm text-center" /> </TableCell>
                           <TableCell className="text-right">{remainingToIgnore.toFixed(2)}</TableCell>
-                        </TableRow>
-                      );
+                          <TableCell className="text-center p-1">
+                            {hasItemsToImport && (
+                              <Button variant="ghost" size="icon" onClick={() => toggleDetailsSection(index)} className="h-8 w-8">
+                                {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>,
+                        isExpanded && hasItemsToImport && (
+                          <TableRow key={`details-${index}`} className="bg-muted/30 hover:bg-muted/40">
+                            <TableCell colSpan={8} className="p-0">
+                              <div className="p-3 space-y-3 border-t">
+                                <h4 className="text-sm font-semibold text-primary">Detalhes Modelo para: <span className="italic">{product.description}</span></h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium">Nome do Ativo (Sistema)</label>
+                                    <Input value={lineDetails.name || ''} onChange={(e) => handleProductLineDetailChange(index, 'name', e.target.value)} placeholder="Nome no sistema" className="h-8 text-xs" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium">Categoria *</label>
+                                    <Select value={lineDetails.categoryId || ""} onValueChange={(val) => handleProductLineDetailChange(index, 'categoryId', val)}>
+                                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione categoria" /></SelectTrigger>
+                                      <SelectContent>
+                                        {categories.map(cat => <SelectItem key={cat.id} value={cat.id} className="text-xs">{cat.name}</SelectItem>)}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium">Modelo</label>
+                                    <AssetModelCombobox value={lineDetails.modelId} onChange={(val) => handleProductLineDetailChange(index, 'modelId', val)} disableQuickAdd={false}/>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium">Local</label>
+                                    <LocationCombobox value={lineDetails.locationId} onChange={(val) => handleProductLineDetailChange(index, 'locationId', val)} disableQuickAdd={false}/>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium">Prefixo N. Patrimônio</label>
+                                    <Input value={lineDetails.assetTagPrefix || ''} onChange={(e) => handleProductLineDetailChange(index, 'assetTagPrefix', e.target.value)} placeholder="Ex: NB-00" className="h-8 text-xs" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium">Prefixo N. Série</label>
+                                    <Input value={lineDetails.serialNumberPrefix || ''} onChange={(e) => handleProductLineDetailChange(index, 'serialNumberPrefix', e.target.value)} placeholder="Ex: SN-ABC" className="h-8 text-xs" />
+                                  </div>
+                                  <div className="md:col-span-2 lg:col-span-3 space-y-1">
+                                    <label className="text-xs font-medium">Info Adicional</label>
+                                    <Textarea value={lineDetails.additionalInfo || ''} onChange={(e) => handleProductLineDetailChange(index, 'additionalInfo', e.target.value)} placeholder="Detalhes..." className="text-xs min-h-[40px]"/>
+                                  </div>
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      ];
                     })
                   ) : (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center">
-                        Nenhum produto para exibir.
-                      </TableCell>
-                    </TableRow>
+                    <TableRow> <TableCell colSpan={8} className="h-24 text-center"> Nenhum produto para exibir. </TableCell> </TableRow>
                   )}
                 </TableBody>
                 {displayableProducts.length > 0 && (
                   <UITableFooter>
                     <TableRow>
-                      <TableHead className="text-left font-semibold" colSpan={4}>TOTAIS:</TableHead>
+                      <TableHead className="text-left font-semibold p-1" colSpan={4}>TOTAIS:</TableHead>
                       <TableHead className="text-center font-semibold">{totalDepreciableQty.toFixed(2)}</TableHead>
                       <TableHead className="text-center font-semibold">{totalPatrimonyQty.toFixed(2)}</TableHead>
                       <TableHead className="text-right font-semibold">{totalIgnoredQty.toFixed(2)}</TableHead>
+                      <TableHead />
                     </TableRow>
                   </UITableFooter>
                 )}
               </Table>
             </ScrollArea>
             <div className="text-sm text-muted-foreground mt-2">
-                Total de itens na NF-e (após exclusões): {displayableProducts.length}.
-                Serão processados {totalProcessedQty} unidade(s) como ativo(s).
+                Total de itens na NF-e: {displayableProducts.length}. Serão processados {totalProcessedQty} unidade(s) como ativo(s).
             </div>
           </div>
 
           <DialogFooter className="mt-auto pt-4 border-t">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button
-              onClick={handleImport}
-              disabled={totalProcessedQty === 0 || supplierOnRecord === undefined || (!supplierOnRecord && !!nfeData.supplierCNPJ)}
-            >
-              <Tag className="mr-2 h-4 w-4" /> Importar {totalProcessedQty > 0 ? `${totalProcessedQty} Unidade(s) como Ativo(s)` : "Ativos"}
+            <Button onClick={handleImport} disabled={totalProcessedQty === 0 || supplierOnRecord === undefined || (!supplierOnRecord && !!nfeData.supplierCNPJ)} >
+              <Tag className="mr-2 h-4 w-4" /> Importar {totalProcessedQty > 0 ? `${totalProcessedQty} Unidade(s)` : "Ativos"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {isSupplierFormOpen && supplierForFormDialog && (
-        <SupplierFormDialog
-          open={isSupplierFormOpen}
-          onOpenChange={setIsSupplierFormOpen}
-          initialData={supplierForFormDialog as Partial<SupplierFormValues>}
-          onSupplierAdded={handleSupplierAdded}
-        />
-      )}
-
-      <ConfirmationDialog
-        open={isConfirmDeleteDialogOpen}
-        onOpenChange={setIsConfirmDeleteDialogOpen}
-        onConfirm={confirmDeleteSelectedItems}
-        title="Confirmar Exclusão de Itens"
-        description={`Tem certeza que deseja remover os ${selectedItems.size} itens selecionados da lista de importação? Esta ação não pode ser desfeita para esta sessão de pré-visualização e as quantidades definidas para os itens remanescentes serão zeradas.`}
-        confirmButtonText="Sim, Remover"
-        confirmButtonVariant="destructive"
-      />
+      {isSupplierFormOpen && supplierForFormDialog && ( <SupplierFormDialog open={isSupplierFormOpen} onOpenChange={setIsSupplierFormOpen} initialData={supplierForFormDialog as Partial<SupplierFormValues>} onSupplierAdded={handleSupplierAdded} /> )}
+      <ConfirmationDialog open={isConfirmDeleteDialogOpen} onOpenChange={setIsConfirmDeleteDialogOpen} onConfirm={confirmDeleteSelectedItems} title="Confirmar Exclusão de Itens" description={`Tem certeza que deseja remover os ${selectedItems.size} itens selecionados da lista de importação? Esta ação não pode ser desfeita para esta sessão e os detalhes modelo definidos para eles serão perdidos.`} confirmButtonText="Sim, Remover" confirmButtonVariant="destructive" />
     </>
   );
 }
+
