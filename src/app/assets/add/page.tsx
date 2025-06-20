@@ -95,7 +95,7 @@ export default function AddAssetPage() {
       purchaseDate: undefined,
       invoiceNumber: '',
       purchaseValue: 0,
-      previouslyDepreciatedValue: undefined,
+      previouslyDepreciatedValue: 0,
       additionalInfo: '',
       imageDateUris: [],
       invoiceFileDataUri: undefined,
@@ -124,16 +124,15 @@ export default function AddAssetPage() {
       invoiceFileName: undefined,
     });
     setImagePreviews([]);
+    form.clearErrors();
   };
 
   const processNextAssetInQueue = () => {
     if (assetImportQueue.length > 0) {
       const nextTask = assetImportQueue[0];
-      // Não remova da fila aqui, remova apenas após o salvamento ou pulo.
       
       resetFormForNewAsset(); 
 
-      // Preencher apenas os campos que vêm da NF-e ou são definidos pela lógica de importação
       form.setValue('name', nextTask.assetData.name || nextTask.originalNFeProductDescription || '');
       form.setValue('purchaseValue', nextTask.assetData.purchaseValue || 0);
       form.setValue('invoiceNumber', nextTask.assetData.invoiceNumber || '');
@@ -147,15 +146,16 @@ export default function AddAssetPage() {
       form.setValue('supplier', nextTask.assetData.supplier || '');
       form.setValue('aplicarRegrasDepreciacao', nextTask.assetData.aplicarRegrasDepreciacao !== undefined ? nextTask.assetData.aplicarRegrasDepreciacao : true);
       
-      // Campos que o usuário deve preencher individualmente
-      form.setValue('categoryId', '');
-      form.setValue('modelId', undefined);
-      form.setValue('locationId', undefined);
-      form.setValue('assetTag', '');
-      form.setValue('serialNumber', '');
-      form.setValue('additionalInfo', '');
-      form.setValue('previouslyDepreciatedValue', 0);
+      form.setValue('categoryId', nextTask.assetData.categoryId || '');
+      form.setValue('modelId', nextTask.assetData.modelId || undefined);
+      form.setValue('locationId', nextTask.assetData.locationId || undefined);
+      form.setValue('additionalInfo', nextTask.assetData.additionalInfo || '');
+      form.setValue('previouslyDepreciatedValue', nextTask.assetData.previouslyDepreciatedValue !== undefined ? nextTask.assetData.previouslyDepreciatedValue : 0);
 
+      // Explicitly clear fields that must be unique for each new asset from the queue.
+      form.setValue('assetTag', ''); 
+      form.setValue('serialNumber', '');
+      // Image and file fields are reset by resetFormForNewAsset()
 
       const currentItemNumber = totalAssetsInQueue - assetImportQueue.length + 1;
       toast({
@@ -165,7 +165,7 @@ export default function AddAssetPage() {
       });
       return true; 
     }
-    setTotalAssetsInQueue(0); // Reseta o contador total se a fila estiver vazia
+    setTotalAssetsInQueue(0); 
     return false; 
   };
 
@@ -198,28 +198,24 @@ export default function AddAssetPage() {
       description: `Ativo "${data.name}" adicionado.`,
     });
 
-    // Remover o item processado da fila
     setAssetImportQueue(prev => prev.slice(1)); 
   }
   
   
   useEffect(() => {
-    // Este useEffect agora só processa o próximo item se a fila não estiver vazia
-    // E o form não estiver em processo de submit (para evitar processar antes de salvar)
     if (assetImportQueue.length > 0 && !form.formState.isSubmitting) { 
       processNextAssetInQueue();
-    } else if (assetImportQueue.length === 0 && totalAssetsInQueue > 0) {
-      // Se a fila esvaziou mas havia itens, significa que todos foram processados
+    } else if (assetImportQueue.length === 0 && totalAssetsInQueue > 0 && !form.formState.isSubmitting) {
       toast({
         title: "Importação Concluída!",
         description: "Todos os ativos da NF-e foram processados.",
         duration: 5000,
       });
-      setTotalAssetsInQueue(0); // Reseta o contador
-      router.push('/assets'); // Redireciona após o último item ser salvo e a fila esvaziar
+      setTotalAssetsInQueue(0);
+      router.push('/assets'); 
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assetImportQueue.length]); // Depender apenas do tamanho da fila
+  }, [assetImportQueue.length, form.formState.isSubmitting]); 
 
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, fieldOnChange: (value: string[]) => void) => {
@@ -296,8 +292,8 @@ export default function AddAssetPage() {
         const xmlContent = e.target?.result as string;
         try {
           const extractedData: ExtractNFeDataOutput = await extractNFeData(xmlContent);
-          setExtractedNFeData(extractedData); // Armazena os dados extraídos
-          setIsNFePreviewOpen(true); // Abre o diálogo de pré-visualização
+          setExtractedNFeData(extractedData); 
+          setIsNFePreviewOpen(true); 
           
         } catch (error) {
           console.error("Erro ao processar NF-e:", error);
@@ -315,7 +311,7 @@ export default function AddAssetPage() {
         } finally {
           setIsProcessingNFe(false);
           if (nfeFileInputRef.current) {
-            nfeFileInputRef.current.value = ''; // Limpa o input de arquivo para permitir nova seleção do mesmo arquivo
+            nfeFileInputRef.current.value = ''; 
           }
         }
       };
@@ -340,17 +336,14 @@ export default function AddAssetPage() {
       return;
     }
     setAssetImportQueue(tasks);
-    setTotalAssetsInQueue(tasks.length); // Define o número total de ativos na fila
+    setTotalAssetsInQueue(tasks.length); 
     
     setIsNFePreviewOpen(false);
-    // O useEffect cuidará de chamar processNextAssetInQueue
   };
 
   const handleNFePreviewDialogClose = (openState: boolean) => {
     setIsNFePreviewOpen(openState);
     if (!openState) { 
-      // Não limpa mais extractedNFeData aqui para que possa ser usado se o usuário reabrir
-      // se assetImportQueue.length === 0 significa que o usuário cancelou ou não importou nada
       if (assetImportQueue.length === 0 && nfeFileInputRef.current) {
          nfeFileInputRef.current.value = ''; 
       }
@@ -415,7 +408,7 @@ export default function AddAssetPage() {
   const handleSkipItem = () => {
     if (assetImportQueue.length > 0) {
       const skippedItemName = assetImportQueue[0].assetData.name || assetImportQueue[0].originalNFeProductDescription;
-      setAssetImportQueue(prev => prev.slice(1)); // Remove o item atual e o useEffect vai pegar o próximo
+      setAssetImportQueue(prev => prev.slice(1)); 
       toast({ title: "Item pulado", description: `Item "${skippedItemName}" removido da fila de importação.`});
     }
   };
