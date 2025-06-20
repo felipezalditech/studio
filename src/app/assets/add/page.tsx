@@ -104,63 +104,31 @@ export default function AddAssetPage() {
     },
   });
 
-  const resetFormForNewAsset = () => {
-    form.reset({
-      name: '',
-      assetTag: '',
-      serialNumber: '',
-      categoryId: '',
-      modelId: undefined,
-      locationId: undefined,
-      additionalInfo: '',
-      imageDateUris: [],
-      invoiceFileDataUri: undefined,
-      invoiceFileName: undefined,
-      aplicarRegrasDepreciacao: true,
-      arquivado: false,
-      // Manter os campos da NF-e se eles forem usados para o próximo item da fila
-      // Isso será tratado em processNextAssetInQueue
-      supplier: form.getValues('supplier'), // Mantém se já preenchido pela NF-e
-      purchaseDate: form.getValues('purchaseDate'), // Mantém se já preenchido
-      invoiceNumber: form.getValues('invoiceNumber'), // Mantém se já preenchido
-      purchaseValue: form.getValues('purchaseValue'), // Mantém se já preenchido
-      previouslyDepreciatedValue: 0,
-    });
-    setImagePreviews([]);
-    form.clearErrors();
-  };
-
-
   const processNextAssetInQueue = () => {
     if (assetImportQueue.length > 0) {
       const nextTask = assetImportQueue[0];
   
-      // Limpa campos específicos do ativo individual, incluindo os que não devem persistir
       form.reset({
         // Campos que vêm da tarefa (NF-e)
-        name: nextTask.assetData.originalNFeProductDescription || '',
-        purchaseValue: nextTask.assetData.purchaseValue || 0,
-        invoiceNumber: nextTask.assetData.invoiceNumber || '',
-        purchaseDate: nextTask.assetData.purchaseDate ? (isValidDate(parseISO(nextTask.assetData.purchaseDate)) ? parseISO(nextTask.assetData.purchaseDate) : undefined) : undefined,
-        supplier: nextTask.assetData.supplierId || '',
-        aplicarRegrasDepreciacao: nextTask.assetData.aplicarRegrasDepreciacao,
+        name: nextTask.originalNFeProductDescription || '',
+        purchaseValue: nextTask.purchaseValue || 0,
+        invoiceNumber: nextTask.invoiceNumber || '',
+        purchaseDate: nextTask.purchaseDate ? (isValidDate(parseISO(nextTask.purchaseDate)) ? parseISO(nextTask.purchaseDate) : undefined) : undefined,
+        supplier: nextTask.supplierId || '',
+        aplicarRegrasDepreciacao: nextTask.aplicarRegrasDepreciacao,
   
-        // Detalhes "modelo" aplicados a esta tarefa
-        categoryId: nextTask.assetModelDetails?.categoryId || '',
-        modelId: nextTask.assetModelDetails?.modelId,
-        locationId: nextTask.assetModelDetails?.locationId,
-        additionalInfo: nextTask.assetModelDetails?.additionalInfo,
-        
-        // Campos a serem zerados ou definidos como padrão para preenchimento manual
-        assetTag: nextTask.assetModelDetails?.assetTagPrefix ? `${nextTask.assetModelDetails.assetTagPrefix}-` : '',
-        serialNumber: nextTask.assetModelDetails?.serialNumberPrefix ? `${nextTask.assetModelDetails.serialNumberPrefix}-` : '',
-        
-        // Campos que sempre devem ser limpos para cada novo ativo
-        imageDateUris: [],
-        invoiceFileDataUri: undefined,
-        invoiceFileName: undefined,
-        previouslyDepreciatedValue: 0,
-        arquivado: false,
+        // Campos que SEMPRE devem ser resetados para cada novo ativo
+        categoryId: '', // Reset
+        modelId: undefined, // Reset
+        locationId: undefined, // Reset
+        additionalInfo: '', // Reset
+        assetTag: '', // Reset
+        serialNumber: '', // Reset
+        imageDateUris: [], // Reset
+        invoiceFileDataUri: undefined, // Reset
+        invoiceFileName: undefined, // Reset
+        previouslyDepreciatedValue: 0, // Reset to default
+        arquivado: false, // Reset to default
       });
   
       setImagePreviews([]); // Limpa as pré-visualizações de imagem
@@ -168,7 +136,7 @@ export default function AddAssetPage() {
       const currentItemNumber = totalAssetsInQueue - assetImportQueue.length + 1;
       toast({
         title: `Cadastrando Ativo ${currentItemNumber} de ${totalAssetsInQueue}`,
-        description: `Preencha os detalhes para: ${form.getValues('name') || 'Novo Ativo'}.`,
+        description: `Preencha os detalhes para: "${form.getValues('name') || 'Novo Ativo'}".`,
         duration: 7000
       });
       return true;
@@ -414,7 +382,7 @@ export default function AddAssetPage() {
 
   const handleSkipItem = () => {
     if (assetImportQueue.length > 0) {
-      const skippedItemName = assetImportQueue[0].assetData.originalNFeProductDescription;
+      const skippedItemName = assetImportQueue[0].originalNFeProductDescription;
       setAssetImportQueue(prev => prev.slice(1)); // Remove o item atual da fila
       toast({ title: "Item pulado", description: `Item "${skippedItemName}" removido da fila de importação.`});
       // A lógica no useEffect cuidará de chamar processNextAssetInQueue se a fila não estiver vazia
@@ -880,7 +848,7 @@ export default function AddAssetPage() {
                         name="previouslyDepreciatedValue"
                         render={({ field }) => (
                           <FormItem className="space-y-0.5">
-                            <div className="flex items-center h-8">
+                             <div className="flex items-center h-8">
                               <FormLabel>Valor depreciado R$</FormLabel>
                               <TooltipProvider>
                                 <Tooltip>
