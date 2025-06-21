@@ -496,9 +496,9 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
       </DialogHeader>
       
       <div className="flex-1 min-h-0">
-        <ScrollArea className="h-full">
-          <div className="space-y-4 p-6">
-              <div className="flex-shrink-0 space-y-3">
+        <ScrollArea className="h-full p-6">
+          <div className="space-y-4">
+              <div className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-b pb-3">
                   <div><strong>Fornecedor:</strong> {nfeData.supplierName || "Não informado"}</div>
                   <div><strong>CNPJ:</strong> {nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : "Não informado"}</div>
@@ -514,7 +514,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
                   {supplierOnRecord && ( <Alert variant="default" className="border-green-500 text-green-700 dark:border-green-400 dark:text-green-300 [&>svg]:text-green-500 dark:[&>svg]:text-green-400"> <CheckCircle className="h-4 w-4" /> <AlertTitle>Fornecedor Localizado</AlertTitle> <AlertDescription> Fornecedor: <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{supplierOnRecord.nomeFantasia || supplierOnRecord.razaoSocial}</Badge> (CNPJ: {supplierOnRecord.cnpj ? maskCNPJ(supplierOnRecord.cnpj.replace(/\D/g, '')) : 'N/A'}). </AlertDescription> </Alert> )}
               </div>
               
-              <div className="flex justify-between items-center px-1 flex-shrink-0">
+              <div className="flex justify-between items-center px-1">
                 <h3 className="text-lg font-semibold flex items-center"> <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal </h3>
                 {displayableProducts.length > 0 && ( <Button onClick={handleDeleteSelectedItems} variant="destructive" size="sm" disabled={selectedItems.size === 0}> <Trash2 className="mr-2 h-4 w-4" /> Excluir Selecionados ({selectedItems.size}) </Button> )}
               </div>
@@ -594,14 +594,20 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
             <Accordion type="multiple" defaultValue={['item-0']} className="w-full">
             {fields.map((field, index) => {
                 const task = importTasks[index];
+                const imagePreviews = watchedAssets[index]?.imageDateUris || [];
+                const isDepreciable = watchedAssets[index]?.aplicarRegrasDepreciacao;
                 const assetFormState = watchedAssets[index];
-                const imagePreviews = assetFormState?.imageDateUris || [];
                 return (
                 <AccordionItem value={`item-${index}`} key={field.id}>
                     <AccordionTrigger>
                       <div className='flex items-center gap-3 w-full text-sm'>
                         <Badge variant="outline" className="shrink-0 px-2">{index + 1}</Badge>
                         <span className="truncate flex-1 text-left font-medium">{task.originalNFeProductDescription}</span>
+                         {isDepreciable ? (
+                            <Badge variant="default" className="shrink-0">Depreciável</Badge>
+                        ) : (
+                            <Badge variant="secondary" className="shrink-0">Patrimônio</Badge>
+                        )}
                         <span className="text-sm text-muted-foreground shrink-0">({formatCurrency(task.purchaseValue)})</span>
                       </div>
                     </AccordionTrigger>
