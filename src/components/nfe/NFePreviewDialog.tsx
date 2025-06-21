@@ -26,7 +26,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { maskCEP, maskCNPJ } from '@/lib/utils';
 import { parseISO } from 'date-fns';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { AssetModelCombobox } from '@/components/asset-models/AssetModelCombobox';
 import { LocationCombobox } from '@/components/locations/LocationCombobox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -43,7 +43,6 @@ export interface ImportPreparationTask {
   invoiceNumber: string;
   purchaseDate: string;
   supplierId: string;
-  aplicarRegrasDepreciacao: boolean;
 }
 
 const MAX_PHOTOS = 10;
@@ -56,6 +55,7 @@ const assetDetailSchema = z.object({
   locationId: z.string().optional(),
   additionalInfo: z.string().optional(),
   previouslyDepreciatedValue: z.coerce.number().min(0, "Não pode ser negativo.").optional(),
+  aplicarRegrasDepreciacao: z.boolean(),
   imageDateUris: z.array(z.string()).max(MAX_PHOTOS, `Máximo de ${MAX_PHOTOS} fotos.`).optional(),
   invoiceFileDataUri: z.string().optional(),
   invoiceFileName: z.string().optional(),
@@ -85,7 +85,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
   const [importTasks, setImportTasks] = useState<ImportPreparationTask[]>([]);
   
   const [displayableProducts, setDisplayableProducts] = useState<NFeProduct[]>([]);
-  const [itemActions, setItemActions] = useState<Map<number, { depreciableQty: number; patrimonyQty: number }>>(new Map());
+  const [itemActions, setItemActions] = useState<Map<number, { processQty: number }>>(new Map());
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
 
@@ -134,9 +134,9 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
         setSupplierOnRecord(null);
       }
 
-      const initialActions = new Map<number, { depreciableQty: number; patrimonyQty: number }>();
+      const initialActions = new Map<number, { processQty: number }>();
       products.forEach((_product, index) => {
-        initialActions.set(index, { depreciableQty: 0, patrimonyQty: 0 });
+        initialActions.set(index, { processQty: 0 });
       });
       setItemActions(initialActions);
     }
@@ -146,7 +146,6 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
 
   const handleQuantityChange = (
     productIndex: number,
-    type: 'depreciableQty' | 'patrimonyQty',
     value: string
   ) => {
     const product = displayableProducts[productIndex];
@@ -159,22 +158,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
 
     setItemActions(prevActions => {
       const newActions = new Map(prevActions);
-      const currentAction = newActions.get(productIndex) || { depreciableQty: 0, patrimonyQty: 0 };
-      const updatedAction = { ...currentAction };
-
-      if (type === 'depreciableQty') {
-        updatedAction.depreciableQty = Math.min(numValue, (product.quantity || 0) - updatedAction.patrimonyQty);
-      } else { 
-        updatedAction.patrimonyQty = Math.min(numValue, (product.quantity || 0) - updatedAction.depreciableQty);
-      }
-      
-      if (updatedAction.depreciableQty + updatedAction.patrimonyQty > (product.quantity || 0)) {
-        if (type === 'depreciableQty') {
-            updatedAction.depreciableQty = (product.quantity || 0) - updatedAction.patrimonyQty;
-        } else {
-            updatedAction.patrimonyQty = (product.quantity || 0) - updatedAction.depreciableQty;
-        }
-      }
+      const updatedAction = { processQty: Math.min(numValue, product.quantity || 0) };
       newActions.set(productIndex, updatedAction);
       return newActions;
     });
@@ -186,21 +170,20 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
       return;
     }
 
-    let rawTasksForPreparation: { product: NFeProduct, assetType: 'depreciable' | 'patrimony' }[] = [];
+    let rawTasksForPreparation: { product: NFeProduct }[] = [];
     displayableProducts.forEach((product, index) => {
       const actions = itemActions.get(index);
       if (!actions || !product) return;
 
-      for (let i = 0; i < actions.depreciableQty; i++) {
-        rawTasksForPreparation.push({ product: { ...product }, assetType: 'depreciable' });
-      }
-      for (let i = 0; i < actions.patrimonyQty; i++) {
-        rawTasksForPreparation.push({ product: { ...product }, assetType: 'patrimony' });
+      for (let i = 0; i < actions.processQty; i++) {
+        rawTasksForPreparation.push({ product: { ...product } });
       }
     });
 
-    if (rawTasksForPreparation.length === 0) {
-      toast({ title: "Nenhum item para importar", description: "Por favor, defina quantidades para 'Ativo Depreciável' ou 'Patrimônio'.", variant: "default" });
+    const totalProcessQty = rawTasksForPreparation.length;
+
+    if (totalProcessQty === 0) {
+      toast({ title: "Nenhum item para importar", description: "Por favor, defina a 'Qtde. a Processar' para pelo menos um item.", variant: "default" });
       return;
     }
 
@@ -234,7 +217,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
         totalProductValueForFreightCalc: number
       ): ImportPreparationTask[] => {
       return tasksToProcess.map(rawTask => {
-        const { product, assetType } = rawTask;
+        const { product } = rawTask;
         let freightPerUnit = 0;
         if (importSettings.allocateFreight && shippingValue > 0 && totalProductValueForFreightCalc > 0 && product.totalValue && product.quantity && product.quantity > 0) {
           const productLineFreightShare = (product.totalValue / totalProductValueForFreightCalc) * shippingValue;
@@ -247,7 +230,6 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
           invoiceNumber: nfeData.invoiceNumber || '',
           purchaseDate: nfePurchaseDate.toISOString(), 
           supplierId: supplierOnRecord!.id,
-          aplicarRegrasDepreciacao: assetType === 'depreciable',
         };
         return task;
       });
@@ -260,7 +242,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
       } else { 
         const productLinesBeingImported = displayableProducts.filter((_p, index) => {
           const actions = itemActions.get(index);
-          return actions && (actions.depreciableQty > 0 || actions.patrimonyQty > 0);
+          return actions && (actions.processQty > 0);
         });
         const totalValueOfProductLinesBeingImported = productLinesBeingImported.reduce((sum, p) => sum + (p.totalValue || 0), 0);
         finalPreparationTasks = mapToImportPreparationTask(rawTasksForPreparation, totalValueOfProductLinesBeingImported);
@@ -279,6 +261,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
         locationId: undefined,
         additionalInfo: '',
         previouslyDepreciatedValue: 0,
+        aplicarRegrasDepreciacao: true,
         imageDateUris: [],
         invoiceFileDataUri: undefined,
         invoiceFileName: undefined,
@@ -301,7 +284,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
         invoiceNumber: task.invoiceNumber,
         supplier: task.supplierId,
         purchaseValue: task.purchaseValue,
-        aplicarRegrasDepreciacao: task.aplicarRegrasDepreciacao,
+        aplicarRegrasDepreciacao: assetDetails.aplicarRegrasDepreciacao,
         ...assetDetails,
         modelId: assetDetails.modelId || undefined,
         locationId: assetDetails.locationId || undefined,
@@ -383,13 +366,13 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
     const newDisplayableProducts = displayableProducts.filter((_, index) => !selectedItems.has(index));
     setDisplayableProducts(newDisplayableProducts);
   
-    const newActions = new Map<number, { depreciableQty: number; patrimonyQty: number }>();
+    const newActions = new Map<number, { processQty: number }>();
     newDisplayableProducts.forEach((product, newIndex) => {
       const oldIndex = displayableProducts.findIndex(p => p === product);
       if (oldIndex !== -1 && itemActions.has(oldIndex)) {
         newActions.set(newIndex, itemActions.get(oldIndex)!);
       } else {
-        newActions.set(newIndex, { depreciableQty: 0, patrimonyQty: 0 });
+        newActions.set(newIndex, { processQty: 0 });
       }
     });
     setItemActions(newActions);
@@ -500,23 +483,21 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
   if (!nfeData) return null;
 
   const totalOriginalQty = displayableProducts.reduce((sum, p) => sum + (p.quantity || 0), 0);
-  const totalDepreciableQty = Array.from(itemActions.values()).reduce((sum, action) => sum + action.depreciableQty, 0);
-  const totalPatrimonyQty = Array.from(itemActions.values()).reduce((sum, action) => sum + action.patrimonyQty, 0);
-  const totalProcessedQty = totalDepreciableQty + totalPatrimonyQty;
-  const totalIgnoredQty = totalOriginalQty - totalProcessedQty;
+  const totalProcessQty = Array.from(itemActions.values()).reduce((sum, action) => sum + action.processQty, 0);
+  const totalIgnoredQty = totalOriginalQty - totalProcessQty;
 
   const renderSelectionStep = () => (
     <>
       <DialogHeader className="p-6 pb-4 border-b flex-shrink-0">
         <DialogTitle>Etapa 1: Seleção de Itens da NF-e: {nfeData.invoiceNumber || "Número Desconhecido"}</DialogTitle>
         <DialogDescription>
-        Revise os dados da NF-e. Para cada item, defina as quantidades que serão importadas como 'Ativo Depreciável' ou apenas 'Patrimônio'.
+        Revise os dados da NF-e. Para cada item, defina a quantidade a processar e exclua os que não serão importados.
         </DialogDescription>
       </DialogHeader>
       
       <div className="flex-1 min-h-0">
-        <ScrollArea className="h-full p-6">
-          <div className="space-y-4">
+        <ScrollArea className="h-full">
+          <div className="space-y-4 p-6">
               <div className="flex-shrink-0 space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-b pb-3">
                   <div><strong>Fornecedor:</strong> {nfeData.supplierName || "Não informado"}</div>
@@ -546,16 +527,15 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
                           <TableHead className="min-w-[200px]">Produto (Descrição)</TableHead>
                           <TableHead className="text-right w-20">Qtde. NF</TableHead>
                           <TableHead className="text-right w-28">Vlr. Unit.</TableHead>
-                          <TableHead className="text-center w-36">Qtde. Depreciável</TableHead>
-                          <TableHead className="text-center w-36">Qtde. Patrimônio</TableHead>
-                          <TableHead className="text-right w-28">Qtde. Ignorar</TableHead>
+                          <TableHead className="text-center w-36">Qtde. a Processar</TableHead>
+                          <TableHead className="text-right w-28">Qtde. a Ignorar</TableHead>
                       </TableRow>
                       </TableHeader>
                       <TableBody>
                       {displayableProducts.length > 0 ? (
                       displayableProducts.map((product, index) => {
-                          const actions = itemActions.get(index) || { depreciableQty: 0, patrimonyQty: 0 };
-                          const remainingToIgnore = (product.quantity || 0) - actions.depreciableQty - actions.patrimonyQty;
+                          const actions = itemActions.get(index) || { processQty: 0 };
+                          const remainingToIgnore = (product.quantity || 0) - actions.processQty;
                           
                           return (
                           <TableRow key={`product-${index}-${product.description}`} data-state={selectedItems.has(index) ? "selected" : ""}>
@@ -563,22 +543,20 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
                               <TableCell className="font-medium">{product.description || "Produto sem descrição"}</TableCell>
                               <TableCell className="text-right">{product.quantity?.toFixed(2) || "0.00"}</TableCell>
                               <TableCell className="text-right">{formatCurrency(product.unitValue || 0)}</TableCell>
-                              <TableCell className="px-1"> <Input type="number" min="0" max={(product.quantity || 0) - actions.patrimonyQty} value={actions.depreciableQty.toString()} onChange={(e) => handleQuantityChange(index, 'depreciableQty', e.target.value)} className="h-8 text-sm text-center" /> </TableCell>
-                              <TableCell className="px-1"> <Input type="number" min="0" max={(product.quantity || 0) - actions.depreciableQty} value={actions.patrimonyQty.toString()} onChange={(e) => handleQuantityChange(index, 'patrimonyQty', e.target.value)} className="h-8 text-sm text-center" /> </TableCell>
+                              <TableCell className="px-1"> <Input type="number" min="0" max={(product.quantity || 0)} value={actions.processQty.toString()} onChange={(e) => handleQuantityChange(index, e.target.value)} className="h-8 text-sm text-center" /> </TableCell>
                               <TableCell className="text-right">{remainingToIgnore.toFixed(2)}</TableCell>
                           </TableRow>
                           );
                       })
                       ) : (
-                      <TableRow> <TableCell colSpan={7} className="h-24 text-center"> Nenhum produto para exibir. </TableCell> </TableRow>
+                      <TableRow> <TableCell colSpan={6} className="h-24 text-center"> Nenhum produto para exibir. </TableCell> </TableRow>
                       )}
                       </TableBody>
                       {displayableProducts.length > 0 && (
                       <UITableFooter>
                           <TableRow>
                           <TableHead className="text-left font-semibold p-1" colSpan={4}>TOTAIS:</TableHead>
-                          <TableHead className="text-center font-semibold">{totalDepreciableQty.toFixed(2)}</TableHead>
-                          <TableHead className="text-center font-semibold">{totalPatrimonyQty.toFixed(2)}</TableHead>
+                          <TableHead className="text-center font-semibold">{totalProcessQty.toFixed(2)}</TableHead>
                           <TableHead className="text-right font-semibold">{totalIgnoredQty.toFixed(2)}</TableHead>
                           </TableRow>
                       </UITableFooter>
@@ -591,11 +569,11 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
 
       <DialogFooter className="p-6 pt-4 border-t flex-shrink-0">
         <div className="text-sm text-muted-foreground flex-1">
-            Total de itens na NF-e: {displayableProducts.length}. Serão processados {totalProcessedQty} unidade(s) como ativo(s).
+            Total de itens na NF-e: {displayableProducts.length}. Serão processados {totalProcessQty} unidade(s) como ativo(s).
         </div>
         <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-        <Button onClick={handleAdvanceToDetailsStep} disabled={totalProcessedQty === 0 || supplierOnRecord === undefined || (!supplierOnRecord && !!nfeData.supplierCNPJ)} >
-        <Forward className="mr-2 h-4 w-4" /> Avançar para Cadastro ({totalProcessedQty})
+        <Button onClick={handleAdvanceToDetailsStep} disabled={totalProcessQty === 0 || supplierOnRecord === undefined || (!supplierOnRecord && !!nfeData.supplierCNPJ)} >
+        <Forward className="mr-2 h-4 w-4" /> Avançar para Cadastro ({totalProcessQty})
         </Button>
       </DialogFooter>
     </>
@@ -625,13 +603,30 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
                         <Badge variant="outline" className="shrink-0 px-2">{index + 1}</Badge>
                         <span className="truncate flex-1 text-left font-medium">{task.originalNFeProductDescription}</span>
                         <span className="text-sm text-muted-foreground shrink-0">({formatCurrency(task.purchaseValue)})</span>
-                        <Badge variant={task.aplicarRegrasDepreciacao ? "default" : "secondary"} className="shrink-0">
-                          {task.aplicarRegrasDepreciacao ? "Depreciável" : "Patrimônio"}
-                        </Badge>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 p-2">
+                        <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.aplicarRegrasDepreciacao`}
+                            render={({ field: formField }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 md:col-span-2">
+                                <div className="space-y-0.5">
+                                    <FormLabel>Ativo Depreciável?</FormLabel>
+                                    <FormDescription>
+                                        Ative se este item deve seguir as regras de depreciação. Desative para controle apenas de patrimônio.
+                                    </FormDescription>
+                                </div>
+                                <FormControl>
+                                    <Switch
+                                        checked={formField.value}
+                                        onCheckedChange={formField.onChange}
+                                    />
+                                </FormControl>
+                            </FormItem>
+                            )}
+                        />
                         <FormField
                             control={detailForm.control}
                             name={`assets.${index}.assetTag`}
