@@ -35,6 +35,7 @@ import { useRouter } from 'next/navigation';
 import type { Asset } from '@/components/assets/types';
 import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export interface ImportPreparationTask {
   originalNFeProductDescription: string;
@@ -385,7 +386,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
   
     const newActions = new Map<number, { depreciableQty: number; patrimonyQty: number }>();
     newDisplayableProducts.forEach((product, newIndex) => {
-      const oldIndex = displayableProducts.findIndex(p => p.description === product.description && p.quantity === product.quantity && p.unitValue === product.unitValue && p.totalValue === product.totalValue);
+      const oldIndex = displayableProducts.findIndex(p => p === product);
       if (oldIndex !== -1 && itemActions.has(oldIndex)) {
         newActions.set(newIndex, itemActions.get(oldIndex)!);
       } else {
@@ -605,214 +606,216 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto py-4 pr-2 -mr-2">
-          <Accordion type="multiple" defaultValue={['item-0']} className="w-full">
-            {fields.map((field, index) => {
-              const task = importTasks[index];
-              const assetFormState = watchedAssets[index];
-              const imagePreviews = assetFormState?.imageDateUris || [];
-              return (
-                <AccordionItem value={`item-${index}`} key={field.id}>
-                  <AccordionTrigger>
-                    <div className='flex items-center gap-2'>
-                        <Badge variant={task.aplicarRegrasDepreciacao ? "default" : "secondary"}>
-                            {index + 1}
-                        </Badge>
-                        <span>{task.originalNFeProductDescription}</span>
-                        <span className="text-sm text-muted-foreground">({formatCurrency(task.purchaseValue)})</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 p-2">
-                       <FormField
-                          control={detailForm.control}
-                          name={`assets.${index}.assetTag`}
-                          render={({ field: formField }) => (
-                            <FormItem>
-                              <FormLabel>Nº de Patrimônio *</FormLabel>
-                              <FormControl><Input placeholder="Ex: ZDI-00123" {...formField} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+        <ScrollArea className="flex-1">
+          <div className="py-4 pr-4">
+            <Accordion type="multiple" defaultValue={['item-0']} className="w-full">
+              {fields.map((field, index) => {
+                const task = importTasks[index];
+                const assetFormState = watchedAssets[index];
+                const imagePreviews = assetFormState?.imageDateUris || [];
+                return (
+                  <AccordionItem value={`item-${index}`} key={field.id}>
+                    <AccordionTrigger>
+                      <div className='flex items-center gap-2'>
+                          <Badge variant={task.aplicarRegrasDepreciacao ? "default" : "secondary"}>
+                              {index + 1}
+                          </Badge>
+                          <span>{task.originalNFeProductDescription}</span>
+                          <span className="text-sm text-muted-foreground">({formatCurrency(task.purchaseValue)})</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 p-2">
                          <FormField
-                          control={detailForm.control}
-                          name={`assets.${index}.serialNumber`}
-                          render={({ field: formField }) => (
-                            <FormItem>
-                              <FormLabel>Nº de Série</FormLabel>
-                              <FormControl><Input placeholder="Ex: SN-ABC123XYZ" {...formField} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                         <FormField
-                          control={detailForm.control}
-                          name={`assets.${index}.categoryId`}
-                          render={({ field: formField }) => (
-                            <FormItem>
-                              <FormLabel>Categoria *</FormLabel>
-                               <Select onValueChange={formField.onChange} defaultValue={formField.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Selecione uma categoria" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={detailForm.control}
-                          name={`assets.${index}.modelId`}
-                          render={({ field: formField }) => (
-                            <FormItem>
-                              <FormLabel>Modelo</FormLabel>
-                               <AssetModelCombobox value={formField.value} onChange={formField.onChange} />
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={detailForm.control}
-                          name={`assets.${index}.locationId`}
-                          render={({ field: formField }) => (
-                             <FormItem>
-                              <FormLabel>Local Alocado</FormLabel>
-                              <LocationCombobox value={formField.value} onChange={formField.onChange} />
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={detailForm.control}
-                          name={`assets.${index}.previouslyDepreciatedValue`}
-                          render={({ field: formField }) => (
-                              <FormItem>
-                                  <FormLabel>Valor Depreciado Anteriormente</FormLabel>
-                                  <FormControl>
-                                      <Input type="number" step="0.01" placeholder="R$ 0,00" {...formField} value={formField.value ?? ''} />
-                                  </FormControl>
-                                  <FormMessage />
-                              </FormItem>
-                          )}
-                        />
-                         <FormField
-                          control={detailForm.control}
-                          name={`assets.${index}.arquivado`}
-                          render={({ field: formField }) => (
-                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 md:col-span-2">
-                                  <div className="space-y-0.5">
-                                      <FormLabel>Arquivar Ativo</FormLabel>
-                                      <FormMessage />
-                                  </div>
-                                  <FormControl>
-                                      <Switch checked={formField.value} onCheckedChange={formField.onChange} />
-                                  </FormControl>
-                              </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={detailForm.control}
-                          name={`assets.${index}.additionalInfo`}
-                          render={({ field: formField }) => (
-                            <FormItem className="md:col-span-2">
-                              <FormLabel>Informações Adicionais</FormLabel>
-                              <FormControl><Textarea placeholder="Detalhes extras sobre o ativo..." {...formField} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* Invoice File Upload */}
-                         <FormField
-                          control={detailForm.control}
-                          name={`assets.${index}.invoiceFileDataUri`}
-                          render={({ field: formField }) => (
-                              <FormItem className="space-y-1 md:col-span-2">
-                                  <FormLabel>Anexo da Nota Fiscal</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                        type="file"
-                                        accept="application/pdf,image/*"
-                                        ref={(el) => (invoiceFileInputRefs.current[index] = el)}
-                                        onChange={(e) => handleInvoiceFileChange(e, index)}
-                                        className="hidden"
-                                        disabled={!!assetFormState?.invoiceFileName}
-                                    />
-                                  </FormControl>
-                                  {!assetFormState?.invoiceFileName ? (
-                                    <Button type="button" variant="outline" className="w-full" onClick={() => invoiceFileInputRefs.current[index]?.click()}>
-                                        <UploadCloud className="mr-2 h-4 w-4" /> Selecionar Arquivo
-                                    </Button>
-                                  ) : (
-                                    <div className="flex items-center space-x-2 p-2 border rounded-md bg-muted/30 h-10">
-                                      <FileText className="h-5 w-5 text-muted-foreground" />
-                                      <span className="text-sm text-foreground truncate flex-1" title={assetFormState.invoiceFileName}>{assetFormState.invoiceFileName}</span>
-                                      <Button type="button" variant="ghost" size="icon" onClick={() => handleViewFile(assetFormState.invoiceFileDataUri, assetFormState.invoiceFileName)} title="Visualizar"><Eye className="h-4 w-4" /></Button>
-                                      <Button type="button" variant="ghost" size="icon" onClick={() => handleDownloadFile(assetFormState.invoiceFileDataUri, assetFormState.invoiceFileName)} title="Baixar"><Download className="h-4 w-4" /></Button>
-                                      <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveInvoiceFile(index)} title="Remover" className="text-destructive hover:text-destructive"><XCircle className="h-4 w-4" /></Button>
-                                    </div>
-                                  )}
-                                  <FormMessage />
-                              </FormItem>
-                          )}
-                        />
-
-                         {/* Image Upload */}
-                        <FormField
                             control={detailForm.control}
-                            name={`assets.${index}.imageDateUris`}
+                            name={`assets.${index}.assetTag`}
                             render={({ field: formField }) => (
-                                <FormItem className="space-y-1 md:col-span-2">
-                                    <FormLabel>Fotos do Ativo (Máx. {MAX_PHOTOS})</FormLabel>
+                              <FormItem>
+                                <FormLabel>Nº de Patrimônio *</FormLabel>
+                                <FormControl><Input placeholder="Ex: ZDI-00123" {...formField} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                           <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.serialNumber`}
+                            render={({ field: formField }) => (
+                              <FormItem>
+                                <FormLabel>Nº de Série</FormLabel>
+                                <FormControl><Input placeholder="Ex: SN-ABC123XYZ" {...formField} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                           <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.categoryId`}
+                            render={({ field: formField }) => (
+                              <FormItem>
+                                <FormLabel>Categoria *</FormLabel>
+                                 <Select onValueChange={formField.onChange} defaultValue={formField.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecione uma categoria" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.modelId`}
+                            render={({ field: formField }) => (
+                              <FormItem>
+                                <FormLabel>Modelo</FormLabel>
+                                 <AssetModelCombobox value={formField.value} onChange={formField.onChange} />
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.locationId`}
+                            render={({ field: formField }) => (
+                               <FormItem>
+                                <FormLabel>Local Alocado</FormLabel>
+                                <LocationCombobox value={formField.value} onChange={formField.onChange} />
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.previouslyDepreciatedValue`}
+                            render={({ field: formField }) => (
+                                <FormItem>
+                                    <FormLabel>Valor Depreciado Anteriormente</FormLabel>
                                     <FormControl>
-                                      <Input
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        ref={el => (imageFileInputRefs.current[index] = el)}
-                                        onChange={(e) => handleImageChange(e, index)}
-                                        className="w-full"
-                                        disabled={(assetFormState?.imageDateUris?.length || 0) >= MAX_PHOTOS}
-                                      />
+                                        <Input type="number" step="0.01" placeholder="R$ 0,00" {...formField} value={formField.value ?? ''} />
                                     </FormControl>
                                     <FormMessage />
-                                    {imagePreviews.length > 0 && (
-                                        <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                                            {imagePreviews.map((previewUrl, imgIndex) => (
-                                                <div key={imgIndex} className="relative w-full aspect-square border rounded-md overflow-hidden group">
-                                                    <Image src={previewUrl} alt={`Preview ${imgIndex + 1}`} layout="fill" objectFit="contain" />
-                                                    <Button
-                                                        type="button"
-                                                        variant="destructive"
-                                                        size="icon"
-                                                        onClick={() => handleRemoveImage(index, imgIndex)}
-                                                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100"
-                                                        title="Remover imagem"
-                                                    >
-                                                        <XCircle className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
                                 </FormItem>
                             )}
-                        />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
-          </Accordion>
-        </div>
+                          />
+                           <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.arquivado`}
+                            render={({ field: formField }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 md:col-span-2">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>Arquivar Ativo</FormLabel>
+                                        <FormMessage />
+                                    </div>
+                                    <FormControl>
+                                        <Switch checked={formField.value} onCheckedChange={formField.onChange} />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.additionalInfo`}
+                            render={({ field: formField }) => (
+                              <FormItem className="md:col-span-2">
+                                <FormLabel>Informações Adicionais</FormLabel>
+                                <FormControl><Textarea placeholder="Detalhes extras sobre o ativo..." {...formField} /></FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-        <DialogFooter className="mt-auto pt-4 border-t">
+                          {/* Invoice File Upload */}
+                           <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.invoiceFileDataUri`}
+                            render={({ field: formField }) => (
+                                <FormItem className="space-y-1 md:col-span-2">
+                                    <FormLabel>Anexo da Nota Fiscal</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                          type="file"
+                                          accept="application/pdf,image/*"
+                                          ref={(el) => (invoiceFileInputRefs.current[index] = el)}
+                                          onChange={(e) => handleInvoiceFileChange(e, index)}
+                                          className="hidden"
+                                          disabled={!!assetFormState?.invoiceFileName}
+                                      />
+                                    </FormControl>
+                                    {!assetFormState?.invoiceFileName ? (
+                                      <Button type="button" variant="outline" className="w-full" onClick={() => invoiceFileInputRefs.current[index]?.click()}>
+                                          <UploadCloud className="mr-2 h-4 w-4" /> Selecionar Arquivo
+                                      </Button>
+                                    ) : (
+                                      <div className="flex items-center space-x-2 p-2 border rounded-md bg-muted/30 h-10">
+                                        <FileText className="h-5 w-5 text-muted-foreground" />
+                                        <span className="text-sm text-foreground truncate flex-1" title={assetFormState.invoiceFileName}>{assetFormState.invoiceFileName}</span>
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => handleViewFile(assetFormState.invoiceFileDataUri, assetFormState.invoiceFileName)} title="Visualizar"><Eye className="h-4 w-4" /></Button>
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => handleDownloadFile(assetFormState.invoiceFileDataUri, assetFormState.invoiceFileName)} title="Baixar"><Download className="h-4 w-4" /></Button>
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveInvoiceFile(index)} title="Remover" className="text-destructive hover:text-destructive"><XCircle className="h-4 w-4" /></Button>
+                                      </div>
+                                    )}
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                          />
+
+                           {/* Image Upload */}
+                          <FormField
+                              control={detailForm.control}
+                              name={`assets.${index}.imageDateUris`}
+                              render={({ field: formField }) => (
+                                  <FormItem className="space-y-1 md:col-span-2">
+                                      <FormLabel>Fotos do Ativo (Máx. {MAX_PHOTOS})</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="file"
+                                          accept="image/*"
+                                          multiple
+                                          ref={el => (imageFileInputRefs.current[index] = el)}
+                                          onChange={(e) => handleImageChange(e, index)}
+                                          className="w-full"
+                                          disabled={(assetFormState?.imageDateUris?.length || 0) >= MAX_PHOTOS}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                      {imagePreviews.length > 0 && (
+                                          <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                              {imagePreviews.map((previewUrl, imgIndex) => (
+                                                  <div key={imgIndex} className="relative w-full aspect-square border rounded-md overflow-hidden group">
+                                                      <Image src={previewUrl} alt={`Preview ${imgIndex + 1}`} layout="fill" objectFit="contain" />
+                                                      <Button
+                                                          type="button"
+                                                          variant="destructive"
+                                                          size="icon"
+                                                          onClick={() => handleRemoveImage(index, imgIndex)}
+                                                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100"
+                                                          title="Remover imagem"
+                                                      >
+                                                          <XCircle className="h-4 w-4" />
+                                                      </Button>
+                                                  </div>
+                                              ))}
+                                          </div>
+                                      )}
+                                  </FormItem>
+                              )}
+                          />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+          </div>
+        </ScrollArea>
+
+        <DialogFooter className="pt-4 border-t">
           <Button variant="outline" type="button" onClick={() => setStep('selection')}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Seleção
           </Button>
