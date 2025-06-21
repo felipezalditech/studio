@@ -515,8 +515,8 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
         </DialogDescription>
       </DialogHeader>
 
-      <div className="px-1 pt-1">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-b pb-3 mb-3">
+      <div className="px-1 pt-1 space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-b pb-3">
           <div><strong>Fornecedor:</strong> {nfeData.supplierName || "Não informado"}</div>
           <div><strong>CNPJ:</strong> {nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : "Não informado"}</div>
           <div><strong>IE:</strong> {nfeData.supplierIE || "Não informada"}</div>
@@ -526,17 +526,17 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
           <div><strong>Valor Frete:</strong> {formatCurrency(nfeData.shippingValue || 0)}</div>
         </div>
 
-        {supplierOnRecord === undefined && ( <Alert variant="default" className="mb-3"> <Info className="h-4 w-4" /> <AlertTitle>Verificando Fornecedor</AlertTitle> <AlertDescription>Aguarde...</AlertDescription> </Alert> )}
-        {supplierOnRecord === null && nfeData.supplierCNPJ && ( <Alert variant="default" className="mb-3 border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300 [&>svg]:text-yellow-500 dark:[&>svg]:text-yellow-400"> <Building className="h-4 w-4" /> <AlertTitle>Fornecedor não cadastrado</AlertTitle> <AlertDescription className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"> <span>O fornecedor <Badge variant="secondary">{nfeData.supplierName || maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, ''))}</Badge> não foi encontrado.</span> <Button onClick={() => setIsSupplierFormOpen(true)} size="sm" variant="outline" className="shrink-0 border-yellow-500 hover:bg-yellow-50 text-yellow-700 dark:border-yellow-400 dark:hover:bg-yellow-700/20 dark:text-yellow-300"> <PlusCircle className="mr-2 h-4 w-4" /> Cadastrar</Button> </AlertDescription> </Alert> )}
-        {supplierOnRecord && ( <Alert variant="default" className="mb-3 border-green-500 text-green-700 dark:border-green-400 dark:text-green-300 [&>svg]:text-green-500 dark:[&>svg]:text-green-400"> <CheckCircle className="h-4 w-4" /> <AlertTitle>Fornecedor Localizado</AlertTitle> <AlertDescription> Fornecedor: <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{supplierOnRecord.nomeFantasia || supplierOnRecord.razaoSocial}</Badge> (CNPJ: {supplierOnRecord.cnpj ? maskCNPJ(supplierOnRecord.cnpj.replace(/\D/g, '')) : 'N/A'}). </AlertDescription> </Alert> )}
+        {supplierOnRecord === undefined && ( <Alert variant="default"> <Info className="h-4 w-4" /> <AlertTitle>Verificando Fornecedor</AlertTitle> <AlertDescription>Aguarde...</AlertDescription> </Alert> )}
+        {supplierOnRecord === null && nfeData.supplierCNPJ && ( <Alert variant="default" className="border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300 [&>svg]:text-yellow-500 dark:[&>svg]:text-yellow-400"> <Building className="h-4 w-4" /> <AlertTitle>Fornecedor não cadastrado</AlertTitle> <AlertDescription className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"> <span>O fornecedor <Badge variant="secondary">{nfeData.supplierName || maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, ''))}</Badge> não foi encontrado.</span> <Button onClick={() => setIsSupplierFormOpen(true)} size="sm" variant="outline" className="shrink-0 border-yellow-500 hover:bg-yellow-50 text-yellow-700 dark:border-yellow-400 dark:hover:bg-yellow-700/20 dark:text-yellow-300"> <PlusCircle className="mr-2 h-4 w-4" /> Cadastrar</Button> </AlertDescription> </Alert> )}
+        {supplierOnRecord && ( <Alert variant="default" className="border-green-500 text-green-700 dark:border-green-400 dark:text-green-300 [&>svg]:text-green-500 dark:[&>svg]:text-green-400"> <CheckCircle className="h-4 w-4" /> <AlertTitle>Fornecedor Localizado</AlertTitle> <AlertDescription> Fornecedor: <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{supplierOnRecord.nomeFantasia || supplierOnRecord.razaoSocial}</Badge> (CNPJ: {supplierOnRecord.cnpj ? maskCNPJ(supplierOnRecord.cnpj.replace(/\D/g, '')) : 'N/A'}). </AlertDescription> </Alert> )}
       </div>
-
-      <div className="flex justify-between items-center mb-2 px-1">
+      
+      <div className="flex justify-between items-center mb-2 px-1 mt-3">
         <h3 className="text-lg font-semibold flex items-center"> <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal </h3>
         {displayableProducts.length > 0 && ( <Button onClick={handleDeleteSelectedItems} variant="destructive" size="sm" disabled={selectedItems.size === 0}> <Trash2 className="mr-2 h-4 w-4" /> Excluir Selecionados ({selectedItems.size}) </Button> )}
       </div>
-      
-      <div className="flex-1 relative px-1">
+
+      <div className="flex-1 min-h-0 relative px-1">
         <ScrollArea className="absolute inset-0 h-full w-full pr-3">
           <div className="border rounded-md">
             <Table>
