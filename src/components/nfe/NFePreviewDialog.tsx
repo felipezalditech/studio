@@ -126,7 +126,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
     if (open && nfeData) {
       resetDialogState();
       const products = nfeData.products || [];
-      setDisplayableProducts(products);
+      setDisplayableProducts(products); // Corrigido para repopular a lista
 
       if (nfeData.supplierCNPJ) {
         const foundSupplier = getSupplierByDocument(nfeData.supplierCNPJ.replace(/\D/g, ''));
@@ -142,7 +142,8 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
       setItemActions(initialActions);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, nfeData]);
+  }, [open, nfeData, getSupplierByDocument]); // Adicionado getSupplierByDocument
+
 
   const handleQuantityChange = (
     productIndex: number,
@@ -509,87 +510,84 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
 
   const renderSelectionStep = () => (
     <>
-      <DialogHeader>
+      <DialogHeader className="p-6 pb-4 border-b">
         <DialogTitle>Etapa 1: Seleção de Itens da NF-e: {nfeData.invoiceNumber || "Número Desconhecido"}</DialogTitle>
         <DialogDescription>
         Revise os dados da NF-e. Para cada item, defina as quantidades que serão importadas como 'Ativo Depreciável' ou apenas 'Patrimônio'.
         </DialogDescription>
       </DialogHeader>
       
-      <div className="flex-1 min-h-0 py-4">
-        <ScrollArea className="h-full pr-4">
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-b pb-3">
-              <div><strong>Fornecedor:</strong> {nfeData.supplierName || "Não informado"}</div>
-              <div><strong>CNPJ:</strong> {nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : "Não informado"}</div>
-              <div><strong>IE:</strong> {nfeData.supplierIE || "Não informada"}</div>
-              <div><strong>E-mail:</strong> {nfeData.supplierEmail || "Não informado"}</div>
-              <div><strong>Data Emissão:</strong> {nfeData.emissionDate ? new Date(nfeData.emissionDate).toLocaleDateString('pt-BR') : "Não informada"}</div>
-              <div><strong>Valor Total NF-e:</strong> {formatCurrency(nfeData.nfeTotalValue || 0)}</div>
-              <div><strong>Valor Frete:</strong> {formatCurrency(nfeData.shippingValue || 0)}</div>
-            </div>
-
-            {supplierOnRecord === undefined && ( <Alert variant="default"> <Info className="h-4 w-4" /> <AlertTitle>Verificando Fornecedor</AlertTitle> <AlertDescription>Aguarde...</AlertDescription> </Alert> )}
-            {supplierOnRecord === null && nfeData.supplierCNPJ && ( <Alert variant="default" className="border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300 [&>svg]:text-yellow-500 dark:[&>svg]:text-yellow-400"> <Building className="h-4 w-4" /> <AlertTitle>Fornecedor não cadastrado</AlertTitle> <AlertDescription className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"> <span>O fornecedor <Badge variant="secondary">{nfeData.supplierName || maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, ''))}</Badge> não foi encontrado.</span> <Button onClick={() => setIsSupplierFormOpen(true)} size="sm" variant="outline" className="shrink-0 border-yellow-500 hover:bg-yellow-50 text-yellow-700 dark:border-yellow-400 dark:hover:bg-yellow-700/20 dark:text-yellow-300"> <PlusCircle className="mr-2 h-4 w-4" /> Cadastrar</Button> </AlertDescription> </Alert> )}
-            {supplierOnRecord && ( <Alert variant="default" className="border-green-500 text-green-700 dark:border-green-400 dark:text-green-300 [&>svg]:text-green-500 dark:[&>svg]:text-green-400"> <CheckCircle className="h-4 w-4" /> <AlertTitle>Fornecedor Localizado</AlertTitle> <AlertDescription> Fornecedor: <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{supplierOnRecord.nomeFantasia || supplierOnRecord.razaoSocial}</Badge> (CNPJ: {supplierOnRecord.cnpj ? maskCNPJ(supplierOnRecord.cnpj.replace(/\D/g, '')) : 'N/A'}). </AlertDescription> </Alert> )}
-            
-            <div className="flex justify-between items-center mb-2 px-1 mt-3">
-              <h3 className="text-lg font-semibold flex items-center"> <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal </h3>
-              {displayableProducts.length > 0 && ( <Button onClick={handleDeleteSelectedItems} variant="destructive" size="sm" disabled={selectedItems.size === 0}> <Trash2 className="mr-2 h-4 w-4" /> Excluir Selecionados ({selectedItems.size}) </Button> )}
-            </div>
-
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10 p-1 text-center"> <Checkbox checked={selectedItems.size > 0 && selectedItems.size === displayableProducts.length && displayableProducts.length > 0} onCheckedChange={handleToggleSelectAllItems} disabled={displayableProducts.length === 0} aria-label="Selecionar todos" /> </TableHead>
-                    <TableHead className="min-w-[200px]">Produto (Descrição)</TableHead>
-                    <TableHead className="text-right w-20">Qtde. NF</TableHead>
-                    <TableHead className="text-right w-28">Vlr. Unit.</TableHead>
-                    <TableHead className="text-center w-36">Qtde. Depreciável</TableHead>
-                    <TableHead className="text-center w-36">Qtde. Patrimônio</TableHead>
-                    <TableHead className="text-right w-28">Qtde. Ignorar</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayableProducts.length > 0 ? (
-                  displayableProducts.map((product, index) => {
-                    const actions = itemActions.get(index) || { depreciableQty: 0, patrimonyQty: 0 };
-                    const remainingToIgnore = (product.quantity || 0) - actions.depreciableQty - actions.patrimonyQty;
-                    
-                    return (
-                      <TableRow key={`product-${index}-${product.description}`} data-state={selectedItems.has(index) ? "selected" : ""}>
-                        <TableCell className="p-1 text-center"> <Checkbox checked={selectedItems.has(index)} onCheckedChange={() => handleToggleSelectItem(index)} /> </TableCell>
-                        <TableCell className="font-medium">{product.description || "Produto sem descrição"}</TableCell>
-                        <TableCell className="text-right">{product.quantity?.toFixed(2) || "0.00"}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(product.unitValue || 0)}</TableCell>
-                        <TableCell className="px-1"> <Input type="number" min="0" max={(product.quantity || 0) - actions.patrimonyQty} value={actions.depreciableQty.toString()} onChange={(e) => handleQuantityChange(index, 'depreciableQty', e.target.value)} className="h-8 text-sm text-center" /> </TableCell>
-                        <TableCell className="px-1"> <Input type="number" min="0" max={(product.quantity || 0) - actions.depreciableQty} value={actions.patrimonyQty.toString()} onChange={(e) => handleQuantityChange(index, 'patrimonyQty', e.target.value)} className="h-8 text-sm text-center" /> </TableCell>
-                        <TableCell className="text-right">{remainingToIgnore.toFixed(2)}</TableCell>
-                      </TableRow>
-                    );
-                  })
-                  ) : (
-                  <TableRow> <TableCell colSpan={7} className="h-24 text-center"> Nenhum produto para exibir. </TableCell> </TableRow>
-                  )}
-                </TableBody>
-                {displayableProducts.length > 0 && (
-                  <UITableFooter>
-                    <TableRow>
-                      <TableHead className="text-left font-semibold p-1" colSpan={4}>TOTAIS:</TableHead>
-                      <TableHead className="text-center font-semibold">{totalDepreciableQty.toFixed(2)}</TableHead>
-                      <TableHead className="text-center font-semibold">{totalPatrimonyQty.toFixed(2)}</TableHead>
-                      <TableHead className="text-right font-semibold">{totalIgnoredQty.toFixed(2)}</TableHead>
-                    </TableRow>
-                  </UITableFooter>
-                )}
-              </Table>
-            </div>
+      <div className="flex-1 min-h-0 p-6">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-b pb-3">
+            <div><strong>Fornecedor:</strong> {nfeData.supplierName || "Não informado"}</div>
+            <div><strong>CNPJ:</strong> {nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : "Não informado"}</div>
+            <div><strong>IE:</strong> {nfeData.supplierIE || "Não informada"}</div>
+            <div><strong>E-mail:</strong> {nfeData.supplierEmail || "Não informado"}</div>
+            <div><strong>Data Emissão:</strong> {nfeData.emissionDate ? new Date(nfeData.emissionDate).toLocaleDateString('pt-BR') : "Não informada"}</div>
+            <div><strong>Valor Total NF-e:</strong> {formatCurrency(nfeData.nfeTotalValue || 0)}</div>
+            <div><strong>Valor Frete:</strong> {formatCurrency(nfeData.shippingValue || 0)}</div>
           </div>
-        </ScrollArea>
-      </div>
 
-      <DialogFooter>
+          {supplierOnRecord === undefined && ( <Alert variant="default"> <Info className="h-4 w-4" /> <AlertTitle>Verificando Fornecedor</AlertTitle> <AlertDescription>Aguarde...</AlertDescription> </Alert> )}
+          {supplierOnRecord === null && nfeData.supplierCNPJ && ( <Alert variant="default" className="border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300 [&>svg]:text-yellow-500 dark:[&>svg]:text-yellow-400"> <Building className="h-4 w-4" /> <AlertTitle>Fornecedor não cadastrado</AlertTitle> <AlertDescription className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"> <span>O fornecedor <Badge variant="secondary">{nfeData.supplierName || maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, ''))}</Badge> não foi encontrado.</span> <Button onClick={() => setIsSupplierFormOpen(true)} size="sm" variant="outline" className="shrink-0 border-yellow-500 hover:bg-yellow-50 text-yellow-700 dark:border-yellow-400 dark:hover:bg-yellow-700/20 dark:text-yellow-300"> <PlusCircle className="mr-2 h-4 w-4" /> Cadastrar</Button> </AlertDescription> </Alert> )}
+          {supplierOnRecord && ( <Alert variant="default" className="border-green-500 text-green-700 dark:border-green-400 dark:text-green-300 [&>svg]:text-green-500 dark:[&>svg]:text-green-400"> <CheckCircle className="h-4 w-4" /> <AlertTitle>Fornecedor Localizado</AlertTitle> <AlertDescription> Fornecedor: <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{supplierOnRecord.nomeFantasia || supplierOnRecord.razaoSocial}</Badge> (CNPJ: {supplierOnRecord.cnpj ? maskCNPJ(supplierOnRecord.cnpj.replace(/\D/g, '')) : 'N/A'}). </AlertDescription> </Alert> )}
+          
+          <div className="flex justify-between items-center mb-2 px-1 mt-3">
+            <h3 className="text-lg font-semibold flex items-center"> <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal </h3>
+            {displayableProducts.length > 0 && ( <Button onClick={handleDeleteSelectedItems} variant="destructive" size="sm" disabled={selectedItems.size === 0}> <Trash2 className="mr-2 h-4 w-4" /> Excluir Selecionados ({selectedItems.size}) </Button> )}
+          </div>
+
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10 p-1 text-center"> <Checkbox checked={selectedItems.size > 0 && selectedItems.size === displayableProducts.length && displayableProducts.length > 0} onCheckedChange={handleToggleSelectAllItems} disabled={displayableProducts.length === 0} aria-label="Selecionar todos" /> </TableHead>
+                  <TableHead className="min-w-[200px]">Produto (Descrição)</TableHead>
+                  <TableHead className="text-right w-20">Qtde. NF</TableHead>
+                  <TableHead className="text-right w-28">Vlr. Unit.</TableHead>
+                  <TableHead className="text-center w-36">Qtde. Depreciável</TableHead>
+                  <TableHead className="text-center w-36">Qtde. Patrimônio</TableHead>
+                  <TableHead className="text-right w-28">Qtde. Ignorar</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {displayableProducts.length > 0 ? (
+                displayableProducts.map((product, index) => {
+                  const actions = itemActions.get(index) || { depreciableQty: 0, patrimonyQty: 0 };
+                  const remainingToIgnore = (product.quantity || 0) - actions.depreciableQty - actions.patrimonyQty;
+                  
+                  return (
+                    <TableRow key={`product-${index}-${product.description}`} data-state={selectedItems.has(index) ? "selected" : ""}>
+                      <TableCell className="p-1 text-center"> <Checkbox checked={selectedItems.has(index)} onCheckedChange={() => handleToggleSelectItem(index)} /> </TableCell>
+                      <TableCell className="font-medium">{product.description || "Produto sem descrição"}</TableCell>
+                      <TableCell className="text-right">{product.quantity?.toFixed(2) || "0.00"}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(product.unitValue || 0)}</TableCell>
+                      <TableCell className="px-1"> <Input type="number" min="0" max={(product.quantity || 0) - actions.patrimonyQty} value={actions.depreciableQty.toString()} onChange={(e) => handleQuantityChange(index, 'depreciableQty', e.target.value)} className="h-8 text-sm text-center" /> </TableCell>
+                      <TableCell className="px-1"> <Input type="number" min="0" max={(product.quantity || 0) - actions.depreciableQty} value={actions.patrimonyQty.toString()} onChange={(e) => handleQuantityChange(index, 'patrimonyQty', e.target.value)} className="h-8 text-sm text-center" /> </TableCell>
+                      <TableCell className="text-right">{remainingToIgnore.toFixed(2)}</TableCell>
+                    </TableRow>
+                  );
+                })
+                ) : (
+                <TableRow> <TableCell colSpan={7} className="h-24 text-center"> Nenhum produto para exibir. </TableCell> </TableRow>
+                )}
+              </TableBody>
+              {displayableProducts.length > 0 && (
+                <UITableFooter>
+                  <TableRow>
+                    <TableHead className="text-left font-semibold p-1" colSpan={4}>TOTAIS:</TableHead>
+                    <TableHead className="text-center font-semibold">{totalDepreciableQty.toFixed(2)}</TableHead>
+                    <TableHead className="text-center font-semibold">{totalPatrimonyQty.toFixed(2)}</TableHead>
+                    <TableHead className="text-right font-semibold">{totalIgnoredQty.toFixed(2)}</TableHead>
+                  </TableRow>
+                </UITableFooter>
+              )}
+            </Table>
+          </div>
+        </div>
+      </div>
+      <DialogFooter className="p-6 pt-4 border-t">
         <div className="text-sm text-muted-foreground flex-1">
             Total de itens na NF-e: {displayableProducts.length}. Serão processados {totalProcessedQty} unidade(s) como ativo(s).
         </div>
@@ -604,15 +602,15 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
   const renderDetailsStep = () => (
     <Form {...detailForm}>
       <form onSubmit={detailForm.handleSubmit(handleFinalSubmit)} className="flex flex-col h-full">
-        <DialogHeader>
+        <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle className="flex items-center"><ListChecks className="mr-2 h-5 w-5" />Etapa 2: Detalhamento dos Ativos ({fields.length})</DialogTitle>
           <DialogDescription>
             Preencha os detalhes para cada ativo que será importado. Campos marcados com * são obrigatórios.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 my-4">
-          <ScrollArea className="h-full pr-4">
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full p-6">
             <Accordion type="multiple" defaultValue={['item-0']} className="w-full">
             {fields.map((field, index) => {
                 const task = importTasks[index];
@@ -621,13 +619,14 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
                 return (
                 <AccordionItem value={`item-${index}`} key={field.id}>
                     <AccordionTrigger>
-                    <div className='flex items-center gap-2'>
-                        <Badge variant={task.aplicarRegrasDepreciacao ? "default" : "secondary"}>
-                        {index + 1}
+                      <div className='flex items-center gap-3 w-full text-sm'>
+                        <Badge variant="outline" className="shrink-0 px-2">{index + 1}</Badge>
+                        <span className="truncate flex-1 text-left font-medium">{task.originalNFeProductDescription}</span>
+                        <span className="text-sm text-muted-foreground shrink-0">({formatCurrency(task.purchaseValue)})</span>
+                        <Badge variant={task.aplicarRegrasDepreciacao ? "default" : "secondary"} className="shrink-0">
+                          {task.aplicarRegrasDepreciacao ? "Depreciável" : "Patrimônio"}
                         </Badge>
-                        <span>{task.originalNFeProductDescription}</span>
-                        <span className="text-sm text-muted-foreground">({formatCurrency(task.purchaseValue)})</span>
-                    </div>
+                      </div>
                     </AccordionTrigger>
                     <AccordionContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 p-2">
@@ -820,7 +819,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
           </ScrollArea>
         </div>
         
-        <DialogFooter>
+        <DialogFooter className="p-6 pt-4 border-t">
           <Button variant="outline" type="button" onClick={() => setStep('selection')}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Seleção
           </Button>
@@ -838,9 +837,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0">
-            <div className="flex flex-col h-full">
-                {step === 'selection' ? renderSelectionStep() : renderDetailsStep()}
-            </div>
+            {step === 'selection' ? renderSelectionStep() : renderDetailsStep()}
         </DialogContent>
       </Dialog>
 
