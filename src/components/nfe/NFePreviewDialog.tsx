@@ -310,7 +310,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
         serialNumber: assetDetails.serialNumber || undefined,
         additionalInfo: assetDetails.additionalInfo || undefined,
         previouslyDepreciatedValue: assetDetails.previouslyDepreciatedValue || 0,
-        arquivado: assetDetails.arquivado,
+        arquivado: false, // Novos ativos nunca são arquivados por padrão
         imageDateUris: assetDetails.imageDateUris || [],
         invoiceFileDataUri: assetDetails.invoiceFileDataUri || undefined,
         invoiceFileName: assetDetails.invoiceFileName || undefined,
@@ -517,76 +517,72 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
         </DialogDescription>
       </DialogHeader>
       
-      <div className="flex-1 min-h-0">
-        <ScrollArea className="h-full">
-          <div className="space-y-4 p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-b pb-3">
-              <div><strong>Fornecedor:</strong> {nfeData.supplierName || "Não informado"}</div>
-              <div><strong>CNPJ:</strong> {nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : "Não informado"}</div>
-              <div><strong>IE:</strong> {nfeData.supplierIE || "Não informada"}</div>
-              <div><strong>E-mail:</strong> {nfeData.supplierEmail || "Não informado"}</div>
-              <div><strong>Data Emissão:</strong> {nfeData.emissionDate ? new Date(nfeData.emissionDate).toLocaleDateString('pt-BR') : "Não informada"}</div>
-              <div><strong>Valor Total NF-e:</strong> {formatCurrency(nfeData.nfeTotalValue || 0)}</div>
-              <div><strong>Valor Frete:</strong> {formatCurrency(nfeData.shippingValue || 0)}</div>
-            </div>
+      <div className="flex-1 p-6 space-y-4 min-h-0">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border-b pb-3">
+          <div><strong>Fornecedor:</strong> {nfeData.supplierName || "Não informado"}</div>
+          <div><strong>CNPJ:</strong> {nfeData.supplierCNPJ ? maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, '')) : "Não informado"}</div>
+          <div><strong>IE:</strong> {nfeData.supplierIE || "Não informada"}</div>
+          <div><strong>E-mail:</strong> {nfeData.supplierEmail || "Não informado"}</div>
+          <div><strong>Data Emissão:</strong> {nfeData.emissionDate ? new Date(nfeData.emissionDate).toLocaleDateString('pt-BR') : "Não informada"}</div>
+          <div><strong>Valor Total NF-e:</strong> {formatCurrency(nfeData.nfeTotalValue || 0)}</div>
+          <div><strong>Valor Frete:</strong> {formatCurrency(nfeData.shippingValue || 0)}</div>
+        </div>
 
-            {supplierOnRecord === undefined && ( <Alert variant="default"> <Info className="h-4 w-4" /> <AlertTitle>Verificando Fornecedor</AlertTitle> <AlertDescription>Aguarde...</AlertDescription> </Alert> )}
-            {supplierOnRecord === null && nfeData.supplierCNPJ && ( <Alert variant="default" className="border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300 [&>svg]:text-yellow-500 dark:[&>svg]:text-yellow-400"> <Building className="h-4 w-4" /> <AlertTitle>Fornecedor não cadastrado</AlertTitle> <AlertDescription className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"> <span>O fornecedor <Badge variant="secondary">{nfeData.supplierName || maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, ''))}</Badge> não foi encontrado.</span> <Button onClick={() => setIsSupplierFormOpen(true)} size="sm" variant="outline" className="shrink-0 border-yellow-500 hover:bg-yellow-50 text-yellow-700 dark:border-yellow-400 dark:hover:bg-yellow-700/20 dark:text-yellow-300"> <PlusCircle className="mr-2 h-4 w-4" /> Cadastrar</Button> </AlertDescription> </Alert> )}
-            {supplierOnRecord && ( <Alert variant="default" className="border-green-500 text-green-700 dark:border-green-400 dark:text-green-300 [&>svg]:text-green-500 dark:[&>svg]:text-green-400"> <CheckCircle className="h-4 w-4" /> <AlertTitle>Fornecedor Localizado</AlertTitle> <AlertDescription> Fornecedor: <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{supplierOnRecord.nomeFantasia || supplierOnRecord.razaoSocial}</Badge> (CNPJ: {supplierOnRecord.cnpj ? maskCNPJ(supplierOnRecord.cnpj.replace(/\D/g, '')) : 'N/A'}). </AlertDescription> </Alert> )}
-            
-            <div className="flex justify-between items-center mb-2 px-1 mt-3">
-              <h3 className="text-lg font-semibold flex items-center"> <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal </h3>
-              {displayableProducts.length > 0 && ( <Button onClick={handleDeleteSelectedItems} variant="destructive" size="sm" disabled={selectedItems.size === 0}> <Trash2 className="mr-2 h-4 w-4" /> Excluir Selecionados ({selectedItems.size}) </Button> )}
-            </div>
-
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10 p-1 text-center"> <Checkbox checked={selectedItems.size > 0 && selectedItems.size === displayableProducts.length && displayableProducts.length > 0} onCheckedChange={handleToggleSelectAllItems} disabled={displayableProducts.length === 0} aria-label="Selecionar todos" /> </TableHead>
-                    <TableHead className="min-w-[200px]">Produto (Descrição)</TableHead>
-                    <TableHead className="text-right w-20">Qtde. NF</TableHead>
-                    <TableHead className="text-right w-28">Vlr. Unit.</TableHead>
-                    <TableHead className="text-center w-36">Qtde. Depreciável</TableHead>
-                    <TableHead className="text-center w-36">Qtde. Patrimônio</TableHead>
-                    <TableHead className="text-right w-28">Qtde. Ignorar</TableHead>
+        {supplierOnRecord === undefined && ( <Alert variant="default"> <Info className="h-4 w-4" /> <AlertTitle>Verificando Fornecedor</AlertTitle> <AlertDescription>Aguarde...</AlertDescription> </Alert> )}
+        {supplierOnRecord === null && nfeData.supplierCNPJ && ( <Alert variant="default" className="border-yellow-500 text-yellow-700 dark:border-yellow-400 dark:text-yellow-300 [&>svg]:text-yellow-500 dark:[&>svg]:text-yellow-400"> <Building className="h-4 w-4" /> <AlertTitle>Fornecedor não cadastrado</AlertTitle> <AlertDescription className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"> <span>O fornecedor <Badge variant="secondary">{nfeData.supplierName || maskCNPJ(nfeData.supplierCNPJ.replace(/\D/g, ''))}</Badge> não foi encontrado.</span> <Button onClick={() => setIsSupplierFormOpen(true)} size="sm" variant="outline" className="shrink-0 border-yellow-500 hover:bg-yellow-50 text-yellow-700 dark:border-yellow-400 dark:hover:bg-yellow-700/20 dark:text-yellow-300"> <PlusCircle className="mr-2 h-4 w-4" /> Cadastrar</Button> </AlertDescription> </Alert> )}
+        {supplierOnRecord && ( <Alert variant="default" className="border-green-500 text-green-700 dark:border-green-400 dark:text-green-300 [&>svg]:text-green-500 dark:[&>svg]:text-green-400"> <CheckCircle className="h-4 w-4" /> <AlertTitle>Fornecedor Localizado</AlertTitle> <AlertDescription> Fornecedor: <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{supplierOnRecord.nomeFantasia || supplierOnRecord.razaoSocial}</Badge> (CNPJ: {supplierOnRecord.cnpj ? maskCNPJ(supplierOnRecord.cnpj.replace(/\D/g, '')) : 'N/A'}). </AlertDescription> </Alert> )}
+        
+        <div className="flex justify-between items-center mb-2 px-1 mt-3">
+          <h3 className="text-lg font-semibold flex items-center"> <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Itens da Nota Fiscal </h3>
+          {displayableProducts.length > 0 && ( <Button onClick={handleDeleteSelectedItems} variant="destructive" size="sm" disabled={selectedItems.size === 0}> <Trash2 className="mr-2 h-4 w-4" /> Excluir Selecionados ({selectedItems.size}) </Button> )}
+        </div>
+        
+        <ScrollArea className="border rounded-md flex-1">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10 p-1 text-center"> <Checkbox checked={selectedItems.size > 0 && selectedItems.size === displayableProducts.length && displayableProducts.length > 0} onCheckedChange={handleToggleSelectAllItems} disabled={displayableProducts.length === 0} aria-label="Selecionar todos" /> </TableHead>
+                <TableHead className="min-w-[200px]">Produto (Descrição)</TableHead>
+                <TableHead className="text-right w-20">Qtde. NF</TableHead>
+                <TableHead className="text-right w-28">Vlr. Unit.</TableHead>
+                <TableHead className="text-center w-36">Qtde. Depreciável</TableHead>
+                <TableHead className="text-center w-36">Qtde. Patrimônio</TableHead>
+                <TableHead className="text-right w-28">Qtde. Ignorar</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {displayableProducts.length > 0 ? (
+              displayableProducts.map((product, index) => {
+                const actions = itemActions.get(index) || { depreciableQty: 0, patrimonyQty: 0 };
+                const remainingToIgnore = (product.quantity || 0) - actions.depreciableQty - actions.patrimonyQty;
+                
+                return (
+                  <TableRow key={`product-${index}-${product.description}`} data-state={selectedItems.has(index) ? "selected" : ""}>
+                    <TableCell className="p-1 text-center"> <Checkbox checked={selectedItems.has(index)} onCheckedChange={() => handleToggleSelectItem(index)} /> </TableCell>
+                    <TableCell className="font-medium">{product.description || "Produto sem descrição"}</TableCell>
+                    <TableCell className="text-right">{product.quantity?.toFixed(2) || "0.00"}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(product.unitValue || 0)}</TableCell>
+                    <TableCell className="px-1"> <Input type="number" min="0" max={(product.quantity || 0) - actions.patrimonyQty} value={actions.depreciableQty.toString()} onChange={(e) => handleQuantityChange(index, 'depreciableQty', e.target.value)} className="h-8 text-sm text-center" /> </TableCell>
+                    <TableCell className="px-1"> <Input type="number" min="0" max={(product.quantity || 0) - actions.depreciableQty} value={actions.patrimonyQty.toString()} onChange={(e) => handleQuantityChange(index, 'patrimonyQty', e.target.value)} className="h-8 text-sm text-center" /> </TableCell>
+                    <TableCell className="text-right">{remainingToIgnore.toFixed(2)}</TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayableProducts.length > 0 ? (
-                  displayableProducts.map((product, index) => {
-                    const actions = itemActions.get(index) || { depreciableQty: 0, patrimonyQty: 0 };
-                    const remainingToIgnore = (product.quantity || 0) - actions.depreciableQty - actions.patrimonyQty;
-                    
-                    return (
-                      <TableRow key={`product-${index}-${product.description}`} data-state={selectedItems.has(index) ? "selected" : ""}>
-                        <TableCell className="p-1 text-center"> <Checkbox checked={selectedItems.has(index)} onCheckedChange={() => handleToggleSelectItem(index)} /> </TableCell>
-                        <TableCell className="font-medium">{product.description || "Produto sem descrição"}</TableCell>
-                        <TableCell className="text-right">{product.quantity?.toFixed(2) || "0.00"}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(product.unitValue || 0)}</TableCell>
-                        <TableCell className="px-1"> <Input type="number" min="0" max={(product.quantity || 0) - actions.patrimonyQty} value={actions.depreciableQty.toString()} onChange={(e) => handleQuantityChange(index, 'depreciableQty', e.target.value)} className="h-8 text-sm text-center" /> </TableCell>
-                        <TableCell className="px-1"> <Input type="number" min="0" max={(product.quantity || 0) - actions.depreciableQty} value={actions.patrimonyQty.toString()} onChange={(e) => handleQuantityChange(index, 'patrimonyQty', e.target.value)} className="h-8 text-sm text-center" /> </TableCell>
-                        <TableCell className="text-right">{remainingToIgnore.toFixed(2)}</TableCell>
-                      </TableRow>
-                    );
-                  })
-                  ) : (
-                  <TableRow> <TableCell colSpan={7} className="h-24 text-center"> Nenhum produto para exibir. </TableCell> </TableRow>
-                  )}
-                </TableBody>
-                {displayableProducts.length > 0 && (
-                  <UITableFooter>
-                    <TableRow>
-                      <TableHead className="text-left font-semibold p-1" colSpan={4}>TOTAIS:</TableHead>
-                      <TableHead className="text-center font-semibold">{totalDepreciableQty.toFixed(2)}</TableHead>
-                      <TableHead className="text-center font-semibold">{totalPatrimonyQty.toFixed(2)}</TableHead>
-                      <TableHead className="text-right font-semibold">{totalIgnoredQty.toFixed(2)}</TableHead>
-                    </TableRow>
-                  </UITableFooter>
-                )}
-              </Table>
-            </div>
-          </div>
+                );
+              })
+              ) : (
+              <TableRow> <TableCell colSpan={7} className="h-24 text-center"> Nenhum produto para exibir. </TableCell> </TableRow>
+              )}
+            </TableBody>
+            {displayableProducts.length > 0 && (
+              <UITableFooter>
+                <TableRow>
+                  <TableHead className="text-left font-semibold p-1" colSpan={4}>TOTAIS:</TableHead>
+                  <TableHead className="text-center font-semibold">{totalDepreciableQty.toFixed(2)}</TableHead>
+                  <TableHead className="text-center font-semibold">{totalPatrimonyQty.toFixed(2)}</TableHead>
+                  <TableHead className="text-right font-semibold">{totalIgnoredQty.toFixed(2)}</TableHead>
+                </TableRow>
+              </UITableFooter>
+            )}
+          </Table>
         </ScrollArea>
       </div>
 
@@ -605,7 +601,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
   const renderDetailsStep = () => (
     <Form {...detailForm}>
       <form onSubmit={detailForm.handleSubmit(handleFinalSubmit)} className="flex flex-col h-full">
-        <DialogHeader className="p-6 pb-4 border-b flex-shrink-0">
+        <DialogHeader className="p-6 pb-4 border-t flex-shrink-0">
           <DialogTitle className="flex items-center"><ListChecks className="mr-2 h-5 w-5" />Etapa 2: Detalhamento dos Ativos ({fields.length})</DialogTitle>
           <DialogDescription>
             Preencha os detalhes para cada ativo que será importado. Campos marcados com * são obrigatórios.
@@ -613,214 +609,198 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
         </DialogHeader>
 
         <div className="flex-1 min-h-0">
-          <ScrollArea className="h-full">
-            <div className="p-6">
-              <Accordion type="multiple" defaultValue={['item-0']} className="w-full">
-              {fields.map((field, index) => {
-                  const task = importTasks[index];
-                  const assetFormState = watchedAssets[index];
-                  const imagePreviews = assetFormState?.imageDateUris || [];
-                  return (
-                  <AccordionItem value={`item-${index}`} key={field.id}>
-                      <AccordionTrigger>
-                        <div className='flex items-center gap-3 w-full text-sm'>
-                          <Badge variant="outline" className="shrink-0 px-2">{index + 1}</Badge>
-                          <span className="truncate flex-1 text-left font-medium">{task.originalNFeProductDescription}</span>
-                          <span className="text-sm text-muted-foreground shrink-0">({formatCurrency(task.purchaseValue)})</span>
-                          <Badge variant={task.aplicarRegrasDepreciacao ? "default" : "secondary"} className="shrink-0">
-                            {task.aplicarRegrasDepreciacao ? "Depreciável" : "Patrimônio"}
-                          </Badge>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 p-2">
-                          <FormField
-                              control={detailForm.control}
-                              name={`assets.${index}.assetTag`}
-                              render={({ field: formField }) => (
-                              <FormItem>
-                                  <FormLabel>Nº de Patrimônio *</FormLabel>
-                                  <FormControl><Input placeholder="Ex: ZDI-00123" {...formField} /></FormControl>
-                                  <FormMessage />
-                              </FormItem>
-                              )}
-                          />
-                          <FormField
-                              control={detailForm.control}
-                              name={`assets.${index}.serialNumber`}
-                              render={({ field: formField }) => (
-                              <FormItem>
-                                  <FormLabel>Nº de Série</FormLabel>
-                                  <FormControl><Input placeholder="Ex: SN-ABC123XYZ" {...formField} /></FormControl>
-                                  <FormMessage />
-                              </FormItem>
-                              )}
-                          />
-                          <FormField
-                              control={detailForm.control}
-                              name={`assets.${index}.categoryId`}
-                              render={({ field: formField }) => (
-                              <FormItem>
-                                  <FormLabel>Categoria *</FormLabel>
-                                  <Select onValueChange={formField.onChange} defaultValue={formField.value}>
-                                  <FormControl>
-                                      <SelectTrigger>
-                                      <SelectValue placeholder="Selecione uma categoria" />
-                                      </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                      {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                                  </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                              </FormItem>
-                              )}
-                          />
-                          <FormField
-                              control={detailForm.control}
-                              name={`assets.${index}.modelId`}
-                              render={({ field: formField }) => (
-                              <FormItem>
-                                  <FormLabel>Modelo</FormLabel>
-                                  <AssetModelCombobox value={formField.value} onChange={formField.onChange} />
-                                  <FormMessage />
-                              </FormItem>
-                              )}
-                          />
-                          <FormField
-                              control={detailForm.control}
-                              name={`assets.${index}.locationId`}
-                              render={({ field: formField }) => (
-                              <FormItem>
-                                  <FormLabel>Local Alocado</FormLabel>
-                                  <LocationCombobox value={formField.value} onChange={formField.onChange} />
-                                  <FormMessage />
-                              </FormItem>
-                              )}
-                          />
-                          <FormField
-                              control={detailForm.control}
-                              name={`assets.${index}.previouslyDepreciatedValue`}
-                              render={({ field: formField }) => (
-                                  <FormItem>
-                                      <FormLabel>Valor Depreciado Anteriormente</FormLabel>
-                                      <FormControl>
-                                          <Input type="number" step="0.01" placeholder="R$ 0,00" {...formField} value={formField.value ?? ''} />
-                                      </FormControl>
-                                      <FormMessage />
-                                  </FormItem>
-                              )}
-                          />
-                          <FormField
-                              control={detailForm.control}
-                              name={`assets.${index}.arquivado`}
-                              render={({ field: formField }) => (
-                                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 md:col-span-2">
-                                      <div className="space-y-0.5">
-                                          <FormLabel>Arquivar Ativo</FormLabel>
-                                          <FormMessage />
-                                      </div>
-                                      <FormControl>
-                                          <Switch checked={formField.value} onCheckedChange={formField.onChange} />
-                                      </FormControl>
-                                  </FormItem>
-                              )}
-                          />
-                          <FormField
-                              control={detailForm.control}
-                              name={`assets.${index}.additionalInfo`}
-                              render={({ field: formField }) => (
-                              <FormItem className="md:col-span-2">
-                                  <FormLabel>Informações Adicionais</FormLabel>
-                                  <FormControl><Textarea placeholder="Detalhes extras sobre o ativo..." {...formField} /></FormControl>
-                                  <FormMessage />
-                              </FormItem>
-                              )}
-                          />
-
-                          {/* Invoice File Upload */}
-                          <FormField
-                              control={detailForm.control}
-                              name={`assets.${index}.invoiceFileDataUri`}
-                              render={({ field: formField }) => (
-                                  <FormItem className="space-y-1 md:col-span-2">
-                                      <FormLabel>Anexo da Nota Fiscal</FormLabel>
-                                      <FormControl>
-                                      <Input
-                                          type="file"
-                                          accept="application/pdf,image/*"
-                                          ref={(el) => (invoiceFileInputRefs.current[index] = el)}
-                                          onChange={(e) => handleInvoiceFileChange(e, index)}
-                                          className="hidden"
-                                          disabled={!!assetFormState?.invoiceFileName}
-                                      />
-                                      </FormControl>
-                                      {!assetFormState?.invoiceFileName ? (
-                                      <Button type="button" variant="outline" className="w-full" onClick={() => invoiceFileInputRefs.current[index]?.click()}>
-                                          <UploadCloud className="mr-2 h-4 w-4" /> Selecionar Arquivo
-                                      </Button>
-                                      ) : (
-                                      <div className="flex items-center space-x-2 p-2 border rounded-md bg-muted/30 h-10">
-                                          <FileText className="h-5 w-5 text-muted-foreground" />
-                                          <span className="text-sm text-foreground truncate flex-1" title={assetFormState.invoiceFileName}>{assetFormState.invoiceFileName}</span>
-                                          <Button type="button" variant="ghost" size="icon" onClick={() => handleViewFile(assetFormState.invoiceFileDataUri, assetFormState.invoiceFileName)} title="Visualizar"><Eye className="h-4 w-4" /></Button>
-                                          <Button type="button" variant="ghost" size="icon" onClick={() => handleDownloadFile(assetFormState.invoiceFileDataUri, assetFormState.invoiceFileName)} title="Baixar"><Download className="h-4 w-4" /></Button>
-                                          <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveInvoiceFile(index)} title="Remover" className="text-destructive hover:text-destructive"><XCircle className="h-4 w-4" /></Button>
-                                      </div>
-                                      )}
-                                      <FormMessage />
-                                  </FormItem>
-                              )}
-                          />
-
-                          {/* Image Upload */}
-                          <FormField
-                              control={detailForm.control}
-                              name={`assets.${index}.imageDateUris`}
-                              render={({ field: formField }) => (
-                                  <FormItem className="space-y-1 md:col-span-2">
-                                      <FormLabel>Fotos do Ativo (Máx. {MAX_PHOTOS})</FormLabel>
-                                      <FormControl>
-                                          <Input
-                                          type="file"
-                                          accept="image/*"
-                                          multiple
-                                          ref={el => (imageFileInputRefs.current[index] = el)}
-                                          onChange={(e) => handleImageChange(e, index)}
-                                          className="w-full"
-                                          disabled={(assetFormState?.imageDateUris?.length || 0) >= MAX_PHOTOS}
-                                          />
-                                      </FormControl>
-                                      <FormMessage />
-                                      {imagePreviews.length > 0 && (
-                                          <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                                              {imagePreviews.map((previewUrl, imgIndex) => (
-                                                  <div key={imgIndex} className="relative w-full aspect-square border rounded-md overflow-hidden group">
-                                                      <Image src={previewUrl} alt={`Preview ${imgIndex + 1}`} layout="fill" objectFit="contain" />
-                                                      <Button
-                                                          type="button"
-                                                          variant="destructive"
-                                                          size="icon"
-                                                          onClick={() => handleRemoveImage(index, imgIndex)}
-                                                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100"
-                                                          title="Remover imagem"
-                                                      >
-                                                          <XCircle className="h-4 w-4" />
-                                                      </Button>
-                                                  </div>
-                                              ))}
-                                          </div>
-                                      )}
-                                  </FormItem>
-                              )}
-                          />
+          <ScrollArea className="h-full px-6">
+            <Accordion type="multiple" defaultValue={['item-0']} className="w-full">
+            {fields.map((field, index) => {
+                const task = importTasks[index];
+                const assetFormState = watchedAssets[index];
+                const imagePreviews = assetFormState?.imageDateUris || [];
+                return (
+                <AccordionItem value={`item-${index}`} key={field.id}>
+                    <AccordionTrigger>
+                      <div className='flex items-center gap-3 w-full text-sm'>
+                        <Badge variant="outline" className="shrink-0 px-2">{index + 1}</Badge>
+                        <span className="truncate flex-1 text-left font-medium">{task.originalNFeProductDescription}</span>
+                        <span className="text-sm text-muted-foreground shrink-0">({formatCurrency(task.purchaseValue)})</span>
+                        <Badge variant={task.aplicarRegrasDepreciacao ? "default" : "secondary"} className="shrink-0">
+                          {task.aplicarRegrasDepreciacao ? "Depreciável" : "Patrimônio"}
+                        </Badge>
                       </div>
-                      </AccordionContent>
-                  </AccordionItem>
-                  );
-              })}
-              </Accordion>
-            </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 p-2">
+                        <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.assetTag`}
+                            render={({ field: formField }) => (
+                            <FormItem>
+                                <FormLabel>Nº de Patrimônio *</FormLabel>
+                                <FormControl><Input placeholder="Ex: ZDI-00123" {...formField} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.serialNumber`}
+                            render={({ field: formField }) => (
+                            <FormItem>
+                                <FormLabel>Nº de Série</FormLabel>
+                                <FormControl><Input placeholder="Ex: SN-ABC123XYZ" {...formField} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.categoryId`}
+                            render={({ field: formField }) => (
+                            <FormItem>
+                                <FormLabel>Categoria *</FormLabel>
+                                <Select onValueChange={formField.onChange} defaultValue={formField.value}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                    <SelectValue placeholder="Selecione uma categoria" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.modelId`}
+                            render={({ field: formField }) => (
+                            <FormItem>
+                                <FormLabel>Modelo</FormLabel>
+                                <AssetModelCombobox value={formField.value} onChange={formField.onChange} />
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.locationId`}
+                            render={({ field: formField }) => (
+                            <FormItem>
+                                <FormLabel>Local Alocado</FormLabel>
+                                <LocationCombobox value={formField.value} onChange={formField.onChange} />
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.previouslyDepreciatedValue`}
+                            render={({ field: formField }) => (
+                                <FormItem>
+                                    <FormLabel>Valor Depreciado Anteriormente</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" step="0.01" placeholder="R$ 0,00" {...formField} value={formField.value ?? ''} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        
+                        <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.additionalInfo`}
+                            render={({ field: formField }) => (
+                            <FormItem className="md:col-span-2">
+                                <FormLabel>Informações Adicionais</FormLabel>
+                                <FormControl><Textarea placeholder="Detalhes extras sobre o ativo..." {...formField} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+
+                        {/* Invoice File Upload */}
+                        <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.invoiceFileDataUri`}
+                            render={({ field: formField }) => (
+                                <FormItem className="space-y-1 md:col-span-2">
+                                    <FormLabel>Anexo da Nota Fiscal</FormLabel>
+                                    <FormControl>
+                                    <Input
+                                        type="file"
+                                        accept="application/pdf,image/*"
+                                        ref={(el) => (invoiceFileInputRefs.current[index] = el)}
+                                        onChange={(e) => handleInvoiceFileChange(e, index)}
+                                        className="hidden"
+                                        disabled={!!assetFormState?.invoiceFileName}
+                                    />
+                                    </FormControl>
+                                    {!assetFormState?.invoiceFileName ? (
+                                    <Button type="button" variant="outline" className="w-full" onClick={() => invoiceFileInputRefs.current[index]?.click()}>
+                                        <UploadCloud className="mr-2 h-4 w-4" /> Selecionar Arquivo
+                                    </Button>
+                                    ) : (
+                                    <div className="flex items-center space-x-2 p-2 border rounded-md bg-muted/30 h-10">
+                                        <FileText className="h-5 w-5 text-muted-foreground" />
+                                        <span className="text-sm text-foreground truncate flex-1" title={assetFormState.invoiceFileName}>{assetFormState.invoiceFileName}</span>
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => handleViewFile(assetFormState.invoiceFileDataUri, assetFormState.invoiceFileName)} title="Visualizar"><Eye className="h-4 w-4" /></Button>
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => handleDownloadFile(assetFormState.invoiceFileDataUri, assetFormState.invoiceFileName)} title="Baixar"><Download className="h-4 w-4" /></Button>
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveInvoiceFile(index)} title="Remover" className="text-destructive hover:text-destructive"><XCircle className="h-4 w-4" /></Button>
+                                    </div>
+                                    )}
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Image Upload */}
+                        <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.imageDateUris`}
+                            render={({ field: formField }) => (
+                                <FormItem className="space-y-1 md:col-span-2">
+                                    <FormLabel>Fotos do Ativo (Máx. {MAX_PHOTOS})</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        ref={el => (imageFileInputRefs.current[index] = el)}
+                                        onChange={(e) => handleImageChange(e, index)}
+                                        className="w-full"
+                                        disabled={(assetFormState?.imageDateUris?.length || 0) >= MAX_PHOTOS}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                    {imagePreviews.length > 0 && (
+                                        <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                            {imagePreviews.map((previewUrl, imgIndex) => (
+                                                <div key={imgIndex} className="relative w-full aspect-square border rounded-md overflow-hidden group">
+                                                    <Image src={previewUrl} alt={`Preview ${imgIndex + 1}`} layout="fill" objectFit="contain" />
+                                                    <Button
+                                                        type="button"
+                                                        variant="destructive"
+                                                        size="icon"
+                                                        onClick={() => handleRemoveImage(index, imgIndex)}
+                                                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100"
+                                                        title="Remover imagem"
+                                                    >
+                                                        <XCircle className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                    </AccordionContent>
+                </AccordionItem>
+                );
+            })}
+            </Accordion>
           </ScrollArea>
         </div>
         

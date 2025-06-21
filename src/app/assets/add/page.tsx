@@ -389,42 +389,6 @@ export default function AddAssetPage() {
                           </FormItem>
                         )}
                       />
-                      <FormField
-                        control={form.control}
-                        name="arquivado"
-                        render={({ field }) => (
-                          <FormItem className="space-y-0.5">
-                            <div className="flex items-center h-8">
-                              <FormLabel>Arquivar *</FormLabel>
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" type="button" className="ml-1.5 h-7 w-7">
-                                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Marque "Sim" para arquivar o ativo. Ativos arquivados geralmente não são incluídos em cálculos ou relatórios operacionais, mas permanecem registrados para fins históricos.</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                            </div>
-                            <FormControl>
-                              <div className="flex items-center space-x-2">
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                  id="arquivado"
-                                />
-                                <label htmlFor="arquivado" className="text-sm text-muted-foreground cursor-pointer">
-                                  {field.value ? "Sim" : "Não"}
-                                </label>
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
