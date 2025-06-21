@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as UITableFooter } from '@/components/ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Building, CheckCircle, Info, PlusCircle, ShoppingCart, Tag, Trash2, Forward, ListChecks, ArrowLeft, Save, UploadCloud, XCircle } from 'lucide-react';
+import { Building, CheckCircle, Info, PlusCircle, ShoppingCart, Tag, Trash2, Forward, ListChecks, ArrowLeft, Save, UploadCloud, XCircle, FileText, Paperclip, Eye, Download } from 'lucide-react';
 import type { ExtractNFeDataOutput, NFeProduct } from '@/ai/flows/extract-nfe-data-flow';
 import type { Supplier } from '@/contexts/SupplierContext';
 import { useSuppliers } from '@/contexts/SupplierContext';
@@ -32,6 +32,9 @@ import { LocationCombobox } from '@/components/locations/LocationCombobox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCategories } from '@/contexts/CategoryContext';
 import { useRouter } from 'next/navigation';
+import type { Asset } from '@/components/assets/types';
+import { Switch } from '@/components/ui/switch';
+import Image from 'next/image';
 
 export interface ImportPreparationTask {
   originalNFeProductDescription: string;
@@ -42,6 +45,8 @@ export interface ImportPreparationTask {
   aplicarRegrasDepreciacao: boolean;
 }
 
+const MAX_PHOTOS = 10;
+
 const assetDetailSchema = z.object({
   assetTag: z.string().min(1, "Obrigatório"),
   serialNumber: z.string().optional(),
@@ -49,7 +54,11 @@ const assetDetailSchema = z.object({
   modelId: z.string().optional(),
   locationId: z.string().optional(),
   additionalInfo: z.string().optional(),
-  // imageDateUris: z.array(z.string()).optional(), // Image handling can be complex here, simplify for now
+  arquivado: z.boolean(),
+  previouslyDepreciatedValue: z.coerce.number().min(0, "Não pode ser negativo.").optional(),
+  imageDateUris: z.array(z.string()).max(MAX_PHOTOS, `Máximo de ${MAX_PHOTOS} fotos.`).optional(),
+  invoiceFileDataUri: z.string().optional(),
+  invoiceFileName: z.string().optional(),
 });
 
 const detailFormSchema = z.object({
@@ -80,6 +89,9 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
 
+  const invoiceFileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const imageFileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
 
   const { getSupplierByDocument } = useSuppliers();
   const { importSettings } = useImportSettings();
@@ -92,11 +104,12 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, update } = useFieldArray({
     control: detailForm.control,
     name: "assets",
   });
-
+  
+  const watchedAssets = detailForm.watch('assets');
 
   const resetDialogState = () => {
     setStep('selection');
@@ -263,6 +276,11 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
         modelId: undefined,
         locationId: undefined,
         additionalInfo: '',
+        arquivado: false,
+        previouslyDepreciatedValue: 0,
+        imageDateUris: [],
+        invoiceFileDataUri: undefined,
+        invoiceFileName: undefined,
       })),
     });
     setStep('details');
@@ -288,9 +306,11 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
         locationId: assetDetails.locationId || undefined,
         serialNumber: assetDetails.serialNumber || undefined,
         additionalInfo: assetDetails.additionalInfo || undefined,
-        previouslyDepreciatedValue: 0,
-        arquivado: false,
-        imageDateUris: [],
+        previouslyDepreciatedValue: assetDetails.previouslyDepreciatedValue || 0,
+        arquivado: assetDetails.arquivado,
+        imageDateUris: assetDetails.imageDateUris || [],
+        invoiceFileDataUri: assetDetails.invoiceFileDataUri || undefined,
+        invoiceFileName: assetDetails.invoiceFileName || undefined,
       };
        addAsset(assetDataToSave as Omit<Asset, 'id'>);
     });
@@ -379,6 +399,103 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
     setIsConfirmDeleteDialogOpen(false);
   };
 
+  const handleInvoiceFileChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        detailForm.setValue(`assets.${index}.invoiceFileDataUri`, reader.result as string, { shouldValidate: true });
+        detailForm.setValue(`assets.${index}.invoiceFileName`, file.name, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveInvoiceFile = (index: number) => {
+    detailForm.setValue(`assets.${index}.invoiceFileDataUri`, undefined);
+    detailForm.setValue(`assets.${index}.invoiceFileName`, undefined);
+    const ref = invoiceFileInputRefs.current[index];
+    if (ref) {
+      ref.value = '';
+    }
+  };
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const files = event.target.files;
+    if (files) {
+        const currentUris = detailForm.getValues(`assets.${index}.imageDateUris`) || [];
+        const availableSlots = MAX_PHOTOS - currentUris.length;
+
+        if (availableSlots <= 0) {
+            toast({ title: "Limite de fotos atingido", description: `Máximo de ${MAX_PHOTOS} fotos por ativo.`, variant: "destructive" });
+            const ref = imageFileInputRefs.current[index];
+            if (ref) ref.value = '';
+            return;
+        }
+
+        const filesToProcess = Array.from(files).slice(0, availableSlots);
+        const newUrisArray = [...currentUris];
+        let filesRead = 0;
+
+        filesToProcess.forEach(file => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const result = reader.result as string;
+                newUrisArray.push(result);
+                filesRead++;
+                if (filesRead === filesToProcess.length) {
+                    detailForm.setValue(`assets.${index}.imageDateUris`, newUrisArray, { shouldValidate: true });
+                    const ref = imageFileInputRefs.current[index];
+                    if (ref) ref.value = '';
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+};
+
+  const handleRemoveImage = (assetIndex: number, imageIndex: number) => {
+    const currentUris = detailForm.getValues(`assets.${assetIndex}.imageDateUris`) || [];
+    const updatedUris = currentUris.filter((_, i) => i !== imageIndex);
+    detailForm.setValue(`assets.${assetIndex}.imageDateUris`, updatedUris, { shouldValidate: true });
+  };
+
+
+  const handleDownloadFile = (dataUri: string | undefined, fileName: string | undefined) => {
+    if (!dataUri || !fileName) return;
+    const link = document.createElement('a');
+    link.href = dataUri;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleViewFile = (dataUri: string | undefined, fileName: string | undefined) => {
+    if (!dataUri || !fileName) return;
+    const newWindow = window.open();
+    if (newWindow) {
+      if (dataUri.startsWith('data:application/pdf')) {
+        newWindow.document.write(
+          `<iframe src="${dataUri}" width="100%" height="100%" title="Visualizar ${fileName}"></iframe>`
+        );
+      } else if (dataUri.startsWith('data:image/')) {
+        newWindow.document.write(
+          `<img src="${dataUri}" alt="Visualizar ${fileName}" style="max-width:100%; max-height:100vh; margin:auto; display:block;" />`
+        );
+      } else {
+         newWindow.document.write(`<p>Não é possível visualizar este tipo de arquivo diretamente. Faça o download.</p><p><a href="${dataUri}" download="${fileName}">Baixar ${fileName}</a></p>`);
+      }
+      newWindow.document.title = `Visualizar: ${fileName}`;
+    } else {
+      toast({
+        title: "Bloqueio de Pop-up",
+        description: "Por favor, desabilite o bloqueador de pop-ups para visualizar o arquivo.",
+        variant: "destructive"
+      });
+    }
+  };
+
 
   if (!nfeData) return null;
 
@@ -437,7 +554,7 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
                   const remainingToIgnore = (product.quantity || 0) - actions.depreciableQty - actions.patrimonyQty;
                   
                   return (
-                    <TableRow key={`product-${index}-${product.description}`} data-state={selectedItems.has(index) && "selected"}>
+                    <TableRow key={`product-${index}-${product.description}`} data-state={selectedItems.has(index) ? "selected" : ""}>
                       <TableCell className="p-1 text-center"> <Checkbox checked={selectedItems.has(index)} onCheckedChange={() => handleToggleSelectItem(index)} /> </TableCell>
                       <TableCell className="font-medium">{product.description || "Produto sem descrição"}</TableCell>
                       <TableCell className="text-right">{product.quantity?.toFixed(2) || "0.00"}</TableCell>
@@ -492,6 +609,8 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
           <Accordion type="multiple" defaultValue={['item-0']} className="w-full">
             {fields.map((field, index) => {
               const task = importTasks[index];
+              const assetFormState = watchedAssets[index];
+              const imagePreviews = assetFormState?.imageDateUris || [];
               return (
                 <AccordionItem value={`item-${index}`} key={field.id}>
                   <AccordionTrigger>
@@ -504,14 +623,14 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 p-2">
                        <FormField
                           control={detailForm.control}
                           name={`assets.${index}.assetTag`}
-                          render={({ field }) => (
+                          render={({ field: formField }) => (
                             <FormItem>
                               <FormLabel>Nº de Patrimônio *</FormLabel>
-                              <FormControl><Input placeholder="Ex: ZDI-00123" {...field} /></FormControl>
+                              <FormControl><Input placeholder="Ex: ZDI-00123" {...formField} /></FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -519,10 +638,10 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
                          <FormField
                           control={detailForm.control}
                           name={`assets.${index}.serialNumber`}
-                          render={({ field }) => (
+                          render={({ field: formField }) => (
                             <FormItem>
                               <FormLabel>Nº de Série</FormLabel>
-                              <FormControl><Input placeholder="Ex: SN-ABC123XYZ" {...field} /></FormControl>
+                              <FormControl><Input placeholder="Ex: SN-ABC123XYZ" {...formField} /></FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -530,10 +649,10 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
                          <FormField
                           control={detailForm.control}
                           name={`assets.${index}.categoryId`}
-                          render={({ field }) => (
+                          render={({ field: formField }) => (
                             <FormItem>
                               <FormLabel>Categoria *</FormLabel>
-                               <Select onValueChange={field.onChange} defaultValue={field.value}>
+                               <Select onValueChange={formField.onChange} defaultValue={formField.value}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Selecione uma categoria" />
@@ -550,10 +669,10 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
                         <FormField
                           control={detailForm.control}
                           name={`assets.${index}.modelId`}
-                          render={({ field }) => (
+                          render={({ field: formField }) => (
                             <FormItem>
                               <FormLabel>Modelo</FormLabel>
-                               <AssetModelCombobox value={field.value} onChange={field.onChange} />
+                               <AssetModelCombobox value={formField.value} onChange={formField.onChange} />
                               <FormMessage />
                             </FormItem>
                           )}
@@ -561,24 +680,129 @@ export function NFePreviewDialog({ open, onOpenChange, nfeData }: NFePreviewDial
                         <FormField
                           control={detailForm.control}
                           name={`assets.${index}.locationId`}
-                          render={({ field }) => (
-                             <FormItem className="md:col-span-2">
+                          render={({ field: formField }) => (
+                             <FormItem>
                               <FormLabel>Local Alocado</FormLabel>
-                              <LocationCombobox value={field.value} onChange={field.onChange} />
+                              <LocationCombobox value={formField.value} onChange={formField.onChange} />
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                         <FormField
                           control={detailForm.control}
+                          name={`assets.${index}.previouslyDepreciatedValue`}
+                          render={({ field: formField }) => (
+                              <FormItem>
+                                  <FormLabel>Valor Depreciado Anteriormente</FormLabel>
+                                  <FormControl>
+                                      <Input type="number" step="0.01" placeholder="R$ 0,00" {...formField} value={formField.value ?? ''} />
+                                  </FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                          )}
+                        />
+                         <FormField
+                          control={detailForm.control}
+                          name={`assets.${index}.arquivado`}
+                          render={({ field: formField }) => (
+                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 md:col-span-2">
+                                  <div className="space-y-0.5">
+                                      <FormLabel>Arquivar Ativo</FormLabel>
+                                      <FormMessage />
+                                  </div>
+                                  <FormControl>
+                                      <Switch checked={formField.value} onCheckedChange={formField.onChange} />
+                                  </FormControl>
+                              </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={detailForm.control}
                           name={`assets.${index}.additionalInfo`}
-                          render={({ field }) => (
+                          render={({ field: formField }) => (
                             <FormItem className="md:col-span-2">
                               <FormLabel>Informações Adicionais</FormLabel>
-                              <FormControl><Textarea placeholder="Detalhes extras sobre o ativo..." {...field} /></FormControl>
+                              <FormControl><Textarea placeholder="Detalhes extras sobre o ativo..." {...formField} /></FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
+                        />
+
+                        {/* Invoice File Upload */}
+                         <FormField
+                          control={detailForm.control}
+                          name={`assets.${index}.invoiceFileDataUri`}
+                          render={({ field: formField }) => (
+                              <FormItem className="space-y-1 md:col-span-2">
+                                  <FormLabel>Anexo da Nota Fiscal</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                        type="file"
+                                        accept="application/pdf,image/*"
+                                        ref={(el) => (invoiceFileInputRefs.current[index] = el)}
+                                        onChange={(e) => handleInvoiceFileChange(e, index)}
+                                        className="hidden"
+                                        disabled={!!assetFormState?.invoiceFileName}
+                                    />
+                                  </FormControl>
+                                  {!assetFormState?.invoiceFileName ? (
+                                    <Button type="button" variant="outline" className="w-full" onClick={() => invoiceFileInputRefs.current[index]?.click()}>
+                                        <UploadCloud className="mr-2 h-4 w-4" /> Selecionar Arquivo
+                                    </Button>
+                                  ) : (
+                                    <div className="flex items-center space-x-2 p-2 border rounded-md bg-muted/30 h-10">
+                                      <FileText className="h-5 w-5 text-muted-foreground" />
+                                      <span className="text-sm text-foreground truncate flex-1" title={assetFormState.invoiceFileName}>{assetFormState.invoiceFileName}</span>
+                                      <Button type="button" variant="ghost" size="icon" onClick={() => handleViewFile(assetFormState.invoiceFileDataUri, assetFormState.invoiceFileName)} title="Visualizar"><Eye className="h-4 w-4" /></Button>
+                                      <Button type="button" variant="ghost" size="icon" onClick={() => handleDownloadFile(assetFormState.invoiceFileDataUri, assetFormState.invoiceFileName)} title="Baixar"><Download className="h-4 w-4" /></Button>
+                                      <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveInvoiceFile(index)} title="Remover" className="text-destructive hover:text-destructive"><XCircle className="h-4 w-4" /></Button>
+                                    </div>
+                                  )}
+                                  <FormMessage />
+                              </FormItem>
+                          )}
+                        />
+
+                         {/* Image Upload */}
+                        <FormField
+                            control={detailForm.control}
+                            name={`assets.${index}.imageDateUris`}
+                            render={({ field: formField }) => (
+                                <FormItem className="space-y-1 md:col-span-2">
+                                    <FormLabel>Fotos do Ativo (Máx. {MAX_PHOTOS})</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        ref={el => (imageFileInputRefs.current[index] = el)}
+                                        onChange={(e) => handleImageChange(e, index)}
+                                        className="w-full"
+                                        disabled={(assetFormState?.imageDateUris?.length || 0) >= MAX_PHOTOS}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                    {imagePreviews.length > 0 && (
+                                        <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                            {imagePreviews.map((previewUrl, imgIndex) => (
+                                                <div key={imgIndex} className="relative w-full aspect-square border rounded-md overflow-hidden group">
+                                                    <Image src={previewUrl} alt={`Preview ${imgIndex + 1}`} layout="fill" objectFit="contain" />
+                                                    <Button
+                                                        type="button"
+                                                        variant="destructive"
+                                                        size="icon"
+                                                        onClick={() => handleRemoveImage(index, imgIndex)}
+                                                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100"
+                                                        title="Remover imagem"
+                                                    >
+                                                        <XCircle className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </FormItem>
+                            )}
                         />
                     </div>
                   </AccordionContent>
